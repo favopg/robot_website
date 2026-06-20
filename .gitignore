@@ -24,3 +24,6 @@ playwright/.cache/
 ### System Files ###
 .DS_Store
 Thumbs.db
+
+### Custom ###
+captures/

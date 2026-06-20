@@ -25,6 +25,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.batch:spring-batch-test'
     testImplementation 'com.microsoft.playwright:playwright:1.43.0'
+    testImplementation 'org.apache.poi:poi:5.2.5'
+    testImplementation 'org.apache.poi:poi-ooxml:5.2.5'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
