@@ -1,0 +1,26 @@
+### Gradle ###
+.gradle/
+build/
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+out/
+
+### VS Code ###
+.vscode/
+
+### Spring Boot ###
+*.log
+*.gz
+
+### Playwright ###
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+### System Files ###
+.DS_Store
+Thumbs.db
