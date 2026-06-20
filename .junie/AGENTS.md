@@ -13,7 +13,7 @@
   * Gradle
 
 # データベース
-  * MySQL
+  * H2
 
 # サーバー
   * tomcat
