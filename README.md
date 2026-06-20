@@ -58,7 +58,7 @@ spring.datasource.password=your_password
 ```bash
 ./gradlew bootRun
 ```
-起動後、ブラウザで `http://localhost:8080` にアクセスしてください。
+起動後、ブラウザで `http://localhost:8081` にアクセスしてください。
 
 ## テスト
 
