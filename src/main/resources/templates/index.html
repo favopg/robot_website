@@ -59,7 +59,42 @@
         </header>
         
         <main>
-            <!-- ここにイベント情報のリストなどが表示される予定 -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ジャンル</th>
+                            <th>日付</th>
+                            <th>タイトル</th>
+                            <th>場所</th>
+                            <th>対象</th>
+                            <th>詳細</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="event : ${events}">
+                            <td>
+                                <span th:if="${event.genre == 'IGO'}" class="badge bg-primary">囲碁</span>
+                                <span th:if="${event.genre == 'SHOGI'}" class="badge bg-success">将棋</span>
+                            </td>
+                            <td th:text="${event.eventDate}">2026-01-01</td>
+                            <td th:text="${event.title}">イベントタイトル</td>
+                            <td th:text="${event.location}">開催場所</td>
+                            <td>
+                                <span th:if="${event.targetBeginner}" class="badge bg-info text-dark">初心者</span>
+                                <span th:if="${event.targetKyuPlayer}" class="badge bg-info text-dark">級位者</span>
+                                <span th:if="${event.targetDanPlayer}" class="badge bg-info text-dark">有段者</span>
+                            </td>
+                            <td>
+                                <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(events)}">
+                            <td colspan="6" class="text-center">現在、表示できるイベント情報はありません。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </main>
     </div>
 
