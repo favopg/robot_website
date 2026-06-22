@@ -6,15 +6,13 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.CommandLineRunner;
 
 import java.util.Date;
 
 @Component
-@EnableScheduling
-public class BatchScheduler {
+public class BatchScheduler implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(BatchScheduler.class);
 
@@ -26,8 +24,13 @@ public class BatchScheduler {
         this.siteSourceCheckJob = siteSourceCheckJob;
     }
 
-    // 5分に1回実行 (300,000ミリ秒)
-    @Scheduled(fixedRate = 300000)
+    @Override
+    public void run(String... args) {
+        runJob();
+    }
+
+    // 30分に1回実行 (1,800,000ミリ秒)
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 1800000)
     public void runJob() {
         try {
             logger.info("Starting siteSourceCheckJob at " + new Date());
