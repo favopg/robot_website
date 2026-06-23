@@ -14,15 +14,25 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 public class SiteSourceCheckTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(SiteSourceCheckTasklet.class);
+    private static final int MAX_PAGES_PER_SOURCE = 10;
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -40,6 +50,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
             return RepeatStatus.FINISHED;
         }
 
+        List<EventRecord> allEvents = new ArrayList<>();
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
             Page page = browser.newPage();
@@ -47,30 +58,103 @@ public class SiteSourceCheckTasklet implements Tasklet {
             for (Map<String, Object> source : sources) {
                 Long id = (Long) source.get("id");
                 String siteName = (String) source.get("site_name");
-                String url = (String) source.get("url");
+                String startUrl = (String) source.get("url");
                 String genre = (String) source.get("type");
 
-                logger.info("Scraping site: {} ({})", siteName, url);
-
-                try {
-                    page.navigate(url);
-                    page.waitForSelector("body");
-                    logger.info("Navigated to {}", url);
-                    List<EventRecord> events = scrapeEvents(page, id, genre);
-                    logger.info("Scraped {} events from {}", events.size(), siteName);
-                    saveEvents(events);
-                } catch (Exception e) {
-                    logger.error("Failed to scrape site: " + siteName, e);
-                }
+                logger.info("Scraping site: {} starting from {}", siteName, startUrl);
+                allEvents.addAll(crawlSite(page, id, startUrl, genre));
             }
             browser.close();
         }
 
+        saveEvents(allEvents);
+
         return RepeatStatus.FINISHED;
     }
 
-    private List<EventRecord> scrapeEvents(Page page, Long siteSourceId, String genre) {
+    private List<EventRecord> crawlSite(Page page, Long siteSourceId, String startUrl, String genre) {
+        List<EventRecord> scrapedEvents = new ArrayList<>();
+        Queue<String> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+        queue.add(startUrl);
+
+        URI startUri;
+        try {
+            startUri = new URI(startUrl);
+        } catch (Exception e) {
+            logger.error("Invalid start URL: " + startUrl, e);
+            return scrapedEvents;
+        }
+
+        int pagesCrawled = 0;
+        while (!queue.isEmpty() && pagesCrawled < MAX_PAGES_PER_SOURCE) {
+            String currentUrl = queue.poll();
+            if (visited.contains(currentUrl)) {
+                continue;
+            }
+
+            try {
+                logger.info("Navigating to: {}", currentUrl);
+                page.navigate(currentUrl);
+                page.waitForSelector("body");
+                visited.add(currentUrl);
+                pagesCrawled++;
+
+                // イベント抽出
+                List<EventRecord> events = scrapeEventsFromPage(page, siteSourceId, genre);
+                logger.info("Scraped {} events from {}", events.size(), currentUrl);
+                scrapedEvents.addAll(events);
+
+                // リンク収集
+                List<ElementHandle> links = page.querySelectorAll("a[href]");
+                for (ElementHandle link : links) {
+                    String href = link.getAttribute("href");
+                    if (href == null || href.isEmpty() || href.startsWith("#") || href.startsWith("javascript:")) {
+                        continue;
+                    }
+
+                    try {
+                        URI resolvedUri = startUri.resolve(href).normalize();
+                        String resolvedUrl = resolvedUri.toString();
+
+                        // 同一ホスト、かつ同一 /event/ 配下かチェック
+                        if (resolvedUri.getHost() != null && resolvedUri.getHost().equals(startUri.getHost())
+                                && resolvedUri.getPath() != null && resolvedUri.getPath().startsWith("/event/")) {
+                            
+                            // 明らかにイベントと関係なさそうな拡張子を除外
+                            if (resolvedUrl.toLowerCase().endsWith(".pdf") || 
+                                resolvedUrl.toLowerCase().endsWith(".jpg") || 
+                                resolvedUrl.toLowerCase().endsWith(".png") ||
+                                resolvedUrl.toLowerCase().endsWith(".zip")) {
+                                continue;
+                            }
+
+                            if (!visited.contains(resolvedUrl) && !queue.contains(resolvedUrl)) {
+                                queue.add(resolvedUrl);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // Ignore invalid URIs
+                    }
+                }
+
+            } catch (Exception e) {
+                logger.error("Failed to crawl page: " + currentUrl, e);
+            }
+        }
+        return scrapedEvents;
+    }
+
+    private List<EventRecord> scrapeEventsFromPage(Page page, Long siteSourceId, String genre) {
         List<EventRecord> events = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        URI baseUri;
+        try {
+            baseUri = new URI(page.url());
+        } catch (Exception e) {
+            logger.error("Invalid page URL: " + page.url(), e);
+            return events;
+        }
 
         // テーブル形式のイベント情報を取得
         List<ElementHandle> rows = page.querySelectorAll("table tr");
@@ -80,16 +164,25 @@ public class SiteSourceCheckTasklet implements Tasklet {
                 ElementHandle titleLink = cells.get(1).querySelector("a");
                 if (titleLink != null) {
                     String title = titleLink.innerText().trim();
-                    String eventUrl = titleLink.getAttribute("href");
-                    if (eventUrl != null && !eventUrl.startsWith("http")) {
-                        if (eventUrl.startsWith("/")) {
-                            eventUrl = "https://www.nihonkiin.or.jp" + eventUrl;
-                        } else {
-                            eventUrl = page.url() + eventUrl;
+                    String href = titleLink.getAttribute("href");
+                    String eventUrl = page.url();
+                    if (href != null) {
+                        try {
+                            eventUrl = baseUri.resolve(href).normalize().toString();
+                        } catch (Exception e) {
+                            // ignore
                         }
                     }
 
                     String infoText = row.innerText();
+                    LocalDate eventDate = extractDate(infoText);
+                    
+                    // システム年月以降のイベントのみ取得
+                    if (eventDate != null && eventDate.isBefore(today)) {
+                        logger.info("Skipping past event: {} (Date: {})", title, eventDate);
+                        continue;
+                    }
+
                     boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
                     boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
                     boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
@@ -97,7 +190,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     events.add(new EventRecord(
                             siteSourceId,
                             title,
-                            null,
+                            eventDate,
                             null,
                             eventUrl,
                             infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText,
@@ -121,16 +214,25 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     if (title.isEmpty()) continue;
 
                     ElementHandle linkEl = el.querySelector("a");
-                    String eventUrl = linkEl != null ? linkEl.getAttribute("href") : page.url();
-                    if (eventUrl != null && !eventUrl.startsWith("http")) {
-                        if (eventUrl.startsWith("/")) {
-                            eventUrl = "https://www.nihonkiin.or.jp" + eventUrl;
-                        } else {
-                            eventUrl = page.url() + eventUrl;
+                    String href = linkEl != null ? linkEl.getAttribute("href") : null;
+                    String eventUrl = page.url();
+                    if (href != null) {
+                        try {
+                            eventUrl = baseUri.resolve(href).normalize().toString();
+                        } catch (Exception e) {
+                            // ignore
                         }
                     }
 
                     String infoText = el.innerText();
+                    LocalDate eventDate = extractDate(infoText);
+
+                    // システム年月以降のイベントのみ取得
+                    if (eventDate != null && eventDate.isBefore(today)) {
+                        logger.info("Skipping past event: {} (Date: {})", title, eventDate);
+                        continue;
+                    }
+
                     boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
                     boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
                     boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
@@ -138,7 +240,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     events.add(new EventRecord(
                             siteSourceId,
                             title,
-                            null,
+                            eventDate,
                             null,
                             eventUrl,
                             infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText,
@@ -154,6 +256,24 @@ public class SiteSourceCheckTasklet implements Tasklet {
         }
 
         return events;
+    }
+
+    private LocalDate extractDate(String text) {
+        if (text == null) return null;
+        // 2026/06/23 or 2026-06-23 or 2026年6月23日 などのパターンを探す
+        Pattern pattern = Pattern.compile("(\\d{4})[/-年](\\d{1,2})[/-月](\\d{1,2})日?");
+        Matcher matcher = pattern.matcher(text);
+        if (matcher.find()) {
+            try {
+                int year = Integer.parseInt(matcher.group(1));
+                int month = Integer.parseInt(matcher.group(2));
+                int day = Integer.parseInt(matcher.group(3));
+                return LocalDate.of(year, month, day);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return null;
     }
 
     private void saveEvents(List<EventRecord> events) {

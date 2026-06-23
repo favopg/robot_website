@@ -26,10 +26,10 @@ class RobotWebsiteApplicationTests {
     void testBatchExecutionAndEventRegistration() {
         // 起動時にBatchSchedulerが走っているはずなので、eventsテーブルを確認する
         List<Map<String, Object>> events = jdbcTemplate.queryForList("SELECT * FROM events");
-        System.out.println("Fetched events count: " + events.size());
+        System.out.println("[DEBUG_LOG] Fetched events count: " + events.size());
         
         for (Map<String, Object> event : events) {
-            System.out.println("Event: " + event.get("title") + " (Beginner: " + event.get("target_beginner") + ")");
+            System.out.println("[DEBUG_LOG] Event: " + event.get("title") + " (Date: " + event.get("event_date") + ")");
         }
     }
 
