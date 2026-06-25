@@ -25,4 +25,18 @@ public class BatchConfig {
                 .tasklet(tasklet, transactionManager)
                 .build();
     }
+
+    @Bean
+    public Job nihonkiinMatchJob(JobRepository jobRepository, Step nihonkiinMatchStep) {
+        return new JobBuilder("nihonkiinMatchJob", jobRepository)
+                .start(nihonkiinMatchStep)
+                .build();
+    }
+
+    @Bean
+    public Step nihonkiinMatchStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, NihonkiinMatchScraperTasklet tasklet) {
+        return new StepBuilder("nihonkiinMatchStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
 }

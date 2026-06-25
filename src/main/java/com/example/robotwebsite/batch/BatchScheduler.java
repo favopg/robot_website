@@ -18,15 +18,18 @@ public class BatchScheduler implements CommandLineRunner {
 
     private final JobLauncher jobLauncher;
     private final Job siteSourceCheckJob;
+    private final Job nihonkiinMatchJob;
 
-    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob) {
+    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob) {
         this.jobLauncher = jobLauncher;
         this.siteSourceCheckJob = siteSourceCheckJob;
+        this.nihonkiinMatchJob = nihonkiinMatchJob;
     }
 
     @Override
     public void run(String... args) {
         runJob();
+        runNihonkiinMatchJob();
     }
 
     // 30分に1回実行 (1,800,000ミリ秒)
@@ -40,6 +43,20 @@ public class BatchScheduler implements CommandLineRunner {
             jobLauncher.run(siteSourceCheckJob, params);
         } catch (Exception e) {
             logger.error("Error executing siteSourceCheckJob", e);
+        }
+    }
+
+    // 5分間隔で実行 (300,000ミリ秒)
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 300000)
+    public void runNihonkiinMatchJob() {
+        try {
+            logger.info("Starting nihonkiinMatchJob at " + new Date());
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(nihonkiinMatchJob, params);
+        } catch (Exception e) {
+            logger.error("Error executing nihonkiinMatchJob", e);
         }
     }
 }
