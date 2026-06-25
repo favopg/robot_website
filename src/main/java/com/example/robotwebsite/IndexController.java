@@ -21,4 +21,9 @@ public class IndexController {
         model.addAttribute("events", events);
         return "index";
     }
+
+    @GetMapping("/match-schedule")
+    public String matchSchedule() {
+        return "match_schedule";
+    }
 }

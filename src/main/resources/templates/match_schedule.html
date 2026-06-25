@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>囲碁イベント情報</title>
+    <title>プロ棋士対局予定</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -21,7 +21,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">イベント情報</a>
+            <a class="navbar-brand" href="/">イベント情報</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -43,36 +43,33 @@
 
     <div class="container mt-5">
         <header class="mb-4">
-            <h1 class="display-4">囲碁イベント情報</h1>
-            <p class="lead">最新のイベント情報を表示します。</p>
+            <h1 class="display-4">プロ棋士対局予定</h1>
+            <p class="lead">サンプル画面です。将来的にプロ棋士の対局予定を表示します。</p>
         </header>
         
         <main>
+            <div class="alert alert-info" role="alert">
+                こちらはダミーのサンプル画面です。
+            </div>
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th>日付</th>
-                            <th>タイトル</th>
-                            <th>対象</th>
-                            <th>詳細</th>
+                            <th>対局日</th>
+                            <th>棋戦</th>
+                            <th>対局者</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="event : ${events}">
-                            <td th:text="${event.eventDate}">2026-01-01</td>
-                            <td th:text="${event.title}">イベントタイトル</td>
-                            <td>
-                                <span th:if="${event.targetBeginner}" class="badge bg-info text-dark">初心者</span>
-                                <span th:if="${event.targetKyuPlayer}" class="badge bg-info text-dark">級位者</span>
-                                <span th:if="${event.targetDanPlayer}" class="badge bg-info text-dark">有段者</span>
-                            </td>
-                            <td>
-                                <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
-                            </td>
+                        <tr>
+                            <td>2026-07-01</td>
+                            <td>本因坊戦</td>
+                            <td>棋士A vs 棋士B</td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(events)}">
-                            <td colspan="4" class="text-center">現在、表示できるイベント情報はありません。</td>
+                        <tr>
+                            <td>2026-07-05</td>
+                            <td>名人戦</td>
+                            <td>棋士C vs 棋士D</td>
                         </tr>
                     </tbody>
                 </table>
