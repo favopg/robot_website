@@ -17,7 +17,7 @@ public class IndexController {
 
     @GetMapping("/")
     public String index(Model model) {
-        List<Event> events = eventRepository.findAllByOrderByEventDateDesc();
+        List<Event> events = eventRepository.findAllByOrderByEventDateAsc();
         model.addAttribute("events", events);
         return "index";
     }
