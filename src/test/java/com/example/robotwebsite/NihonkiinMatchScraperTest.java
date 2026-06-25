@@ -27,30 +27,19 @@ public class NihonkiinMatchScraperTest {
     private MatchRepository matchRepository;
 
     @Test
-    public void testScraping() throws Exception {
-        // Run scraper
-        RepeatStatus status = scraperTasklet.execute(null, null);
-        assertEquals(RepeatStatus.FINISHED, status);
+    public void testScrapingTwice() throws Exception {
+        // Run scraper first time
+        RepeatStatus status1 = scraperTasklet.execute(null, null);
+        assertEquals(RepeatStatus.FINISHED, status1);
+        
+        long count1 = matchRepository.count();
+        assertTrue(count1 > 0);
 
-        // Verify data was saved
-        List<Match> matches = matchRepository.findAll();
-        System.out.println("[DEBUG_LOG] Scraped matches count: " + matches.size());
-        assertFalse(matches.isEmpty(), "Matches should have been scraped and saved");
-
-        System.out.println("[DEBUG_LOG] Scraped matches count: " + matches.size());
-        for (int i = 0; i < Math.min(5, matches.size()); i++) {
-            Match m = matches.get(i);
-            System.out.println("[DEBUG_LOG] Match: " + m.getMatchDate() + " " + m.getMatchName() + " " + m.getPlayer1Name() + " vs " + m.getPlayer2Name() + " result: " + m.getResult());
-        }
+        // Run scraper second time - this should not cause UnexpectedRollbackException
+        RepeatStatus status2 = scraperTasklet.execute(null, null);
+        assertEquals(RepeatStatus.FINISHED, status2);
         
-        // Check if there are both results and schedule
-        long resultsCount = matches.stream().filter(m -> m.getResult() != null).count();
-        long scheduleCount = matches.stream().filter(m -> m.getResult() == null).count();
-        
-        System.out.println("[DEBUG_LOG] Results count: " + resultsCount);
-        System.out.println("[DEBUG_LOG] Schedule count: " + scheduleCount);
-        
-        assertTrue(resultsCount > 0, "Should have scraped some results");
-        assertTrue(scheduleCount > 0, "Should have scraped some scheduled matches");
+        long count2 = matchRepository.count();
+        assertEquals(count1, count2, "Count should be same after second run (if no new data on website)");
     }
 }

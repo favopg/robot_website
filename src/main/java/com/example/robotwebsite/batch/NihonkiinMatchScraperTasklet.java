@@ -162,11 +162,22 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
 
     private void saveOrUpdateMatch(Match match) {
         try {
-            matchRepository.saveAndFlush(match);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            // Already exists
+            matchRepository.findByUrl(match.getUrl()).ifPresentOrElse(
+                existing -> {
+                    existing.setMatchDate(match.getMatchDate());
+                    existing.setMatchName(match.getMatchName());
+                    existing.setPlayer1Name(match.getPlayer1Name());
+                    existing.setPlayer2Name(match.getPlayer2Name());
+                    existing.setPlayer1Sente(match.getPlayer1Sente());
+                    existing.setPlayer2Sente(match.getPlayer2Sente());
+                    existing.setResult(match.getResult());
+                    existing.setWinnerName(match.getWinnerName());
+                    matchRepository.save(existing);
+                },
+                () -> matchRepository.save(match)
+            );
         } catch (Exception e) {
-            logger.error("Error saving match", e);
+            logger.error("Error saving match: " + match.getUrl(), e);
         }
     }
 }

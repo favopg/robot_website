@@ -63,9 +63,9 @@
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td>
-                                <span th:text="${match.player1Sente ? '△' : ''} + ${match.player1Name}">棋士A</span>
+                                <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
                                 vs
-                                <span th:text="${match.player2Sente ? '△' : ''} + ${match.player2Name}">棋士B</span>
+                                <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
                             </td>
                             <td th:text="${match.result}">-</td>
                         </tr>

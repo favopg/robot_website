@@ -6,8 +6,10 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByMatchDateBetweenOrderByMatchDateAsc(LocalDate startDate, LocalDate endDate);
+    Optional<Match> findByUrl(String url);
 }
