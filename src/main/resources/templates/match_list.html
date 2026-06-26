@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>プロ棋士対局予定</title>
+    <title th:text="${title}">対局情報</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -45,8 +45,9 @@
 
     <div class="container mt-5">
         <header class="mb-4">
-            <h1 class="display-4">プロ棋士対局予定・結果</h1>
-            <p class="lead">日本棋院から取得した直近1週間の対局結果と今後1週間の対局予定を表示します。</p>
+            <h1 class="display-4" th:text="${title}">対局情報</h1>
+            <p class="lead" th:if="${title.contains('予定')}">今後の対局予定を表示します。</p>
+            <p class="lead" th:if="${title.contains('結果')}">直近の対局結果を表示します。</p>
         </header>
         
         <main>
@@ -57,7 +58,7 @@
                             <th>対局日</th>
                             <th>棋戦</th>
                             <th>対局者</th>
-                            <th>結果</th>
+                            <th th:if="${title.contains('結果')}">結果</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,11 +66,11 @@
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td>
-                                <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
+                                <span th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
                                 vs
-                                <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
+                                <span th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
                             </td>
-                            <td th:text="${match.result}">-</td>
+                            <td th:if="${title.contains('結果')}" th:text="${match.result}">-</td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(matches)}">
                             <td colspan="4" class="text-center">現在、表示できる対局情報はありません。</td>

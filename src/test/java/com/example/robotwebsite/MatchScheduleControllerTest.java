@@ -50,7 +50,7 @@ public class MatchScheduleControllerTest {
 
         mockMvc.perform(get("/match-schedule"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("match_schedule"))
+                .andExpect(view().name("match_list"))
                 .andExpect(model().attributeExists("matches"));
     }
 
@@ -69,7 +69,26 @@ public class MatchScheduleControllerTest {
 
         mockMvc.perform(get("/match-schedule"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("match_schedule"))
+                .andExpect(view().name("match_list"))
+                .andExpect(model().attributeExists("matches"));
+    }
+
+    @Test
+    public void testMatchResultsPage() throws Exception {
+        // Create a match with result
+        Match match = new Match();
+        match.setMatchDate(LocalDate.now().minusDays(1));
+        match.setMatchName("Test Match Result");
+        match.setPlayer1Name("Player E");
+        match.setPlayer2Name("Player F");
+        match.setResult("Black wins");
+        match.setWinnerName("Player E");
+        match.setUrl("test-url-3");
+        matchRepository.save(match);
+
+        mockMvc.perform(get("/match-results"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("match_list"))
                 .andExpect(model().attributeExists("matches"));
     }
 }
