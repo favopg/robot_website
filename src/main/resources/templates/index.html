@@ -50,6 +50,11 @@
         </header>
         
         <main>
+            <!-- 検索窓の追加 -->
+            <div class="mb-4">
+                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名または棋士名でフィルター..." onkeyup="globalFilter()">
+            </div>
+
             <!-- 既存のイベント情報セクション -->
             <section class="mb-5">
                 <h2 class="border-bottom pb-2">囲碁イベント情報</h2>
@@ -64,9 +69,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="event : ${events}">
+                            <tr th:each="event : ${events}" class="filterable-item">
                                 <td th:text="${event.eventDate}">2026-01-01</td>
-                                <td th:text="${event.title}">イベントタイトル</td>
+                                <td th:text="${event.title}" class="search-target">イベントタイトル</td>
                                 <td>
                                     <span th:if="${event.targetBeginner}" class="badge bg-info text-dark">初心者</span>
                                     <span th:if="${event.targetKyuPlayer}" class="badge bg-info text-dark">級位者</span>
@@ -97,10 +102,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="match : ${matchSchedules}">
+                            <tr th:each="match : ${matchSchedules}" class="filterable-item">
                                 <td th:text="${match.matchDate}">2026-07-01</td>
                                 <td th:text="${match.matchName}">本因坊戦</td>
-                                <td>
+                                <td class="search-target">
                                     <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span> vs 
                                     <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
                                 </td>
@@ -127,10 +132,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="match : ${matchResults}">
+                            <tr th:each="match : ${matchResults}" class="filterable-item">
                                 <td th:text="${match.matchDate}">2026-06-25</td>
                                 <td th:text="${match.matchName}">名人戦</td>
-                                <td>
+                                <td class="search-target">
                                     <span th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span> vs 
                                     <span th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
                                 </td>
@@ -148,5 +153,21 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function globalFilter() {
+            const query = document.getElementById('globalSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('.filterable-item');
+
+            rows.forEach(row => {
+                const targetText = row.querySelector('.search-target').textContent.toLowerCase();
+                if (targetText.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
 </body>
 </html>
