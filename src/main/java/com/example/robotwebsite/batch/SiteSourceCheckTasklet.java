@@ -117,12 +117,6 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     String infoText = row.innerText();
                     LocalDate eventDate = extractDate(infoText);
                     
-                    // システム年月より1週間前以降のイベントのみ取得
-                    if (eventDate != null && eventDate.isBefore(today.minusDays(7))) {
-                        logger.info("Skipping old event: {} (Date: {})", title, eventDate);
-                        continue;
-                    }
-
                     boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
                     boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
                     boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
@@ -195,12 +189,6 @@ public class SiteSourceCheckTasklet implements Tasklet {
 
                     // 日本棋院などのニュースの場合、日付が取れないものはイベントではない可能性が高い
                     if (eventDate == null && !isEventElement) {
-                        continue;
-                    }
-
-                    // システム年月より1週間前以降のイベントのみ取得
-                    if (eventDate != null && eventDate.isBefore(today.minusDays(7))) {
-                        logger.info("Skipping old event: {} (Date: {})", title, eventDate);
                         continue;
                     }
 

@@ -25,7 +25,7 @@ public class IndexController {
     @GetMapping("/")
     public String index(Model model) {
         // 既存のイベント情報
-        List<Event> events = eventRepository.findAllByOrderByEventDateAsc();
+        List<Event> events = eventRepository.findAllByOrderByEventDateDesc();
         model.addAttribute("events", events);
 
         return "index";
