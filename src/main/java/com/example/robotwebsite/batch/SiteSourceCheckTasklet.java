@@ -18,12 +18,8 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -32,7 +28,6 @@ import java.util.stream.Collectors;
 public class SiteSourceCheckTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(SiteSourceCheckTasklet.class);
-    private static final int MAX_PAGES_PER_SOURCE = 10;
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -74,73 +69,18 @@ public class SiteSourceCheckTasklet implements Tasklet {
 
     private List<EventRecord> crawlSite(Page page, Long siteSourceId, String startUrl, String genre) {
         List<EventRecord> scrapedEvents = new ArrayList<>();
-        Queue<String> queue = new LinkedList<>();
-        Set<String> visited = new HashSet<>();
-        queue.add(startUrl);
-
-        URI startUri;
         try {
-            startUri = new URI(startUrl);
+            logger.info("Navigating to: {}", startUrl);
+            page.navigate(startUrl);
+            page.waitForSelector("body");
+
+            // イベント抽出
+            List<EventRecord> events = scrapeEventsFromPage(page, siteSourceId, genre);
+            logger.info("Scraped {} events from {}", events.size(), startUrl);
+            scrapedEvents.addAll(events);
+
         } catch (Exception e) {
-            logger.error("Invalid start URL: " + startUrl, e);
-            return scrapedEvents;
-        }
-
-        int pagesCrawled = 0;
-        while (!queue.isEmpty() && pagesCrawled < MAX_PAGES_PER_SOURCE) {
-            String currentUrl = queue.poll();
-            if (visited.contains(currentUrl)) {
-                continue;
-            }
-
-            try {
-                logger.info("Navigating to: {}", currentUrl);
-                page.navigate(currentUrl);
-                page.waitForSelector("body");
-                visited.add(currentUrl);
-                pagesCrawled++;
-
-                // イベント抽出
-                List<EventRecord> events = scrapeEventsFromPage(page, siteSourceId, genre);
-                logger.info("Scraped {} events from {}", events.size(), currentUrl);
-                scrapedEvents.addAll(events);
-
-                // リンク収集
-                List<ElementHandle> links = page.querySelectorAll("a[href]");
-                for (ElementHandle link : links) {
-                    String href = link.getAttribute("href");
-                    if (href == null || href.isEmpty() || href.startsWith("#") || href.startsWith("javascript:")) {
-                        continue;
-                    }
-
-                    try {
-                        URI resolvedUri = startUri.resolve(href).normalize();
-                        String resolvedUrl = resolvedUri.toString();
-
-                        // 同一ホスト、かつ同一 /event/ 配下かチェック
-                        if (resolvedUri.getHost() != null && resolvedUri.getHost().equals(startUri.getHost())
-                                && resolvedUri.getPath() != null && resolvedUri.getPath().startsWith("/event/")) {
-                            
-                            // 明らかにイベントと関係なさそうな拡張子を除外
-                            if (resolvedUrl.toLowerCase().endsWith(".pdf") || 
-                                resolvedUrl.toLowerCase().endsWith(".jpg") || 
-                                resolvedUrl.toLowerCase().endsWith(".png") ||
-                                resolvedUrl.toLowerCase().endsWith(".zip")) {
-                                continue;
-                            }
-
-                            if (!visited.contains(resolvedUrl) && !queue.contains(resolvedUrl)) {
-                                queue.add(resolvedUrl);
-                            }
-                        }
-                    } catch (Exception e) {
-                        // Ignore invalid URIs
-                    }
-                }
-
-            } catch (Exception e) {
-                logger.error("Failed to crawl page: " + currentUrl, e);
-            }
+            logger.error("Failed to scrape page: " + startUrl, e);
         }
         return scrapedEvents;
     }
@@ -177,9 +117,9 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     String infoText = row.innerText();
                     LocalDate eventDate = extractDate(infoText);
                     
-                    // システム年月以降のイベントのみ取得
-                    if (eventDate != null && eventDate.isBefore(today)) {
-                        logger.info("Skipping past event: {} (Date: {})", title, eventDate);
+                    // システム年月より1週間前以降のイベントのみ取得
+                    if (eventDate != null && eventDate.isBefore(today.minusDays(7))) {
+                        logger.info("Skipping old event: {} (Date: {})", title, eventDate);
                         continue;
                     }
 
@@ -205,16 +145,35 @@ public class SiteSourceCheckTasklet implements Tasklet {
 
         // 既存のセレクタも予備として残す
         if (events.isEmpty()) {
-            List<ElementHandle> eventElements = page.querySelectorAll("ul.event_list li, .event_item, article, section.event");
+            List<ElementHandle> eventElements = page.querySelectorAll("ul.event_list li, .event_list li, .news_list li, .news_list_item, .event_item, article, section.event, li");
             for (ElementHandle el : eventElements) {
                 try {
-                    ElementHandle titleEl = el.querySelector("dt, h2, h3, .title");
-                    if (titleEl == null) continue;
-                    String title = titleEl.innerText().trim();
-                    if (title.isEmpty()) continue;
-
+                    // 日本棋院のニュースリストなどの特定の構造をチェック
                     ElementHandle linkEl = el.querySelector("a");
-                    String href = linkEl != null ? linkEl.getAttribute("href") : null;
+                    if (linkEl == null) continue;
+
+                    String title = linkEl.innerText().trim();
+                    if (title.isEmpty()) continue;
+                    
+                    // 特定のキーワードが含まれているか、または親が特定のクラスを持っている場合のみ対象とする
+                    // 汎用的な li を拾っているので、何らかの絞り込みが必要
+                    String className = (String) el.getProperty("className").jsonValue();
+                    String parentClassName = "";
+                    ElementHandle parent = page.evaluateHandle("el => el.parentElement", el).asElement();
+                    if (parent != null) {
+                        parentClassName = (String) parent.getProperty("className").jsonValue();
+                    }
+                    
+                    boolean isEventElement = className.contains("event") || className.contains("news") ||
+                                            parentClassName.contains("event") || parentClassName.contains("news");
+                    
+                    // 日本棋院の特定の構造（日付 span + タイトル a）
+                    ElementHandle dateEl = el.querySelector(".date, .time, .event-date");
+                    if (!isEventElement && dateEl == null) {
+                        continue;
+                    }
+
+                    String href = linkEl.getAttribute("href");
                     String eventUrl = page.url();
                     if (href != null) {
                         try {
@@ -225,11 +184,23 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     }
 
                     String infoText = el.innerText();
-                    LocalDate eventDate = extractDate(infoText);
+                    LocalDate eventDate = null;
+                    if (dateEl != null) {
+                        String dateStr = dateEl.innerText().trim();
+                        eventDate = extractDate(dateStr);
+                    }
+                    if (eventDate == null) {
+                        eventDate = extractDate(infoText);
+                    }
 
-                    // システム年月以降のイベントのみ取得
-                    if (eventDate != null && eventDate.isBefore(today)) {
-                        logger.info("Skipping past event: {} (Date: {})", title, eventDate);
+                    // 日本棋院などのニュースの場合、日付が取れないものはイベントではない可能性が高い
+                    if (eventDate == null && !isEventElement) {
+                        continue;
+                    }
+
+                    // システム年月より1週間前以降のイベントのみ取得
+                    if (eventDate != null && eventDate.isBefore(today.minusDays(7))) {
+                        logger.info("Skipping old event: {} (Date: {})", title, eventDate);
                         continue;
                     }
 

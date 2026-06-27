@@ -28,23 +28,6 @@ public class IndexController {
         List<Event> events = eventRepository.findAllByOrderByEventDateAsc();
         model.addAttribute("events", events);
 
-        // 対局情報の取得（直近1週間など）
-        LocalDate today = LocalDate.now();
-        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
-                today.minusWeeks(1), today.plusWeeks(1));
-
-        // 「結果があるもの」と「結果がないもの（予定）」に分ける
-        List<Match> results = allMatches.stream()
-                .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
-                .collect(Collectors.toList());
-
-        List<Match> schedules = allMatches.stream()
-                .filter(m -> m.getResult() == null || m.getResult().isEmpty())
-                .collect(Collectors.toList());
-
-        model.addAttribute("matchResults", results);
-        model.addAttribute("matchSchedules", schedules);
-
         return "index";
     }
 

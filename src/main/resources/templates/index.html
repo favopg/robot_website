@@ -52,7 +52,7 @@
         <main>
             <!-- 検索窓の追加 -->
             <div class="mb-4">
-                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名または棋士名でフィルター..." onkeyup="globalFilter()">
+                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()">
             </div>
 
             <!-- 既存のイベント情報セクション -->
@@ -83,66 +83,6 @@
                             </tr>
                             <tr th:if="${#lists.isEmpty(events)}">
                                 <td colspan="4" class="text-center">現在、表示できるイベント情報はありません。</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- 対局予定セクション -->
-            <section class="mb-5">
-                <h2 class="border-bottom pb-2">プロ棋士 対局予定</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>日付</th>
-                                <th>棋戦</th>
-                                <th>対局</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="match : ${matchSchedules}" class="filterable-item">
-                                <td th:text="${match.matchDate}">2026-07-01</td>
-                                <td th:text="${match.matchName}">本因坊戦</td>
-                                <td class="search-target">
-                                    <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span> vs 
-                                    <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(matchSchedules)}">
-                                <td colspan="3" class="text-center">予定されている対局はありません。</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- 対局結果セクション -->
-            <section class="mb-5">
-                <h2 class="border-bottom pb-2">プロ棋士 対局結果</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>日付</th>
-                                <th>棋戦</th>
-                                <th>対局（勝者）</th>
-                                <th>結果</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="match : ${matchResults}" class="filterable-item">
-                                <td th:text="${match.matchDate}">2026-06-25</td>
-                                <td th:text="${match.matchName}">名人戦</td>
-                                <td class="search-target">
-                                    <span th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span> vs 
-                                    <span th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
-                                </td>
-                                <td th:text="${match.result}">黒中押勝</td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(matchResults)}">
-                                <td colspan="4" class="text-center">最近の対局結果はありません。</td>
                             </tr>
                         </tbody>
                     </table>
