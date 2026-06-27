@@ -52,9 +52,15 @@
         
         <main>
             <!-- 検索窓の追加 -->
-            <div class="row mb-3">
+            <div class="row mb-3 align-items-center">
                 <div class="col-md-4">
                     <input type="text" id="playerSearch" class="form-control" placeholder="棋士名でフィルター..." onkeyup="filterTable()">
+                </div>
+                <div class="col-md-4" th:if="${title.contains('結果')}">
+                    <span id="winLossResult" class="fw-bold" style="display:none;">
+                        結果: <span id="winCount" class="text-danger">0</span>勝 
+                        <span id="lossCount" class="text-primary">0</span>敗
+                    </span>
                 </div>
             </div>
 
@@ -69,7 +75,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="match : ${matches}" class="match-row">
+                        <tr th:each="match : ${matches}" class="match-row" th:data-winner="${match.winnerName}">
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
@@ -95,15 +101,41 @@
         function filterTable() {
             const query = document.getElementById('playerSearch').value.toLowerCase();
             const rows = document.querySelectorAll('.match-row');
+            const resultArea = document.getElementById('winLossResult');
+            
+            let wins = 0;
+            let losses = 0;
 
             rows.forEach(row => {
                 const text = row.querySelector('.player-names').textContent.toLowerCase();
-                if (text.includes(query)) {
+                const winnerName = row.getAttribute('data-winner') ? row.getAttribute('data-winner').toLowerCase() : "";
+
+                if (query !== "" && text.includes(query)) {
+                    row.style.display = '';
+                    
+                    // 勝敗のカウント（検索ワードが勝者名に含まれていれば勝ち）
+                    if (winnerName !== "" && winnerName.includes(query)) {
+                        wins++;
+                    } else if (winnerName !== "") {
+                        losses++;
+                    }
+                } else if (query === "") {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
                 }
             });
+
+            // 結果の表示更新
+            if (resultArea) {
+                if (query !== "") {
+                    document.getElementById('winCount').textContent = wins;
+                    document.getElementById('lossCount').textContent = losses;
+                    resultArea.style.display = 'inline';
+                } else {
+                    resultArea.style.display = 'none';
+                }
+            }
         }
     </script>
 </body>
