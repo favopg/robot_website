@@ -72,7 +72,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="event : ${events}" class="filterable-item">
+                            <tr th:each="event : ${events.content}" class="filterable-item">
                                 <td th:text="${event.eventDate}">2026-01-01</td>
                                 <td th:text="${event.title}" class="search-target">イベントタイトル</td>
                                 <td>
@@ -84,12 +84,31 @@
                                     <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
                                 </td>
                             </tr>
-                            <tr th:if="${#lists.isEmpty(events)}">
+                            <tr th:if="${events.empty}">
                                 <td colspan="4" class="text-center">現在、表示できるイベント情報はありません。</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+
+                <!-- ページングナビゲーション -->
+                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
+                            <a class="page-link" th:href="@{/(page=${events.number - 1})}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
+                            <a class="page-link" th:href="@{/(page=${i})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
+                            <a class="page-link" th:href="@{/(page=${events.number + 1})}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </section>
         </main>
     </div>

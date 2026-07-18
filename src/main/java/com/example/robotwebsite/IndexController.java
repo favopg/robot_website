@@ -5,9 +5,14 @@ import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.repository.EventRepository;
 import com.example.robotwebsite.repository.MatchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,10 +28,11 @@ public class IndexController {
     private MatchRepository matchRepository;
 
     @GetMapping("/")
-    public String index(Model model) {
-        // 既存のイベント情報
-        List<Event> events = eventRepository.findAllByOrderByEventDateDesc();
-        model.addAttribute("events", events);
+    public String index(Model model, @RequestParam(defaultValue = "0") int page) {
+        // 既存のイベント情報をページング表示（1ページ20件）
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("eventDate").descending());
+        Page<Event> eventPage = eventRepository.findAll(pageable);
+        model.addAttribute("events", eventPage);
 
         return "index";
     }
