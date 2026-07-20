@@ -38,18 +38,50 @@ public class IndexController {
     }
 
     @GetMapping("/match-results")
-    public String matchResults(Model model) {
-        LocalDate today = LocalDate.now();
-        // 直近2週間などの結果を取得
+    public String matchResults(Model model,
+                               @RequestParam(required = false) Integer year,
+                               @RequestParam(required = false) Integer month) {
+        LocalDate startDate;
+        LocalDate endDate;
+        String titlePrefix = "";
+
+        if (year != null && month != null) {
+            startDate = LocalDate.of(year, month, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            titlePrefix = year + "年" + month + "月 ";
+        } else {
+            LocalDate today = LocalDate.now();
+            startDate = today.minusWeeks(2);
+            endDate = today;
+        }
+
         List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
-                today.minusWeeks(2), today);
+                startDate, endDate);
 
         List<Match> results = allMatches.stream()
                 .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
                 .collect(Collectors.toList());
 
+        // 月別リンク用のデータを生成（データがある月のみ）
+        LocalDate now = LocalDate.now();
+        List<String> months = new java.util.ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            LocalDate d = now.minusMonths(i);
+            LocalDate start = d.withDayOfMonth(1);
+            LocalDate end = d.withDayOfMonth(d.lengthOfMonth());
+            
+            List<Match> monthlyMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(start, end);
+            boolean hasResults = monthlyMatches.stream()
+                    .anyMatch(m -> m.getResult() != null && !m.getResult().isEmpty());
+            
+            if (hasResults) {
+                months.add(d.getYear() + "-" + d.getMonthValue());
+            }
+        }
+
         model.addAttribute("matches", results);
-        model.addAttribute("title", "プロ棋士対局結果");
+        model.addAttribute("months", months);
+        model.addAttribute("title", titlePrefix + "プロ棋士対局結果");
         return "match_list";
     }
 

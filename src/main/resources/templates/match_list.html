@@ -51,6 +51,27 @@
         </header>
         
         <main>
+            <!-- 月別リンクの追加 -->
+            <div class="row mb-4" th:if="${months != null}">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">月別結果</h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a th:each="m : ${months}" 
+                                   th:with="parts=${m.split('-')}"
+                                   th:href="@{/match-results(year=${parts[0]}, month=${parts[1]})}" 
+                                   class="btn btn-outline-primary btn-sm"
+                                   th:text="${parts[0] + '年' + parts[1] + '月'}">
+                                    2026年6月
+                                </a>
+                                <a href="/match-results" class="btn btn-outline-secondary btn-sm">直近</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 検索窓の追加 -->
             <div class="row mb-3 align-items-center">
                 <div class="col-md-4">
