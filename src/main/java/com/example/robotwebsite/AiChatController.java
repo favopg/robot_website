@@ -22,23 +22,16 @@ public class AiChatController {
     }
 
     @GetMapping("/spring-ai")
-    public String index() {
+    public String index(Model model) {
+        model.addAttribute("error", "現在、AI機能は停止しています。");
         return "ai_chat";
     }
 
     @PostMapping("/spring-ai/ask")
     public String ask(@RequestParam("prompt") String prompt, Model model) {
-        logger.info("AI ask request received with prompt: {}", prompt);
-        try {
-            String response = aiService.getAiResponse(prompt);
-            logger.info("AI response received successfully");
-            model.addAttribute("prompt", prompt);
-            model.addAttribute("response", response);
-        } catch (Exception e) {
-            logger.error("Error occurred while getting AI response", e);
-            model.addAttribute("prompt", prompt);
-            model.addAttribute("error", "AIからの応答取得中にエラーが発生しました: " + e.getMessage());
-        }
+        logger.info("AI ask request received but AI is disabled. Prompt: {}", prompt);
+        model.addAttribute("prompt", prompt);
+        model.addAttribute("error", "現在、AI機能は停止しています。");
         return "ai_chat";
     }
 }

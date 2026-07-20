@@ -33,10 +33,19 @@ public class AiServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(chatClientBuilder.defaultSystem(anyString())).thenReturn(chatClientBuilder);
-        when(chatClientBuilder.build()).thenReturn(chatClient);
-        
-        aiService = new AiService(chatClientBuilder);
+        // 現在AiServiceは引数なしコンストラクタでChatClientをnullに設定するため、
+        // テストでモックを使用するにはリフレクション等でセットするか、
+        // 開発環境のみChatClientを有効にするなどの対応が必要。
+        // ここでは一旦、テストが通るようにAiServiceを初期化した後、
+        // フィールドを無理やり書き換えるか、あるいはテスト自体を無効化メッセージの確認にする。
+        aiService = new AiService();
+        try {
+            java.lang.reflect.Field field = AiService.class.getDeclaredField("chatClient");
+            field.setAccessible(true);
+            field.set(aiService, chatClient);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test

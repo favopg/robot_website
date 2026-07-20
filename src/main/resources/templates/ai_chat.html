@@ -38,9 +38,11 @@
                             <li><a class="dropdown-item" href="/match-schedule">プロ棋士対局予定</a></li>
                         </ul>
                     </li>
+                    <!--
                     <li class="nav-item">
                         <a class="nav-link" href="/spring-ai">Spring AI</a>
                     </li>
+                    -->
                 </ul>
             </div>
         </div>
@@ -54,7 +56,10 @@
 
         <main>
             <section class="mb-5">
-                <form th:action="@{/spring-ai/ask}" method="post" class="card p-4 shadow-sm">
+                <div class="alert alert-warning" role="alert">
+                    現在、AI機能は停止しています。
+                </div>
+                <form th:action="@{/spring-ai/ask}" method="post" class="card p-4 shadow-sm" style="opacity: 0.5; pointer-events: none;">
                     <div class="mb-3">
                         <label for="prompt" class="form-label">プロンプトを入力してください：</label>
                         <textarea class="form-control" id="prompt" name="prompt" rows="3" required th:text="${prompt}" placeholder="例：囲碁の初心者向けの勉強法を教えて"></textarea>
