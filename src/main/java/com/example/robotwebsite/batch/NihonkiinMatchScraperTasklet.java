@@ -2,6 +2,7 @@ package com.example.robotwebsite.batch;
 
 import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.repository.MatchRepository;
+import com.example.robotwebsite.service.MatchService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -26,11 +27,13 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(NihonkiinMatchScraperTasklet.class);
     private final MatchRepository matchRepository;
+    private final MatchService matchService;
     private final JdbcTemplate jdbcTemplate;
     private static final String URL = "https://www.nihonkiin.or.jp/match/2week.html";
 
-    public NihonkiinMatchScraperTasklet(MatchRepository matchRepository, JdbcTemplate jdbcTemplate) {
+    public NihonkiinMatchScraperTasklet(MatchRepository matchRepository, MatchService matchService, JdbcTemplate jdbcTemplate) {
         this.matchRepository = matchRepository;
+        this.matchService = matchService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -162,20 +165,7 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
 
     private void saveOrUpdateMatch(Match match) {
         try {
-            matchRepository.findByUrl(match.getUrl()).ifPresentOrElse(
-                existing -> {
-                    existing.setMatchDate(match.getMatchDate());
-                    existing.setMatchName(match.getMatchName());
-                    existing.setPlayer1Name(match.getPlayer1Name());
-                    existing.setPlayer2Name(match.getPlayer2Name());
-                    existing.setPlayer1Sente(match.getPlayer1Sente());
-                    existing.setPlayer2Sente(match.getPlayer2Sente());
-                    existing.setResult(match.getResult());
-                    existing.setWinnerName(match.getWinnerName());
-                    matchRepository.save(existing);
-                },
-                () -> matchRepository.save(match)
-            );
+            matchService.saveOrUpdate(match);
         } catch (Exception e) {
             logger.error("Error saving match: " + match.getUrl(), e);
         }
