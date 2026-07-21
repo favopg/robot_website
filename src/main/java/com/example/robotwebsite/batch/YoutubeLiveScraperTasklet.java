@@ -46,41 +46,84 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
             page.navigate(YOUTUBE_STREAMS_URL);
             
             // Wait for items to load
-            page.waitForSelector("ytd-rich-item-renderer");
+            page.waitForSelector("ytd-rich-grid-row, ytd-rich-item-renderer");
             
             // YouTube uses lazy loading, but upcoming streams should be at the top.
-            // We might need to wait a bit for metadata to load.
-            page.waitForTimeout(2000);
+            page.waitForTimeout(5000);
+            
+            // Scroll down a bit to trigger loading
+            page.mouse().wheel(0, 1000);
+            page.waitForTimeout(3000);
 
-            List<ElementHandle> items = page.querySelectorAll("ytd-rich-item-renderer");
+            // Use more specific selectors for titles and metadata
+            List<ElementHandle> items = page.querySelectorAll("ytd-rich-item-renderer, ytd-video-renderer");
             logger.info("Found {} items on YouTube streams page", items.size());
 
             int count = 0;
             for (ElementHandle item : items) {
                 try {
-                    // Check if it's an "Upcoming" stream
-                    // Upcoming streams usually have "scheduled" text in metadata
-                    ElementHandle metadataLine = item.querySelector("#metadata-line");
-                    if (metadataLine == null) continue;
+                    String itemText = item.innerText().replace("\n", " ");
+                    logger.info("Raw item text: {}", itemText);
                     
-                    String metadataText = metadataLine.innerText();
-                    // Also checking for "Scheduled" in case locale setting is not fully respected or for future flexibility
-                    if (metadataText == null || (!metadataText.contains("予定") && !metadataText.contains("Scheduled"))) {
-                        // Skip if not scheduled/upcoming
+                    // Title and URL
+                    ElementHandle titleLinkEl = item.querySelector("#video-title-link");
+                    if (titleLinkEl == null) {
+                        titleLinkEl = item.querySelector("a#video-title-link");
+                    }
+                    if (titleLinkEl == null) {
+                        titleLinkEl = item.querySelector("#video-title");
+                    }
+                    
+                    if (titleLinkEl == null) {
+                        logger.warn("Could not find title element for an item");
                         continue;
                     }
 
-                    ElementHandle titleEl = item.querySelector("#video-title");
-                    if (titleEl == null) continue;
+                    String title = titleLinkEl.innerText().trim();
+                    String ariaLabel = titleLinkEl.getAttribute("aria-label");
+                    if (ariaLabel == null) ariaLabel = "";
                     
-                    String title = titleEl.innerText().trim();
-                    String href = titleEl.getAttribute("href");
+                    if (title.isEmpty() && !ariaLabel.isEmpty()) {
+                        title = ariaLabel;
+                    }
+
+                    String href = titleLinkEl.getAttribute("href");
                     if (href == null) continue;
+
+                    // Metadata (scheduled time)
+                    String metadataText = "";
+                    ElementHandle metadataLine = item.querySelector("#metadata-line");
+                    if (metadataLine != null) {
+                        metadataText = metadataLine.innerText();
+                    } else {
+                        // Try fallback for metadata
+                        metadataText = itemText; // Use the raw text we already got
+                    }
+                    
+                    String checkText = (metadataText + " " + ariaLabel + " " + title).toLowerCase();
+                    logger.info("Checking item: Title: {}, Aria-label: {}, checkText: {}", 
+                                title, 
+                                ariaLabel,
+                                checkText);
+
+                    // Keyword check
+                    boolean isUpcoming = false;
+                    if (checkText.contains("予定") || checkText.contains("scheduled") || 
+                        checkText.contains("待機中") || checkText.contains("upcoming") ||
+                        checkText.matches(".*\\d{4}/\\d{2}/\\d{2}.*")) {
+                        isUpcoming = true;
+                    }
+
+                    if (!isUpcoming) {
+                        logger.info("Item skipped (not upcoming)");
+                        continue;
+                    }
                     
                     String videoUrl = "https://www.youtube.com" + (href.contains("?") ? href.substring(0, href.indexOf("?")) : href);
-                    
-                    // Extract scheduling text (e.g., "2026/07/25 10:00 に公開予定")
                     String scheduledText = metadataText.trim();
+                    if (scheduledText.isEmpty() && !ariaLabel.isEmpty()) {
+                        scheduledText = ariaLabel;
+                    }
                     
                     saveOrUpdateYoutubeLive(title, videoUrl, scheduledText);
                     count++;
