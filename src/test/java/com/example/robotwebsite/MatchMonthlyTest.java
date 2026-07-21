@@ -106,4 +106,40 @@ public class MatchMonthlyTest {
                 // 今月のリンクは存在しないはず（結果がないため）
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(now.getYear() + "年" + now.getMonthValue() + "月"))));
     }
+
+    @Test
+    public void testMatchResultsDescendingOrder() throws Exception {
+        matchRepository.deleteAll();
+
+        // 2026-07-01 (古い)
+        Match matchOld = new Match();
+        matchOld.setMatchDate(LocalDate.of(2026, 7, 1));
+        matchOld.setMatchName("Old Match");
+        matchOld.setPlayer1Name("A");
+        matchOld.setPlayer2Name("B");
+        matchOld.setResult("A win");
+        matchOld.setUrl("url-old");
+        matchRepository.save(matchOld);
+
+        // 2026-07-10 (新しい)
+        Match matchNew = new Match();
+        matchNew.setMatchDate(LocalDate.of(2026, 7, 10));
+        matchNew.setMatchName("New Match");
+        matchNew.setPlayer1Name("C");
+        matchNew.setPlayer2Name("D");
+        matchNew.setResult("C win");
+        matchNew.setUrl("url-new");
+        matchRepository.save(matchNew);
+
+        // 7月を指定してリクエスト
+        String content = mockMvc.perform(get("/match-results").param("year", "2026").param("month", "7"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // New Match が Old Match より前に出現することを確認
+        int indexNew = content.indexOf("New Match");
+        int indexOld = content.indexOf("Old Match");
+        
+        org.junit.jupiter.api.Assertions.assertTrue(indexNew < indexOld, "New Match should appear before Old Match");
+    }
 }

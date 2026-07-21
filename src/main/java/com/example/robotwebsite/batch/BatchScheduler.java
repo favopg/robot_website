@@ -20,16 +20,20 @@ public class BatchScheduler implements CommandLineRunner {
     private final Job siteSourceCheckJob;
     private final Job nihonkiinMatchJob;
 
-    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob) {
+    private final Job youtubeLiveScrapeJob;
+
+    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob) {
         this.jobLauncher = jobLauncher;
         this.siteSourceCheckJob = siteSourceCheckJob;
         this.nihonkiinMatchJob = nihonkiinMatchJob;
+        this.youtubeLiveScrapeJob = youtubeLiveScrapeJob;
     }
 
     @Override
     public void run(String... args) {
         runJob();
         runNihonkiinMatchJob();
+        runYoutubeLiveScrapeJob();
     }
 
     // 30分に1回実行 (1,800,000ミリ秒)
@@ -57,6 +61,19 @@ public class BatchScheduler implements CommandLineRunner {
             jobLauncher.run(nihonkiinMatchJob, params);
         } catch (Exception e) {
             logger.error("Error executing nihonkiinMatchJob", e);
+        }
+    }
+    // 1時間に1回実行 (3,600,000ミリ秒)
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 3600000)
+    public void runYoutubeLiveScrapeJob() {
+        try {
+            logger.info("Starting youtubeLiveScrapeJob at " + new Date());
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(youtubeLiveScrapeJob, params);
+        } catch (Exception e) {
+            logger.error("Error executing youtubeLiveScrapeJob", e);
         }
     }
 }

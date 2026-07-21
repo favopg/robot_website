@@ -36,6 +36,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/match-results">プロ棋士対局結果</a></li>
                             <li><a class="dropdown-item" href="/match-schedule">プロ棋士対局予定</a></li>
+                            <li><a class="dropdown-item" href="/youtube-schedule">YouTube 配信予定</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -58,6 +59,8 @@
                         <div class="card-body">
                             <h5 class="card-title">月別結果</h5>
                             <div class="d-flex flex-wrap gap-2">
+                                <a href="/match-results?all=true" class="btn btn-outline-info btn-sm">全て</a>
+                                <a href="/match-results" class="btn btn-outline-secondary btn-sm">直近</a>
                                 <a th:each="m : ${months}" 
                                    th:with="parts=${m.split('-')}"
                                    th:href="@{/match-results(year=${parts[0]}, month=${parts[1]})}" 
@@ -65,7 +68,6 @@
                                    th:text="${parts[0] + '年' + parts[1] + '月'}">
                                     2026年6月
                                 </a>
-                                <a href="/match-results" class="btn btn-outline-secondary btn-sm">直近</a>
                             </div>
                         </div>
                     </div>

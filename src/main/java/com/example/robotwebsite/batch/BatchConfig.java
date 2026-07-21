@@ -39,4 +39,17 @@ public class BatchConfig {
                 .tasklet(tasklet, transactionManager)
                 .build();
     }
+    @Bean
+    public Job youtubeLiveScrapeJob(JobRepository jobRepository, Step youtubeLiveScrapeStep) {
+        return new JobBuilder("youtubeLiveScrapeJob", jobRepository)
+                .start(youtubeLiveScrapeStep)
+                .build();
+    }
+
+    @Bean
+    public Step youtubeLiveScrapeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, YoutubeLiveScraperTasklet tasklet) {
+        return new StepBuilder("youtubeLiveScrapeStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
 }

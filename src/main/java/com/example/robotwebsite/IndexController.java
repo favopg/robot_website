@@ -2,8 +2,10 @@ package com.example.robotwebsite;
 
 import com.example.robotwebsite.entity.Event;
 import com.example.robotwebsite.entity.Match;
+import com.example.robotwebsite.entity.YoutubeLive;
 import com.example.robotwebsite.repository.EventRepository;
 import com.example.robotwebsite.repository.MatchRepository;
+import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +29,9 @@ public class IndexController {
     @Autowired
     private MatchRepository matchRepository;
 
+    @Autowired
+    private YoutubeLiveRepository youtubeLiveRepository;
+
     @GetMapping("/")
     public String index(Model model, @RequestParam(defaultValue = "0") int page) {
         // 既存のイベント情報をページング表示（1ページ20件）
@@ -37,30 +42,50 @@ public class IndexController {
         return "index";
     }
 
+    @GetMapping("/youtube-schedule")
+    public String youtubeSchedule(Model model) {
+        // YouTube配信予定を取得
+        List<YoutubeLive> youtubeLives = youtubeLiveRepository.findAll(Sort.by(Sort.Direction.ASC, "scheduledStartTime"));
+        // 時間情報がないものもあるため、全件取得してリスト表示
+        if (youtubeLives.isEmpty()) {
+            youtubeLives = youtubeLiveRepository.findAll();
+        }
+        model.addAttribute("youtubeLives", youtubeLives);
+        model.addAttribute("title", "YouTube 配信予定（日本棋院）");
+        return "youtube_list";
+    }
+
     @GetMapping("/match-results")
     public String matchResults(Model model,
                                @RequestParam(required = false) Integer year,
-                               @RequestParam(required = false) Integer month) {
-        LocalDate startDate;
-        LocalDate endDate;
+                               @RequestParam(required = false) Integer month,
+                               @RequestParam(required = false, defaultValue = "false") boolean all) {
+        List<Match> results;
         String titlePrefix = "";
 
-        if (year != null && month != null) {
-            startDate = LocalDate.of(year, month, 1);
-            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        if (all) {
+            List<Match> allMatches = matchRepository.findAll(Sort.by(Sort.Direction.DESC, "matchDate"));
+            results = allMatches.stream()
+                    .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
+                    .collect(Collectors.toList());
+            titlePrefix = "全データ ";
+        } else if (year != null && month != null) {
+            LocalDate startDate = LocalDate.of(year, month, 1);
+            LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
             titlePrefix = year + "年" + month + "月 ";
+            List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(startDate, endDate);
+            results = allMatches.stream()
+                    .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
+                    .collect(Collectors.toList());
         } else {
             LocalDate today = LocalDate.now();
-            startDate = today.minusWeeks(2);
-            endDate = today;
+            LocalDate startDate = today.minusWeeks(2);
+            LocalDate endDate = today;
+            List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(startDate, endDate);
+            results = allMatches.stream()
+                    .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
+                    .collect(Collectors.toList());
         }
-
-        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
-                startDate, endDate);
-
-        List<Match> results = allMatches.stream()
-                .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
-                .collect(Collectors.toList());
 
         // 月別リンク用のデータを生成（データがある月のみ）
         LocalDate now = LocalDate.now();
@@ -70,7 +95,7 @@ public class IndexController {
             LocalDate start = d.withDayOfMonth(1);
             LocalDate end = d.withDayOfMonth(d.lengthOfMonth());
             
-            List<Match> monthlyMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(start, end);
+            List<Match> monthlyMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(start, end);
             boolean hasResults = monthlyMatches.stream()
                     .anyMatch(m -> m.getResult() != null && !m.getResult().isEmpty());
             
@@ -89,7 +114,7 @@ public class IndexController {
     public String matchSchedule(Model model) {
         LocalDate today = LocalDate.now();
         // 今後の予定を取得
-        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
+        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(
                 today, today.plusWeeks(2));
 
         List<Match> schedules = allMatches.stream()

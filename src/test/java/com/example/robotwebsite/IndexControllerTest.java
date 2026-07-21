@@ -28,22 +28,19 @@ public class IndexControllerTest {
     private MatchRepository matchRepository;
 
     @Test
-    public void testIndexPageDoesNotContainMatches() throws Exception {
-        // 対局データを作成
-        Match match = new Match();
-        match.setMatchDate(LocalDate.now());
-        match.setMatchName("Test Match");
-        match.setPlayer1Name("Player A");
-        match.setPlayer2Name("Player B");
-        match.setUrl("test-index-url");
-        matchRepository.save(match);
-
+    public void testIndexPageDoesNotContainYouTubeLives() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("index"))
-                .andExpect(model().attributeDoesNotExist("matchResults"))
-                .andExpect(model().attributeDoesNotExist("matchSchedules"))
-                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("プロ棋士 対局予定"))))
-                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("プロ棋士 対局結果"))));
+                .andExpect(model().attributeDoesNotExist("youtubeLives"));
+    }
+
+    @Test
+    public void testYoutubeSchedulePage() throws Exception {
+        mockMvc.perform(get("/youtube-schedule"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("youtube_list"))
+                .andExpect(model().attributeExists("youtubeLives"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("YouTube 配信予定（日本棋院）")));
     }
 }
