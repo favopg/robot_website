@@ -74,21 +74,47 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
                         titleLinkEl = item.querySelector("#video-title");
                     }
                     
+                    // Fallback for finding the link: look for any <a> tag containing "/watch" in href
                     if (titleLinkEl == null) {
-                        logger.warn("Could not find title element for an item");
+                        List<ElementHandle> links = item.querySelectorAll("a");
+                        for (ElementHandle link : links) {
+                            String linkHref = link.getAttribute("href");
+                            if (linkHref != null && linkHref.contains("/watch")) {
+                                titleLinkEl = link;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    String title = "";
+                    String href = "";
+                    String ariaLabel = "";
+
+                    if (titleLinkEl != null) {
+                        title = titleLinkEl.innerText().trim();
+                        ariaLabel = titleLinkEl.getAttribute("aria-label");
+                        if (ariaLabel == null) ariaLabel = "";
+                        
+                        if (title.isEmpty() && !ariaLabel.isEmpty()) {
+                            title = ariaLabel;
+                        }
+
+                        href = titleLinkEl.getAttribute("href");
+                    }
+
+                    // Final fallback for title if still empty: use itemText but try to clean it
+                    if (title.isEmpty()) {
+                        title = itemText;
+                        if (title.contains("公開予定")) {
+                            title = title.substring(0, title.lastIndexOf("公開予定")).trim();
+                        }
+                    }
+                    
+                    if (href == null || href.isEmpty()) {
+                        // If we still don't have a href, we can't save it as a live event
+                        logger.warn("Could not find link (href) for an item. Item text: {}", itemText);
                         continue;
                     }
-
-                    String title = titleLinkEl.innerText().trim();
-                    String ariaLabel = titleLinkEl.getAttribute("aria-label");
-                    if (ariaLabel == null) ariaLabel = "";
-                    
-                    if (title.isEmpty() && !ariaLabel.isEmpty()) {
-                        title = ariaLabel;
-                    }
-
-                    String href = titleLinkEl.getAttribute("href");
-                    if (href == null) continue;
 
                     // Metadata (scheduled time)
                     String metadataText = "";
@@ -119,11 +145,15 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
                         continue;
                     }
                     
-                    String videoUrl = "https://www.youtube.com" + (href.contains("?") ? href.substring(0, href.indexOf("?")) : href);
+                    String videoUrl = "https://www.youtube.com" + href;
                     String scheduledText = metadataText.trim();
                     if (scheduledText.isEmpty() && !ariaLabel.isEmpty()) {
                         scheduledText = ariaLabel;
                     }
+                    
+                    // Truncate strings to prevent database errors (assuming max 1000 after DB update)
+                    if (title.length() > 1000) title = title.substring(0, 997) + "...";
+                    if (scheduledText.length() > 1000) scheduledText = scheduledText.substring(0, 997) + "...";
                     
                     saveOrUpdateYoutubeLive(title, videoUrl, scheduledText);
                     count++;
