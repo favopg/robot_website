@@ -35,27 +35,21 @@ public class AiChatControllerTest {
 
     @Test
     public void testAskAi() throws Exception {
-        String mockResponse = "AIからの回答です。";
-        when(aiService.getAiResponse(anyString())).thenReturn(mockResponse);
-
         mockMvc.perform(post("/spring-ai/ask")
                 .param("prompt", "テストプロンプト"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ai_chat"))
                 .andExpect(model().attribute("prompt", "テストプロンプト"))
-                .andExpect(model().attribute("response", mockResponse))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString(mockResponse)));
+                .andExpect(model().attribute("error", "現在、AI機能は停止しています。"));
     }
 
     @Test
     public void testAskAiError() throws Exception {
-        when(aiService.getAiResponse(anyString())).thenThrow(new RuntimeException("AI Error"));
-
+        // AI機能が停止しているため、どのような入力でもエラーメッセージが表示されることを確認
         mockMvc.perform(post("/spring-ai/ask")
                 .param("prompt", "エラーのテスト"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ai_chat"))
-                .andExpect(model().attributeExists("error"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("AIからの応答取得中にエラーが発生しました")));
+                .andExpect(model().attribute("error", "現在、AI機能は停止しています。"));
     }
 }
