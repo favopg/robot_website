@@ -9,8 +9,5 @@ public record EventRecord(
     String location,
     String url,
     String description,
-    String genre,
-    boolean targetBeginner,
-    boolean targetKyuPlayer,
-    boolean targetDanPlayer
+    String genre
 ) {}

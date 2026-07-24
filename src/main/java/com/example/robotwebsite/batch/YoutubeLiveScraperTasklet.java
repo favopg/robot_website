@@ -152,8 +152,8 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
                     }
                     
                     // Truncate strings to prevent database errors (assuming max 1000 after DB update)
-                    if (title.length() > 1000) title = title.substring(0, 997) + "...";
-                    if (scheduledText.length() > 1000) scheduledText = scheduledText.substring(0, 997) + "...";
+                    if (title.length() > 1000) title = title.substring(0, 1000);
+                    if (scheduledText.length() > 1000) scheduledText = scheduledText.substring(0, 1000);
                     
                     saveOrUpdateYoutubeLive(title, videoUrl, scheduledText);
                     count++;

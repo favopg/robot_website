@@ -36,11 +36,11 @@ public class IndexControllerTest {
     }
 
     @Test
-    public void testYoutubeSchedulePage() throws Exception {
-        mockMvc.perform(get("/youtube-schedule"))
+    public void testIndexPagePagingUpperAndLower() throws Exception {
+        mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("youtube_list"))
-                .andExpect(model().attributeExists("youtubeLives"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("YouTube 配信予定（日本棋院）")));
+                .andExpect(view().name("index"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<!-- 上部ページングナビゲーション -->")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<!-- ページングナビゲーション -->")));
     }
 }

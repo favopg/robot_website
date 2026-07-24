@@ -32,15 +32,6 @@ public class Event {
     @Column(nullable = false)
     private String genre;
 
-    @Column(name = "target_beginner")
-    private Boolean targetBeginner = false;
-
-    @Column(name = "target_kyu_player")
-    private Boolean targetKyuPlayer = false;
-
-    @Column(name = "target_dan_player")
-    private Boolean targetDanPlayer = false;
-
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -68,15 +59,6 @@ public class Event {
 
     public String getGenre() { return genre; }
     public void setGenre(String genre) { this.genre = genre; }
-
-    public Boolean getTargetBeginner() { return targetBeginner; }
-    public void setTargetBeginner(Boolean targetBeginner) { this.targetBeginner = targetBeginner; }
-
-    public Boolean getTargetKyuPlayer() { return targetKyuPlayer; }
-    public void setTargetKyuPlayer(Boolean targetKyuPlayer) { this.targetKyuPlayer = targetKyuPlayer; }
-
-    public Boolean getTargetDanPlayer() { return targetDanPlayer; }
-    public void setTargetDanPlayer(Boolean targetDanPlayer) { this.targetDanPlayer = targetDanPlayer; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

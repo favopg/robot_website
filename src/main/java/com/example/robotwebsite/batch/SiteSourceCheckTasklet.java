@@ -103,6 +103,8 @@ public class SiteSourceCheckTasklet implements Tasklet {
                 ElementHandle titleLink = cells.get(1).querySelector("a");
                 if (titleLink != null) {
                     String title = titleLink.innerText().trim();
+                    if (title.length() > 500) title = title.substring(0, 500);
+
                     String href = titleLink.getAttribute("href");
                     String eventUrl = page.url();
                     if (href != null) {
@@ -116,10 +118,6 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     String infoText = row.innerText();
                     LocalDate eventDate = extractDate(infoText);
                     String description = infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText;
-                    
-                    boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
-                    boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
-                    boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
 
                     events.add(new EventRecord(
                             siteSourceId,
@@ -128,10 +126,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
                             null,
                             eventUrl,
                             description,
-                            genre,
-                            beginner,
-                            kyu,
-                            dan
+                            genre
                     ));
                 }
             }
@@ -147,6 +142,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     if (linkEl == null) continue;
 
                     String title = linkEl.innerText().trim();
+                    if (title.length() > 500) title = title.substring(0, 500);
                     if (title.isEmpty()) continue;
                     
                     // 特定のキーワードが含まれているか、または親が特定のクラスを持っている場合のみ対象とする
@@ -193,9 +189,6 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     }
 
                     String description = infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText;
-                    boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
-                    boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
-                    boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
 
                     events.add(new EventRecord(
                             siteSourceId,
@@ -204,10 +197,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
                             null,
                             eventUrl,
                             description,
-                            genre,
-                            beginner,
-                            kyu,
-                            dan
+                            genre
                     ));
                 } catch (Exception e) {
                     // Ignore
@@ -240,12 +230,12 @@ public class SiteSourceCheckTasklet implements Tasklet {
         for (EventRecord event : events) {
             try {
                 // 重複登録を避けるため MERGE 相当の処理を行う（URLがUNIQUE制約付き）
-                String sql = "INSERT INTO events (site_source_id, title, event_date, location, url, description, genre, target_beginner, target_kyu_player, target_dan_player) " +
-                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                String sql = "INSERT INTO events (site_source_id, title, event_date, location, url, description, genre) " +
+                           "VALUES (?, ?, ?, ?, ?, ?, ?) " +
                            "ON DUPLICATE KEY UPDATE title = VALUES(title)"; 
                 // H2の場合は MERGE INTO を使うのが一般的
-                String h2Sql = "MERGE INTO events (site_source_id, title, event_date, location, url, description, genre, target_beginner, target_kyu_player, target_dan_player) " +
-                             "KEY(url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                String h2Sql = "MERGE INTO events (site_source_id, title, event_date, location, url, description, genre) " +
+                             "KEY(url) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 
                 jdbcTemplate.update(h2Sql,
                     event.siteSourceId(),
@@ -254,10 +244,7 @@ public class SiteSourceCheckTasklet implements Tasklet {
                     event.location(),
                     event.url(),
                     event.description(),
-                    event.genre(),
-                    event.targetBeginner(),
-                    event.targetKyuPlayer(),
-                    event.targetDanPlayer()
+                    event.genre()
                 );
             } catch (Exception e) {
                 logger.error("Failed to save event: " + event.title(), e);
