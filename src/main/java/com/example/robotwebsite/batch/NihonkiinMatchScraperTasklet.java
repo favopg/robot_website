@@ -119,7 +119,9 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
 
                 if (isResult && cells.size() >= 5) { // Result row usually has 6 cells
                     // Result row format: matchName, senteMark1, player1, resultDescription, senteMark2, player2
-                    match.setMatchName(cells.get(0).text().trim());
+                    String matchName = cells.get(0).text().trim();
+                    if (matchName.length() > 500) matchName = matchName.substring(0, 500);
+                    match.setMatchName(matchName);
                     
                     String sente1 = cells.get(1).text().trim();
                     String p1 = cells.get(2).text().trim();
