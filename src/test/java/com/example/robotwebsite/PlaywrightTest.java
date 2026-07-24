@@ -26,7 +26,7 @@ class PlaywrightTest {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
             Page page = browser.newPage();
             page.navigate("http://localhost:" + port);
-            assertTrue(page.title().contains("囲碁イベント情報"));
+            assertTrue(page.title().contains("制作者が役立つ囲碁情報サイト"));
             browser.close();
         }
     }
