@@ -1,6 +1,5 @@
 package com.example.robotwebsite.batch;
 
-import com.example.robotwebsite.service.AiService;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.ElementHandle;
@@ -30,11 +29,9 @@ public class SiteSourceCheckTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(SiteSourceCheckTasklet.class);
     private final JdbcTemplate jdbcTemplate;
-    private final AiService aiService;
 
-    public SiteSourceCheckTasklet(JdbcTemplate jdbcTemplate, AiService aiService) {
+    public SiteSourceCheckTasklet(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.aiService = aiService;
     }
 
     @Override
@@ -118,23 +115,11 @@ public class SiteSourceCheckTasklet implements Tasklet {
 
                     String infoText = row.innerText();
                     LocalDate eventDate = extractDate(infoText);
+                    String description = infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText;
                     
                     boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
                     boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
                     boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
-
-                    // AIによる属性抽出
-                    String description = infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText;
-                    if (description.length() > 20) {
-                        try {
-                            AiService.EventAttributes attrs = aiService.extractEventAttributes(description);
-                            beginner = beginner || attrs.targetBeginner();
-                            kyu = kyu || attrs.targetKyuPlayer();
-                            dan = dan || attrs.targetDanPlayer();
-                        } catch (Exception e) {
-                            logger.warn("AI attribute extraction failed for: " + title, e);
-                        }
-                    }
 
                     events.add(new EventRecord(
                             siteSourceId,
@@ -207,22 +192,10 @@ public class SiteSourceCheckTasklet implements Tasklet {
                         continue;
                     }
 
+                    String description = infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText;
                     boolean beginner = infoText.contains("初心者") || infoText.contains("入門") || infoText.contains("はじめて");
                     boolean kyu = infoText.contains("級位者") || infoText.contains("級") || infoText.contains("10級");
                     boolean dan = infoText.contains("有段者") || infoText.contains("段") || infoText.contains("五段");
-
-                    // AIによる属性抽出
-                    String description = infoText.length() > 1000 ? infoText.substring(0, 1000) : infoText;
-                    if (description.length() > 20) {
-                        try {
-                            AiService.EventAttributes attrs = aiService.extractEventAttributes(description);
-                            beginner = beginner || attrs.targetBeginner();
-                            kyu = kyu || attrs.targetKyuPlayer();
-                            dan = dan || attrs.targetDanPlayer();
-                        } catch (Exception e) {
-                            logger.warn("AI attribute extraction failed for: " + title, e);
-                        }
-                    }
 
                     events.add(new EventRecord(
                             siteSourceId,
