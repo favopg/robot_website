@@ -16,8 +16,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -31,6 +37,49 @@ public class IndexController {
 
     @Autowired
     private YoutubeLiveRepository youtubeLiveRepository;
+
+    private Set<String> getPlayerIcons() {
+        Set<String> iconNames = new HashSet<>();
+        try {
+            // クラスパス上のリソースディレクトリから取得
+            File folder = new File("src/main/resources/static/images/players");
+            if (folder.exists() && folder.isDirectory()) {
+                File[] files = folder.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        if (f.isFile() && f.getName().endsWith(".jpg")) {
+                            iconNames.add(f.getName().substring(0, f.getName().lastIndexOf(".")));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // エラー時はログ出力するか、空セットを返す
+            e.printStackTrace();
+        }
+        return iconNames;
+    }
+
+    private void setIcons(List<Match> matches) {
+        Set<String> icons = getPlayerIcons();
+        for (Match m : matches) {
+            String p1Name = m.getPlayer1Name();
+            String p2Name = m.getPlayer2Name();
+
+            for (String iconName : icons) {
+                if (p1Name != null && (p1Name.contains(iconName) || iconName.contains(p1Name))) {
+                    m.setPlayer1Icon("/images/players/" + iconName + ".jpg");
+                    break;
+                }
+            }
+            for (String iconName : icons) {
+                if (p2Name != null && (p2Name.contains(iconName) || iconName.contains(p2Name))) {
+                    m.setPlayer2Icon("/images/players/" + iconName + ".jpg");
+                    break;
+                }
+            }
+        }
+    }
 
     @GetMapping("/")
     public String index(Model model, @RequestParam(defaultValue = "0") int page) {
@@ -105,6 +154,7 @@ public class IndexController {
         }
 
         model.addAttribute("matches", results);
+        setIcons(results);
         model.addAttribute("months", months);
         model.addAttribute("title", titlePrefix + "プロ棋士対局結果");
         return "match_list";
@@ -122,6 +172,7 @@ public class IndexController {
                 .collect(Collectors.toList());
 
         model.addAttribute("matches", schedules);
+        setIcons(schedules);
         model.addAttribute("title", "プロ棋士対局予定");
         return "match_list";
     }

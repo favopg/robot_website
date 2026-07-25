@@ -3,6 +3,7 @@ package com.example.robotwebsite.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "matches")
@@ -44,6 +45,12 @@ public class Match {
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Transient
+    private String player1Icon;
+
+    @Transient
+    private String player2Icon;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -80,4 +87,10 @@ public class Match {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getPlayer1Icon() { return player1Icon; }
+    public void setPlayer1Icon(String player1Icon) { this.player1Icon = player1Icon; }
+
+    public String getPlayer2Icon() { return player2Icon; }
+    public void setPlayer2Icon(String player2Icon) { this.player2Icon = player2Icon; }
 }
