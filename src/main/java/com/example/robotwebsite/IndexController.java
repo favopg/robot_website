@@ -11,13 +11,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -31,6 +36,45 @@ public class IndexController {
 
     @Autowired
     private YoutubeLiveRepository youtubeLiveRepository;
+
+    private Set<String> getPlayerIcons() {
+        Set<String> iconNames = new HashSet<>();
+        try {
+            ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            // クラスパス内のリソースをスキャン
+            Resource[] resources = resolver.getResources("classpath*:static/images/players/*.jpg");
+            for (Resource resource : resources) {
+                String filename = resource.getFilename();
+                if (filename != null) {
+                    iconNames.add(filename.substring(0, filename.lastIndexOf(".")));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return iconNames;
+    }
+
+    private void setIcons(List<Match> matches) {
+        Set<String> icons = getPlayerIcons();
+        for (Match m : matches) {
+            String p1Name = m.getPlayer1Name();
+            String p2Name = m.getPlayer2Name();
+
+            for (String iconName : icons) {
+                if (p1Name != null && (p1Name.contains(iconName) || iconName.contains(p1Name))) {
+                    m.setPlayer1Icon("/images/players/" + iconName + ".jpg");
+                    break;
+                }
+            }
+            for (String iconName : icons) {
+                if (p2Name != null && (p2Name.contains(iconName) || iconName.contains(p2Name))) {
+                    m.setPlayer2Icon("/images/players/" + iconName + ".jpg");
+                    break;
+                }
+            }
+        }
+    }
 
     @GetMapping("/")
     public String index(Model model, @RequestParam(defaultValue = "0") int page) {
@@ -105,6 +149,7 @@ public class IndexController {
         }
 
         model.addAttribute("matches", results);
+        setIcons(results);
         model.addAttribute("months", months);
         model.addAttribute("title", titlePrefix + "プロ棋士対局結果");
         return "match_list";
@@ -122,6 +167,7 @@ public class IndexController {
                 .collect(Collectors.toList());
 
         model.addAttribute("matches", schedules);
+        setIcons(schedules);
         model.addAttribute("title", "プロ棋士対局予定");
         return "match_list";
     }
