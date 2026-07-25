@@ -67,16 +67,21 @@
             <!-- 月別リンクの追加 -->
             <div class="row mb-4" th:if="${months != null}">
                 <div class="col-12">
-                    <div class="card">
+                    <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title">月別結果</h5>
-                            <div class="d-flex flex-wrap gap-2">
-                                <a href="/match-results?all=true" class="btn btn-outline-info btn-sm">全て</a>
-                                <a href="/match-results" class="btn btn-outline-secondary btn-sm">直近</a>
+                            <h5 class="card-title mb-3">月別結果</h5>
+                            <div class="d-flex overflow-auto pb-2" style="white-space: nowrap; -webkit-overflow-scrolling: touch;">
+                                <a href="/match-results?all=true" 
+                                   class="btn btn-sm me-2" 
+                                   th:classappend="${param.all != null && param.all[0] == 'true'} ? 'btn-info' : 'btn-outline-info'">全て</a>
+                                <a href="/match-results" 
+                                   class="btn btn-sm me-2" 
+                                   th:classappend="${param.all == null && param.year == null && param.month == null} ? 'btn-secondary' : 'btn-outline-secondary'">直近</a>
                                 <a th:each="m : ${months}" 
                                    th:with="parts=${m.split('-')}"
                                    th:href="@{/match-results(year=${parts[0]}, month=${parts[1]})}" 
-                                   class="btn btn-outline-primary btn-sm"
+                                   class="btn btn-sm me-2"
+                                   th:classappend="${param.year != null && param.year[0] == parts[0] && param.month != null && param.month[0] == parts[1]} ? 'btn-primary' : 'btn-outline-primary'"
                                    th:text="${parts[0] + '年' + parts[1] + '月'}">
                                     2026年6月
                                 </a>
