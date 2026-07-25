@@ -11,16 +11,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,20 +40,16 @@ public class IndexController {
     private Set<String> getPlayerIcons() {
         Set<String> iconNames = new HashSet<>();
         try {
-            // クラスパス上のリソースディレクトリから取得
-            File folder = new File("src/main/resources/static/images/players");
-            if (folder.exists() && folder.isDirectory()) {
-                File[] files = folder.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        if (f.isFile() && f.getName().endsWith(".jpg")) {
-                            iconNames.add(f.getName().substring(0, f.getName().lastIndexOf(".")));
-                        }
-                    }
+            ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            // クラスパス内のリソースをスキャン
+            Resource[] resources = resolver.getResources("classpath*:static/images/players/*.jpg");
+            for (Resource resource : resources) {
+                String filename = resource.getFilename();
+                if (filename != null) {
+                    iconNames.add(filename.substring(0, filename.lastIndexOf(".")));
                 }
             }
         } catch (Exception e) {
-            // エラー時はログ出力するか、空セットを返す
             e.printStackTrace();
         }
         return iconNames;
