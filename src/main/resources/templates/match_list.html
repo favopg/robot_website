@@ -119,9 +119,15 @@
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
-                                <span th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
+                                <span th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''">
+                                    <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
+                                    <span th:if="${match.winnerName == match.player1Name}" class="badge rounded-pill bg-danger ms-1">勝</span>
+                                </span>
                                 vs
-                                <span th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''" th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
+                                <span th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''">
+                                    <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
+                                    <span th:if="${match.winnerName == match.player2Name}" class="badge rounded-pill bg-danger ms-1">勝</span>
+                                </span>
                             </td>
                             <td th:if="${title.contains('結果')}" th:text="${match.result}">-</td>
                         </tr>
