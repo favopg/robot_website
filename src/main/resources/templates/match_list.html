@@ -111,7 +111,7 @@
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
@@ -144,6 +144,45 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- モバイル向けカード形式 -->
+            <div class="d-md-none">
+                <div th:each="match : ${matches}" class="card mb-3 shadow-sm match-card" th:data-winner="${match.winnerName}">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                        <span class="badge bg-secondary" th:text="${match.matchName}">棋戦名</span>
+                        <small class="text-muted" th:text="${match.matchDate}">2026-07-01</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center text-center player-names">
+                            <div class="col-5">
+                                <div th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''">
+                                    <span th:if="${match.player1Sente != null && match.player1Sente}" class="badge bg-dark me-1">先</span>
+                                    <span th:text="${match.player1Name}">棋士A</span>
+                                    <div th:if="${match.winnerName == match.player1Name}" class="mt-1">
+                                        <span class="badge rounded-pill bg-danger">勝</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-2 text-muted small">vs</div>
+                            <div class="col-5">
+                                <div th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''">
+                                    <span th:if="${match.player2Sente != null && match.player2Sente}" class="badge bg-dark me-1">先</span>
+                                    <span th:text="${match.player2Name}">棋士B</span>
+                                    <div th:if="${match.winnerName == match.player2Name}" class="mt-1">
+                                        <span class="badge rounded-pill bg-danger">勝</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 border-top small text-muted text-center" th:if="${title.contains('結果')}" th:text="${match.result}">
+                            結果詳細
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(matches)}" class="text-center py-4 border rounded bg-light">
+                    現在、表示できる対局情報はありません。
+                </div>
+            </div>
         </main>
     </div>
 
@@ -153,29 +192,36 @@
     <script>
         function filterTable() {
             const query = document.getElementById('playerSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('.match-row');
+            const items = document.querySelectorAll('.match-row, .match-card');
             const resultArea = document.getElementById('winLossResult');
             
             let wins = 0;
             let losses = 0;
 
-            rows.forEach(row => {
-                const text = row.querySelector('.player-names').textContent.toLowerCase();
-                const winnerName = row.getAttribute('data-winner') ? row.getAttribute('data-winner').toLowerCase() : "";
+            items.forEach(item => {
+                const text = item.querySelector('.player-names').textContent.toLowerCase();
+                const winnerName = item.getAttribute('data-winner') ? item.getAttribute('data-winner').toLowerCase() : "";
 
                 if (query !== "" && text.includes(query)) {
-                    row.style.display = '';
+                    item.style.setProperty('display', '', 'important');
                     
                     // 勝敗のカウント（検索ワードが勝者名に含まれていれば勝ち）
-                    if (winnerName !== "" && winnerName.includes(query)) {
-                        wins++;
-                    } else if (winnerName !== "") {
-                        losses++;
+                    // テーブルとカードで2回カウントされないよう、片方の表示状態だけ見る必要があるが、
+                    // ここではアイテムごとに判定し、最終的に2で割るか、種類を限定する必要がある。
+                    // シンプルに、表示されているもの（かつ片方の形式のみ）でカウントする。
+                    
+                    // カウントは一回だけ行う（例えば match-row の方だけでカウント）
+                    if (item.classList.contains('match-row')) {
+                        if (winnerName !== "" && winnerName.includes(query)) {
+                            wins++;
+                        } else if (winnerName !== "") {
+                            losses++;
+                        }
                     }
                 } else if (query === "") {
-                    row.style.display = '';
+                    item.style.display = '';
                 } else {
-                    row.style.display = 'none';
+                    item.style.setProperty('display', 'none', 'important');
                 }
             });
 
