@@ -27,10 +27,10 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # Gradleの事前スキャンによるエラー回避のため、ファイルを一時退避
+    # 1. ビルド前にファイルを退避（ワイルドカードを使用して確実に移動）
     - name: Move problematic file away from Gradle
       run: |
-        mv "src/main/resources/static/images/players/辻󠄀篤仁.jpg" /home/runner/temp_tsuji.jpg
+        mv src/main/resources/static/images/players/辻*.jpg /home/runner/temp_tsuji.jpg
 
     - name: Build and Test with Gradle
       run: ./gradlew build --info
@@ -39,11 +39,12 @@ jobs:
         JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
         LANG: ja_JP.UTF-8
 
-    # ビルド完了後、ファイルを成果物ディレクトリと元の場所に配置
+    # 2. ビルド完了後、ファイルを成果物ディレクトリに配置
     - name: Restore and Deploy problematic resource
       run: |
         mkdir -p build/resources/main/static/images/players/
         cp /home/runner/temp_tsuji.jpg build/resources/main/static/images/players/辻󠄀篤仁.jpg
+        # 次回ビルドのために元の場所にも戻す
         mv /home/runner/temp_tsuji.jpg "src/main/resources/static/images/players/辻󠄀篤仁.jpg"
 
     - name: Upload Test Results

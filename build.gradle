@@ -43,3 +43,17 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+sourceSets {
+    main {
+        resources {
+            // ソースセットレベルで除外。ワイルドカードを使うのが確実です。
+            exclude '**/static/images/players/辻*.jpg'
+        }
+    }
+}
+
+processResources {
+    // 状態追跡を無効化し、Gradleによるファイルスキャンを回避
+    doNotTrackState('GitHub Actionsでの特殊文字ファイルによるビルドエラー回避のため')
+}
