@@ -31,6 +31,14 @@ jobs:
       run: ./gradlew build --info
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 0
+        JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
+        LANG: ja_JP.UTF-8
+
+    # GradleのprocessResourcesで除外したファイルを、Linuxのcpコマンドで手動コピー
+    - name: Manually copy problematic resource
+      run: |
+        mkdir -p build/resources/main/static/images/players/
+        cp "src/main/resources/static/images/players/辻󠄀篤仁.jpg" "build/resources/main/static/images/players/"
 
     - name: Upload Test Results
       if: always()

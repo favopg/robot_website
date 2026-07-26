@@ -43,3 +43,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+processResources {
+    // GitHub Actions (Linux) での Gradle ビルドエラー回避のため、異体字セレクタを含むファイルを除外
+    exclude '**/static/images/players/辻󠄀篤仁.jpg'
+}
