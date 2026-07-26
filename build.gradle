@@ -43,3 +43,17 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+sourceSets {
+    main {
+        resources {
+            // 保険としてワイルドカード除外を継続
+            exclude '**/static/images/players/辻*.jpg'
+        }
+    }
+}
+
+processResources {
+    // 状態追跡を無効化
+    doNotTrackState('Build failure workaround for special characters')
+}
