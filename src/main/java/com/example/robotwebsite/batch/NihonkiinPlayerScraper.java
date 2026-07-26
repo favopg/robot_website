@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,34 +31,36 @@ public class NihonkiinPlayerScraper {
 
         Optional<Player> existingPlayer = playerRepository.findByName(playerName);
         if (existingPlayer.isPresent()) {
-            // もし最近更新されていたらスキップするなどのロジックを入れることも可能
-            // 今回は存在しなければ取得する方針
             return;
         }
 
-        logger.info("Scraping details for player: " + playerName);
+        logger.info("Searching for player profile: " + playerName);
         
         try {
-            // 日本棋院の検索用URL（名前で検索して詳細ページを探すのは難しいので、
-            // 本来はIDが必要だが、ここでは提示されたURLの構造から推測するか、
-            // 検索結果から取得する。
-            // ただし、提示されたタスクでは「指定されたURL（例：ki000385.html）をJSoupで解析」とある。
-            // 実際には対局一覧から詳細へのリンクを取得するのが望ましい。
-            // 暫定的に、検索ページから棋士を探すロジックを検討。
+            // Remove rank from the end of the name (e.g., "Name Rank" -> "Name")
+            String searchName = playerName.replaceAll("[\\s\u3000]*([一二三四五六七八九十]|\\d+)段$", "").trim();
             
-            // 日本棋院の棋士検索 (名前で検索)
-            String searchUrl = "https://www.nihonkiin.or.jp/player/htm/search.php?name=" + playerName;
-            // 実際にはもっと複雑な場合があるが、ここでは直接詳細ページを特定する方法を模索。
-            // 日本棋院のサイト構成上、名前から直接URLを叩くことはできない。
-            // 対局一覧のHTMLに対局者の詳細ページへのリンクが含まれていないか確認が必要。
+            // 1. Search in /player/dan/ (high reliability)
+            String danUrl = "https://www.nihonkiin.or.jp/player/dan/";
+            Document danDoc = Jsoup.connect(danUrl).get();
+            Elements links = danDoc.select("a[href*=/player/htm/ki]");
             
-            // NihonkiinMatchScraperTaskletを確認すると、リンクは取得していない。
-            // しかし、多くの棋士のURLは /player/htm/kiXXXXXX.html の形式。
+            for (Element link : links) {
+                // Match name (remove all whitespace for comparison)
+                String linkText = link.text().replaceAll("[\\s\u3000]+", "");
+                String normalizedSearchName = searchName.replaceAll("[\\s\u3000]+", "");
+                if (linkText.equals(normalizedSearchName) || link.attr("href").contains(normalizedSearchName)) {
+                    String detailUrl = link.absUrl("href");
+                    scrapePlayerDetail(playerName, detailUrl);
+                    return;
+                }
+            }
             
-            // 課題の指示通り、特定のURLを解析するメソッドを作成し、
-            // 呼び出し側でURLを特定する方法を考える。
+            logger.warn("Profile URL not found for player: " + playerName + " (searched in dan list as: " + searchName + ")");
+        } catch (org.jsoup.HttpStatusException e) {
+            logger.error("HTTP error searching player: " + playerName + " - Status=" + e.getStatusCode() + ", URL=" + e.getUrl());
         } catch (Exception e) {
-            logger.error("Error scraping player: " + playerName, e);
+            logger.error("Error searching player: " + playerName, e);
         }
     }
 
@@ -70,13 +71,11 @@ public class NihonkiinPlayerScraper {
             player.setName(playerName);
             player.setProfileUrl(url);
 
-            // 段位の取得
             Element rankElement = doc.selectFirst("div.rank");
             if (rankElement != null) {
                 player.setRank(rankElement.text().trim());
             }
 
-            // 性別、生年月日、出身地、門下の取得
             Elements tables = doc.select("table.inter-table");
             for (Element table : tables) {
                 Elements rows = table.select("tr");
@@ -84,19 +83,19 @@ public class NihonkiinPlayerScraper {
                     String th = row.select("th").text().trim();
                     String td = row.select("td").text().trim();
 
-                    if (th.contains("性別")) {
+                    // Using Unicode escapes for "性別", "生年月日", "出身地", "師匠", "門下"
+                    if (th.contains("Gender") || th.contains("\u6027\u5225")) {
                         player.setGender(td);
-                    } else if (th.contains("生年月日")) {
+                    } else if (th.contains("Birthday") || th.contains("\u751f\u5e74\u6708\u65e5")) {
                         player.setBirthDate(parseJapaneseDate(td));
-                    } else if (th.contains("出身地")) {
+                    } else if (th.contains("Place") || th.contains("\u51fa\u8eab\u5730")) {
                         player.setBirthPlace(td);
-                    } else if (th.contains("師匠") || th.contains("門下")) {
+                    } else if (th.contains("Master") || th.contains("\u5e2b\u5320") || th.contains("\u9580\u4e0b")) {
                         player.setMaster(td);
                     }
                 }
             }
             
-            // アイコン画像の取得
             Element imgElement = doc.selectFirst("div.player-photo img");
             if (imgElement != null) {
                 String src = imgElement.absUrl("src");
@@ -113,8 +112,8 @@ public class NihonkiinPlayerScraper {
 
     private LocalDate parseJapaneseDate(String dateStr) {
         try {
-            // 例: 1989年12月15日
-            Pattern pattern = Pattern.compile("(\\d+)年(\\d+)月(\\d+)日");
+            // Match digits for year, month, day
+            Pattern pattern = Pattern.compile("(\\d+).+(\\d+).+(\\d+).");
             Matcher matcher = pattern.matcher(dateStr);
             if (matcher.find()) {
                 int year = Integer.parseInt(matcher.group(1));
