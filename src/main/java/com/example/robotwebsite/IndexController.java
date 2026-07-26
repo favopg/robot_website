@@ -171,4 +171,17 @@ public class IndexController {
         model.addAttribute("title", "プロ棋士対局予定");
         return "match_list";
     }
+
+    @GetMapping("/match-list")
+    public String matchList(Model model) {
+        LocalDate today = LocalDate.now();
+        // 過去2週間から未来2週間分を取得
+        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(
+                today.minusWeeks(2), today.plusWeeks(2));
+
+        model.addAttribute("matches", allMatches);
+        setIcons(allMatches);
+        model.addAttribute("title", "プロ棋士対局一覧");
+        return "match_list";
+    }
 }

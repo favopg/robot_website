@@ -56,6 +56,7 @@
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLinkIgo">
                             <li><a class="dropdown-item" href="/">イベント一覧</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/match-list">プロ棋士対局一覧</a></li>
                             <li><a class="dropdown-item" href="/match-results">プロ棋士対局結果</a></li>
                             <li><a class="dropdown-item" href="/match-schedule">プロ棋士対局予定</a></li>
                             <li><a class="dropdown-item" href="/youtube-schedule">YouTube 配信予定</a></li>
@@ -77,6 +78,7 @@
             <h1 class="display-4" th:text="${title}">対局情報</h1>
             <p class="lead" th:if="${title.contains('予定')}">今後の対局予定を表示します。</p>
             <p class="lead" th:if="${title.contains('結果')}">直近の対局結果を表示します。</p>
+            <p class="lead" th:if="${title.contains('一覧')}">直近および今後の対局情報を表示します。</p>
         </header>
         
         <main>
@@ -114,7 +116,7 @@
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
-                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名で検索・フィルター..." onkeyup="filterTable()">
+                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." onkeyup="filterTable()">
                     </div>
                 </div>
                 <div class="col-md-6" th:if="${title.contains('結果')}">
@@ -198,21 +200,23 @@
             let losses = 0;
 
             items.forEach(item => {
-                const text = item.querySelector('.player-names').textContent.toLowerCase();
+                const playerNames = item.querySelector('.player-names').textContent.toLowerCase();
+                const matchName = item.querySelector('.badge').textContent.toLowerCase();
+                const text = playerNames + " " + matchName;
                 const winnerName = item.getAttribute('data-winner') ? item.getAttribute('data-winner').toLowerCase() : "";
 
                 if (query !== "" && text.includes(query)) {
-                    item.style.setProperty('display', '', 'important');
+                    item.classList.remove('d-none');
                     
-                    if (winnerName !== "" && winnerName.includes(query)) {
+                    if (winnerName !== "" && playerNames.includes(query) && winnerName.includes(query)) {
                         wins++;
-                    } else if (winnerName !== "") {
+                    } else if (winnerName !== "" && playerNames.includes(query)) {
                         losses++;
                     }
                 } else if (query === "") {
-                    item.style.display = '';
+                    item.classList.remove('d-none');
                 } else {
-                    item.style.setProperty('display', 'none', 'important');
+                    item.classList.add('d-none');
                 }
             });
 
