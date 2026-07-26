@@ -43,17 +43,3 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
-
-sourceSets {
-    main {
-        resources {
-            // ソースセットレベルで除外することで、Gradleによるファイルスキャン（ハッシュ計算）から完全に外します
-            exclude '**/static/images/players/辻*.jpg'
-        }
-    }
-}
-
-processResources {
-    // GitHub Actionsでの特殊文字ファイルによるビルドエラー回避のため、状態追跡を無効化
-    doNotTrackState('GitHub Actionsでの特殊文字ファイルによるビルドエラー回避のため')
-}
