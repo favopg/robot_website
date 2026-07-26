@@ -17,14 +17,11 @@ public class Player {
 
     private String gender;
     private String rank;
-
-    @Column(name = "birth_date")
-    private LocalDate birthDate;
-
+    
     @Column(name = "birth_place")
     private String birthPlace;
 
-    private String master;
+    private String affiliation;
 
     @Column(name = "profile_url")
     private String profileUrl;
@@ -48,14 +45,11 @@ public class Player {
     public String getRank() { return rank; }
     public void setRank(String rank) { this.rank = rank; }
 
-    public LocalDate getBirthDate() { return birthDate; }
-    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
-
     public String getBirthPlace() { return birthPlace; }
     public void setBirthPlace(String birthPlace) { this.birthPlace = birthPlace; }
 
-    public String getMaster() { return master; }
-    public void setMaster(String master) { this.master = master; }
+    public String getAffiliation() { return affiliation; }
+    public void setAffiliation(String affiliation) { this.affiliation = affiliation; }
 
     public String getProfileUrl() { return profileUrl; }
     public void setProfileUrl(String profileUrl) { this.profileUrl = profileUrl; }

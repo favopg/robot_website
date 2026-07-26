@@ -7,7 +7,7 @@ import com.example.robotwebsite.repository.EventRepository;
 import com.example.robotwebsite.repository.MatchRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import com.example.robotwebsite.entity.Player;
-import com.example.robotwebsite.repository.PlayerRepository;
+import com.example.robotwebsite.service.PlayerService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,7 +41,7 @@ public class IndexController {
     private MatchRepository matchRepository;
 
     @Autowired
-    private PlayerRepository playerRepository;
+    private PlayerService playerService;
 
     @Autowired
     private YoutubeLiveRepository youtubeLiveRepository;
@@ -49,8 +49,21 @@ public class IndexController {
     @GetMapping("/api/players/{name}")
     @ResponseBody
     public Player getPlayerInfo(@PathVariable String name) {
-        return playerRepository.findByName(name)
+        Player player = playerService.findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
+        
+        // アイコンパスの解決（対局一覧と同じロジックを適用）
+        // まずファイルシステムから検索（優先）
+        Set<String> localIcons = getPlayerIcons();
+        for (String iconName : localIcons) {
+            if (name.contains(iconName) || iconName.contains(name)) {
+                player.setIconPath("/images/players/" + iconName + ".jpg");
+                return player;
+            }
+        }
+        
+        // ファイルシステムにない場合はDBの値を保持（既にplayerにセットされている）
+        return player;
     }
 
     private Set<String> getPlayerIcons() {
@@ -83,20 +96,21 @@ public class IndexController {
         String name = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
         if (name == null) return;
 
-        // まずDBから検索
-        String iconPath = playerRepository.findByName(name)
-                .map(Player::getIconPath)
-                .filter(path -> path != null && !path.isEmpty())
-                .orElse(null);
-
-        // DBにない場合はファイルシステムから検索（後方互換性）
-        if (iconPath == null) {
-            for (String iconName : icons) {
-                if (name.contains(iconName) || iconName.contains(name)) {
-                    iconPath = "/images/players/" + iconName + ".jpg";
-                    break;
-                }
+        // まずファイルシステムから検索（優先）
+        String iconPath = null;
+        for (String iconName : icons) {
+            if (name.contains(iconName) || iconName.contains(name)) {
+                iconPath = "/images/players/" + iconName + ".jpg";
+                break;
             }
+        }
+
+        // ファイルシステムにない場合はDBから検索
+        if (iconPath == null) {
+            iconPath = playerService.findByName(name)
+                    .map(Player::getIconPath)
+                    .filter(path -> path != null && !path.isEmpty())
+                    .orElse(null);
         }
 
         if (playerNum == 1) {
