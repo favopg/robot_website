@@ -140,8 +140,13 @@
                                 <!-- 対局者1 -->
                                 <div class="text-center" style="flex: 1;">
                                     <div class="position-relative mb-2">
-                                        <img th:if="${match.player1Icon != null}" th:src="${match.player1Icon}" class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" alt="">
-                                        <div th:unless="${match.player1Icon != null}" class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
+                                        <img th:if="${match.player1Icon != null}" th:src="${match.player1Icon}" 
+                                             class="rounded-circle shadow-sm player-detail-trigger" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;" 
+                                             alt="" th:data-player-name="${match.player1Name}">
+                                        <div th:unless="${match.player1Icon != null}" 
+                                             class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm player-detail-trigger" 
+                                             style="width: 60px; height: 60px; cursor: pointer;"
+                                             th:data-player-name="${match.player1Name}">
                                             <i class="bi bi-person text-secondary fs-2"></i>
                                         </div>
                                         <span th:if="${match.player1Sente != null && match.player1Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark">先</span>
@@ -159,8 +164,13 @@
                                 <!-- 対局者2 -->
                                 <div class="text-center" style="flex: 1;">
                                     <div class="position-relative mb-2">
-                                        <img th:if="${match.player2Icon != null}" th:src="${match.player2Icon}" class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" alt="">
-                                        <div th:unless="${match.player2Icon != null}" class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
+                                        <img th:if="${match.player2Icon != null}" th:src="${match.player2Icon}" 
+                                             class="rounded-circle shadow-sm player-detail-trigger" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;" 
+                                             alt="" th:data-player-name="${match.player2Name}">
+                                        <div th:unless="${match.player2Icon != null}" 
+                                             class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm player-detail-trigger" 
+                                             style="width: 60px; height: 60px; cursor: pointer;"
+                                             th:data-player-name="${match.player2Name}">
                                             <i class="bi bi-person text-secondary fs-2"></i>
                                         </div>
                                         <span th:if="${match.player2Sente != null && match.player2Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark">先</span>
@@ -185,6 +195,31 @@
                 現在、表示できる対局情報はありません。
             </div>
         </main>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div class="modal fade" id="playerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="playerName">棋士詳細</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
+                    <table class="table table-sm text-start">
+                        <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
+                        <tr><th>段位</th><td id="playerRank"></td></tr>
+                        <tr><th>生年月日</th><td id="playerBirth"></td></tr>
+                        <tr><th>出身地</th><td id="playerPlace"></td></tr>
+                        <tr><th>門下</th><td id="playerMaster"></td></tr>
+                    </table>
+                    <div class="mt-3 text-end">
+                        <a id="playerProfileLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">日本棋院プロフィール <i class="bi bi-box-arrow-up-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap Bundle with Popper -->
@@ -231,6 +266,51 @@
                 }
             }
         }
+
+        function showPlayerDetail(name) {
+            fetch(`/api/players/${encodeURIComponent(name)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Player info not found');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('playerName').textContent = data.name;
+                    document.getElementById('playerGender').textContent = data.gender || '-';
+                    document.getElementById('playerRank').textContent = data.rank || '-';
+                    document.getElementById('playerBirth').textContent = data.birthDate || '-';
+                    document.getElementById('playerPlace').textContent = data.birthPlace || '-';
+                    document.getElementById('playerMaster').textContent = data.master || '-';
+                    document.getElementById('playerModalIcon').src = data.iconPath || '/images/players/default.jpg';
+                    
+                    const profileLink = document.getElementById('playerProfileLink');
+                    if (data.profileUrl) {
+                        profileLink.href = data.profileUrl;
+                        profileLink.style.display = 'inline-block';
+                    } else {
+                        profileLink.style.display = 'none';
+                    }
+                    
+                    new bootstrap.Modal(document.getElementById('playerModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error fetching player details:', error);
+                    // 詳細が見つからない場合は名前だけ表示するか、アラートを出す
+                    alert('棋士の詳細情報が登録されていません。');
+                });
+        }
+
+        // イベントリスナーの登録
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('click', function(event) {
+                const trigger = event.target.closest('.player-detail-trigger');
+                if (trigger) {
+                    const playerName = trigger.getAttribute('data-player-name');
+                    if (playerName) {
+                        showPlayerDetail(playerName);
+                    }
+                }
+            });
+        });
 
         // ダークモード切り替え機能
         const darkModeSwitch = document.getElementById('darkModeSwitch');

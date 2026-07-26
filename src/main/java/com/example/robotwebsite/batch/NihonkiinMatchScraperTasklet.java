@@ -16,7 +16,9 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import com.example.robotwebsite.batch.NihonkiinPlayerScraper;
 import java.io.IOException;
+import java.util.Optional;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -31,10 +33,13 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
     private final JdbcTemplate jdbcTemplate;
     private static final String URL = "https://www.nihonkiin.or.jp/match/2week.html";
 
-    public NihonkiinMatchScraperTasklet(MatchRepository matchRepository, MatchService matchService, JdbcTemplate jdbcTemplate) {
+    private final NihonkiinPlayerScraper playerScraper;
+
+    public NihonkiinMatchScraperTasklet(MatchRepository matchRepository, MatchService matchService, JdbcTemplate jdbcTemplate, NihonkiinPlayerScraper playerScraper) {
         this.matchRepository = matchRepository;
         this.matchService = matchService;
         this.jdbcTemplate = jdbcTemplate;
+        this.playerScraper = playerScraper;
     }
 
     @Override
@@ -138,13 +143,23 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
                     match.setPlayer2Sente("△".equals(sente2));
                     match.setWinnerName(p1);
                     
+                    // 棋士情報の収集トリガー
+                    playerScraper.scrapeAndSavePlayer(p1);
+                    playerScraper.scrapeAndSavePlayer(p2);
+                    
                 } else if (!isResult && cells.size() >= 3) {
                     // Schedule row format: matchName, player1, (empty/vs), player2
                     match.setMatchName(cells.get(0).text().trim());
-                    match.setPlayer1Name(cells.get(1).text().trim());
-                    match.setPlayer2Name(cells.get(cells.size() - 1).text().trim());
+                    String p1 = cells.get(1).text().trim();
+                    String p2 = cells.get(cells.size() - 1).text().trim();
+                    match.setPlayer1Name(p1);
+                    match.setPlayer2Name(p2);
 
                     if (match.getPlayer1Name().isEmpty() || match.getPlayer2Name().isEmpty()) continue;
+
+                    // 棋士情報の収集トリガー
+                    playerScraper.scrapeAndSavePlayer(p1);
+                    playerScraper.scrapeAndSavePlayer(p2);
                 } else {
                     continue;
                 }

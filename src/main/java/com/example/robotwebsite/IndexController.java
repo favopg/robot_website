@@ -6,6 +6,12 @@ import com.example.robotwebsite.entity.YoutubeLive;
 import com.example.robotwebsite.repository.EventRepository;
 import com.example.robotwebsite.repository.MatchRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
+import com.example.robotwebsite.entity.Player;
+import com.example.robotwebsite.repository.PlayerRepository;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +41,17 @@ public class IndexController {
     private MatchRepository matchRepository;
 
     @Autowired
+    private PlayerRepository playerRepository;
+
+    @Autowired
     private YoutubeLiveRepository youtubeLiveRepository;
+
+    @GetMapping("/api/players/{name}")
+    @ResponseBody
+    public Player getPlayerInfo(@PathVariable String name) {
+        return playerRepository.findByName(name)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
+    }
 
     private Set<String> getPlayerIcons() {
         Set<String> iconNames = new HashSet<>();
@@ -58,21 +74,35 @@ public class IndexController {
     private void setIcons(List<Match> matches) {
         Set<String> icons = getPlayerIcons();
         for (Match m : matches) {
-            String p1Name = m.getPlayer1Name();
-            String p2Name = m.getPlayer2Name();
+            updatePlayerIcon(m, 1, icons);
+            updatePlayerIcon(m, 2, icons);
+        }
+    }
 
+    private void updatePlayerIcon(Match m, int playerNum, Set<String> icons) {
+        String name = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
+        if (name == null) return;
+
+        // まずDBから検索
+        String iconPath = playerRepository.findByName(name)
+                .map(Player::getIconPath)
+                .filter(path -> path != null && !path.isEmpty())
+                .orElse(null);
+
+        // DBにない場合はファイルシステムから検索（後方互換性）
+        if (iconPath == null) {
             for (String iconName : icons) {
-                if (p1Name != null && (p1Name.contains(iconName) || iconName.contains(p1Name))) {
-                    m.setPlayer1Icon("/images/players/" + iconName + ".jpg");
+                if (name.contains(iconName) || iconName.contains(name)) {
+                    iconPath = "/images/players/" + iconName + ".jpg";
                     break;
                 }
             }
-            for (String iconName : icons) {
-                if (p2Name != null && (p2Name.contains(iconName) || iconName.contains(p2Name))) {
-                    m.setPlayer2Icon("/images/players/" + iconName + ".jpg");
-                    break;
-                }
-            }
+        }
+
+        if (playerNum == 1) {
+            m.setPlayer1Icon(iconPath);
+        } else {
+            m.setPlayer2Icon(iconPath);
         }
     }
 
