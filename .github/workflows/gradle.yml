@@ -13,6 +13,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    # ジョブ全体で日本語ロケールを有効にする
+    env:
+      LANG: ja_JP.UTF-8
+      LC_ALL: ja_JP.UTF-8
 
     steps:
     - uses: actions/checkout@v4
@@ -27,26 +31,26 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # 1. ビルド前にファイルを退避（ワイルドカードを使用して確実に移動）
-    - name: Move problematic file away from Gradle
+    # 1. 非ASCII文字（日本語等）を含むファイルを安全に退避
+    - name: Move problematic files away from Gradle
       run: |
-        mkdir -p /home/runner/temp_tsuji
-        mv src/main/resources/static/images/players/辻*.jpg /home/runner/temp_tsuji/
+        mkdir -p /home/runner/temp_resources
+        # LC_ALL=C を使い、非ASCII文字を含むファイルを検索して移動
+        find src/main/resources/static/images/players/ -name '*[! -~]*' -exec mv {} /home/runner/temp_resources/ \;
 
     - name: Build and Test with Gradle
-      run: ./gradlew build --info
+      run: ./gradlew build --info --no-daemon --no-watch-fs
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 0
         JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
-        LANG: ja_JP.UTF-8
 
-    # 2. ビルド完了後、ファイルを成果物ディレクトリに配置
-    - name: Restore and Deploy problematic resource
+    # 2. 退避したファイルを成果物ディレクトリと元の場所に復元
+    - name: Restore resources
       run: |
         mkdir -p build/resources/main/static/images/players/
-        cp /home/runner/temp_tsuji/辻*.jpg build/resources/main/static/images/players/
-        # 次回ビルドのために元の場所にも戻す
-        mv /home/runner/temp_tsuji/辻*.jpg src/main/resources/static/images/players/
+        # 退避していたファイルをコピー（元のファイル名で復元される）
+        cp /home/runner/temp_resources/* build/resources/main/static/images/players/ || true
+        mv /home/runner/temp_resources/* src/main/resources/static/images/players/ || true
 
     - name: Upload Test Results
       if: always()
