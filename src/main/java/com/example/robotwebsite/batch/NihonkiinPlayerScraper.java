@@ -1,7 +1,7 @@
 package com.example.robotwebsite.batch;
 
 import com.example.robotwebsite.entity.Player;
-import com.example.robotwebsite.repository.PlayerRepository;
+import com.example.robotwebsite.service.PlayerService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,21 +19,26 @@ import java.util.regex.Pattern;
 public class NihonkiinPlayerScraper {
 
     private static final Logger logger = LoggerFactory.getLogger(NihonkiinPlayerScraper.class);
-    private final PlayerRepository playerRepository;
-
-    public NihonkiinPlayerScraper(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
+    private final PlayerService playerService;
+    
+    public NihonkiinPlayerScraper(PlayerService playerService) {
+        this.playerService = playerService;
     }
-
+    
     public void scrapeAndSavePlayer(String playerName) {
         if (playerName == null || playerName.isEmpty()) return;
-
-        Optional<Player> existingPlayer = playerRepository.findByName(playerName);
+        
+        Optional<Player> existingPlayer = playerService.findByName(playerName);
         if (existingPlayer.isPresent()) {
-            return;
+            // If essential info is missing, re-scrape
+            Player p = existingPlayer.get();
+            if (p.getGender() != null && p.getRank() != null) {
+                return;
+            }
+            logger.info("Re-scraping player profile to fill missing info: " + playerName);
+        } else {
+            logger.info("Searching for player profile: " + playerName);
         }
-
-        logger.info("Searching for player profile: " + playerName);
         
         try {
             // Remove rank from the end of the name (e.g., "Name Rank" -> "Name")
@@ -67,7 +71,7 @@ public class NihonkiinPlayerScraper {
     public void scrapePlayerDetail(String playerName, String url) {
         try {
             Document doc = Jsoup.connect(url).get();
-            Player player = playerRepository.findByName(playerName).orElse(new Player());
+            Player player = new Player();
             player.setName(playerName);
             player.setProfileUrl(url);
 
@@ -76,69 +80,37 @@ public class NihonkiinPlayerScraper {
                 player.setRank(rankElement.text().trim());
             }
 
-            Elements tables = doc.select("table.inter-table");
+            // Target multiple possible table classes
+            Elements tables = doc.select("table.inter-table, table.table1, table.table-rank");
             for (Element table : tables) {
                 Elements rows = table.select("tr");
                 for (Element row : rows) {
                     String th = row.select("th").text().trim();
                     String td = row.select("td").text().trim();
 
-                    // Using Unicode escapes for "性別", "生年月日", "出身地", "師匠", "門下", "所属", "棋士段位"
-                    if (th.contains("Gender") || th.contains("\u6027\u5225")) {
+                    if (th.contains("Gender") || th.contains("性別")) {
                         player.setGender(td);
-                    } else if (th.contains("Birthday") || th.contains("\u751f\u5e74\u6708\u65e5")) {
-                        player.setBirthDate(parseJapaneseDate(td));
-                    } else if (th.contains("Place") || th.contains("\u51fa\u8eab\u5730")) {
+                    } else if (th.contains("Place") || th.contains("出身地")) {
                         player.setBirthPlace(td);
-                    } else if (th.contains("Master") || th.contains("\u5e2b\u5320") || th.contains("\u9580\u4e0b")) {
-                        player.setMaster(td);
-                    } else if (th.contains("Affiliation") || th.contains("\u6240\u5c5e")) {
+                    } else if (th.contains("Affiliation") || th.contains("所属")) {
                         player.setAffiliation(td);
-                    } else if (th.contains("Rank") || th.contains("\u68cb\u58eb\u6bb5\u4f4d")) {
+                    } else if (th.contains("Rank") || th.contains("棋士段位")) {
                         player.setRank(td);
                     }
                 }
             }
 
-            // If birth date is still null, try searching in the profile section
-            if (player.getBirthDate() == null) {
-                Element profileText = doc.selectFirst("div.profile-text");
-                if (profileText != null) {
-                    player.setBirthDate(parseJapaneseDate(profileText.text()));
-                } else {
-                    // Try searching in the entire document body for a date pattern followed by "生"
-                    player.setBirthDate(parseJapaneseDate(doc.body().text()));
-                }
-            }
-            
             Element imgElement = doc.selectFirst("div.player-photo img");
             if (imgElement != null) {
                 String src = imgElement.absUrl("src");
                 player.setIconPath(src);
             }
 
-            playerRepository.save(player);
+            playerService.saveOrUpdate(player);
             logger.info("Saved player info for: " + playerName);
 
         } catch (IOException e) {
             logger.error("Failed to fetch player detail page: " + url, e);
         }
-    }
-
-    private LocalDate parseJapaneseDate(String dateStr) {
-        try {
-            // Match digits for year, month, day
-            Pattern pattern = Pattern.compile("(\\d+).+(\\d+).+(\\d+).");
-            Matcher matcher = pattern.matcher(dateStr);
-            if (matcher.find()) {
-                int year = Integer.parseInt(matcher.group(1));
-                int month = Integer.parseInt(matcher.group(2));
-                int day = Integer.parseInt(matcher.group(3));
-                return LocalDate.of(year, month, day);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to parse date: " + dateStr);
-        }
-        return null;
     }
 }

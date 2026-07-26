@@ -1,0 +1,1 @@
+ALTER TABLE players DROP COLUMN birth_date;
