@@ -83,7 +83,7 @@ public class NihonkiinPlayerScraper {
                     String th = row.select("th").text().trim();
                     String td = row.select("td").text().trim();
 
-                    // Using Unicode escapes for "性別", "生年月日", "出身地", "師匠", "門下"
+                    // Using Unicode escapes for "性別", "生年月日", "出身地", "師匠", "門下", "所属", "棋士段位"
                     if (th.contains("Gender") || th.contains("\u6027\u5225")) {
                         player.setGender(td);
                     } else if (th.contains("Birthday") || th.contains("\u751f\u5e74\u6708\u65e5")) {
@@ -92,7 +92,22 @@ public class NihonkiinPlayerScraper {
                         player.setBirthPlace(td);
                     } else if (th.contains("Master") || th.contains("\u5e2b\u5320") || th.contains("\u9580\u4e0b")) {
                         player.setMaster(td);
+                    } else if (th.contains("Affiliation") || th.contains("\u6240\u5c5e")) {
+                        player.setAffiliation(td);
+                    } else if (th.contains("Rank") || th.contains("\u68cb\u58eb\u6bb5\u4f4d")) {
+                        player.setRank(td);
                     }
+                }
+            }
+
+            // If birth date is still null, try searching in the profile section
+            if (player.getBirthDate() == null) {
+                Element profileText = doc.selectFirst("div.profile-text");
+                if (profileText != null) {
+                    player.setBirthDate(parseJapaneseDate(profileText.text()));
+                } else {
+                    // Try searching in the entire document body for a date pattern followed by "生"
+                    player.setBirthDate(parseJapaneseDate(doc.body().text()));
                 }
             }
             

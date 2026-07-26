@@ -26,6 +26,8 @@ public class Player {
 
     private String master;
 
+    private String affiliation;
+
     @Column(name = "profile_url")
     private String profileUrl;
 
@@ -56,6 +58,9 @@ public class Player {
 
     public String getMaster() { return master; }
     public void setMaster(String master) { this.master = master; }
+
+    public String getAffiliation() { return affiliation; }
+    public void setAffiliation(String affiliation) { this.affiliation = affiliation; }
 
     public String getProfileUrl() { return profileUrl; }
     public void setProfileUrl(String profileUrl) { this.profileUrl = profileUrl; }
