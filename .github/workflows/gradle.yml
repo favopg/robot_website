@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+﻿name: Java CI with Gradle
 
 on:
   push:
@@ -30,7 +30,8 @@ jobs:
     # 1. ビルド前にファイルを退避（ワイルドカードを使用して確実に移動）
     - name: Move problematic file away from Gradle
       run: |
-        mv src/main/resources/static/images/players/辻*.jpg /home/runner/temp_tsuji.jpg
+        mkdir -p /home/runner/temp_tsuji
+        mv src/main/resources/static/images/players/辻*.jpg /home/runner/temp_tsuji/
 
     - name: Build and Test with Gradle
       run: ./gradlew build --info
@@ -43,9 +44,9 @@ jobs:
     - name: Restore and Deploy problematic resource
       run: |
         mkdir -p build/resources/main/static/images/players/
-        cp /home/runner/temp_tsuji.jpg build/resources/main/static/images/players/辻󠄀篤仁.jpg
+        cp /home/runner/temp_tsuji/辻*.jpg build/resources/main/static/images/players/
         # 次回ビルドのために元の場所にも戻す
-        mv /home/runner/temp_tsuji.jpg "src/main/resources/static/images/players/辻󠄀篤仁.jpg"
+        mv /home/runner/temp_tsuji/辻*.jpg src/main/resources/static/images/players/
 
     - name: Upload Test Results
       if: always()
