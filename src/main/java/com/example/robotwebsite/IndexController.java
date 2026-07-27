@@ -194,6 +194,7 @@ public class IndexController {
 
         model.addAttribute("matches", results);
         setIcons(results);
+        model.addAttribute("today", LocalDate.now());
         model.addAttribute("months", months);
         model.addAttribute("title", titlePrefix + "プロ棋士対局結果");
         return "match_list";
@@ -212,6 +213,7 @@ public class IndexController {
 
         model.addAttribute("matches", schedules);
         setIcons(schedules);
+        model.addAttribute("today", today);
         model.addAttribute("title", "プロ棋士対局予定");
         return "match_list";
     }
@@ -225,6 +227,7 @@ public class IndexController {
 
         model.addAttribute("matches", allMatches);
         setIcons(allMatches);
+        model.addAttribute("today", today);
         model.addAttribute("title", "プロ棋士対局一覧");
         return "match_list";
     }
