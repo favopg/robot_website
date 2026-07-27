@@ -59,17 +59,17 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-3">
         
         <main>
             <!-- 検索窓の追加 -->
-            <div class="mb-4">
+            <div class="mb-3">
                 <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()">
             </div>
 
             <!-- 既存のイベント情報セクション -->
-            <section class="mb-5">
-                <h2 class="border-bottom pb-2">イベント情報</h2>
+            <section class="mb-4">
+                <h2 class="h4 border-bottom pb-2">イベント情報</h2>
 
                 <!-- 上部ページングナビゲーション -->
                 <nav th:if="${events.totalPages > 1}" aria-label="Page navigation" class="mb-3">
@@ -107,7 +107,7 @@
                                     <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
                                 </td>
                             </tr>
-                            <tr th:if="${events.empty}">
+                            <tr th:if="${events.isEmpty()}">
                                 <td colspan="3" class="text-center">現在、表示できるイベント情報はありません。</td>
                             </tr>
                         </tbody>

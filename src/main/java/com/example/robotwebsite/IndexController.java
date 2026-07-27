@@ -204,7 +204,7 @@ public class IndexController {
     public String matchSchedule(Model model) {
         LocalDate today = LocalDate.now();
         // 今後の予定を取得
-        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(
+        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
                 today, today.plusWeeks(2));
 
         List<Match> schedules = allMatches.stream()
@@ -222,7 +222,7 @@ public class IndexController {
     public String matchList(Model model) {
         LocalDate today = LocalDate.now();
         // 過去2週間から未来2週間分を取得
-        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(
+        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
                 today.minusWeeks(2), today.plusWeeks(2));
 
         model.addAttribute("matches", allMatches);
