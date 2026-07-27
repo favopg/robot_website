@@ -20,9 +20,11 @@ public class NihonkiinPlayerScraper {
 
     private static final Logger logger = LoggerFactory.getLogger(NihonkiinPlayerScraper.class);
     private final PlayerService playerService;
+    private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
     
-    public NihonkiinPlayerScraper(PlayerService playerService) {
+    public NihonkiinPlayerScraper(PlayerService playerService, KansaikiinPlayerScraper kansaikiinPlayerScraper) {
         this.playerService = playerService;
+        this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
     }
     
     public void scrapeAndSavePlayer(String playerName) {
@@ -58,6 +60,11 @@ public class NihonkiinPlayerScraper {
                     scrapePlayerDetail(playerName, detailUrl);
                     return;
                 }
+            }
+            
+            // 2. Search in Kansaikiin if not found in Nihonkiin
+            if (kansaikiinPlayerScraper.scrapeAndSavePlayer(playerName)) {
+                return;
             }
             
             logger.warn("Profile URL not found for player: " + playerName + " (searched in dan list as: " + searchName + ")");
