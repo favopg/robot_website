@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.4.1'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -30,13 +30,14 @@ dependencies {
     implementation 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
     testImplementation 'com.h2database:h2'
-    implementation 'com.microsoft.playwright:playwright:1.43.0'
-    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'com.microsoft.playwright:playwright:1.61.0'
+    implementation 'org.jsoup:jsoup:1.22.2'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.batch:spring-batch-test'
-    testImplementation 'org.apache.poi:poi:5.2.5'
-    testImplementation 'org.apache.poi:poi-ooxml:5.2.5'
+    testImplementation 'org.apache.poi:poi:5.5.1'
+    testImplementation 'org.apache.poi:poi-ooxml:5.5.1'
+    testImplementation 'org.apache.commons:commons-lang3:3.18.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

@@ -34,7 +34,7 @@ public class NihonkiinPlayerScraper {
         if (existingPlayer.isPresent()) {
             // If essential info is missing, re-scrape
             Player p = existingPlayer.get();
-            if (p.getGender() != null && p.getRank() != null) {
+            if (p.getGender() != null && p.getRank() != null && p.getIconPath() != null) {
                 return;
             }
             logger.info("Re-scraping player profile to fill missing info: " + playerName);
@@ -43,18 +43,19 @@ public class NihonkiinPlayerScraper {
         }
         
         try {
-            // Remove rank from the end of the name (e.g., "Name Rank" -> "Name")
-            String searchName = playerName.replaceAll("[\\s\u3000]*([一二三四五六七八九十]|\\d+)段$", "").trim();
+            // Remove rank and titles from the end of the name
+            // e.g., "一力遼 名人" -> "一力遼", "芝野虎丸 棋聖" -> "芝野虎丸"
+            String searchName = playerName.replaceAll("[\\s\u3000]*(([一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+).*$", "").trim();
             
             // 1. Search in /player/dan/ (high reliability)
             String danUrl = "https://www.nihonkiin.or.jp/player/dan/";
             Document danDoc = Jsoup.connect(danUrl).get();
             Elements links = danDoc.select("a[href*=/player/htm/ki]");
             
+            String normalizedSearchName = searchName.replaceAll("[\\s\u3000]+", "");
             for (Element link : links) {
                 // Match name (remove all whitespace for comparison)
                 String linkText = link.text().replaceAll("[\\s\u3000]+", "");
-                String normalizedSearchName = searchName.replaceAll("[\\s\u3000]+", "");
                 if (linkText.equals(normalizedSearchName) || link.attr("href").contains(normalizedSearchName)) {
                     String detailUrl = link.absUrl("href");
                     scrapePlayerDetail(playerName, detailUrl);
@@ -67,7 +68,7 @@ public class NihonkiinPlayerScraper {
                 return;
             }
             
-            logger.warn("Profile URL not found for player: " + playerName + " (searched in dan list as: " + searchName + ")");
+            logger.warn("Profile URL not found for player: " + playerName + " (searched as: " + searchName + ")");
         } catch (org.jsoup.HttpStatusException e) {
             logger.error("HTTP error searching player: " + playerName + " - Status=" + e.getStatusCode() + ", URL=" + e.getUrl());
         } catch (Exception e) {
@@ -92,8 +93,12 @@ public class NihonkiinPlayerScraper {
             for (Element table : tables) {
                 Elements rows = table.select("tr");
                 for (Element row : rows) {
-                    String th = row.select("th").text().trim();
-                    String td = row.select("td").text().trim();
+                    Elements ths = row.select("th");
+                    Elements tds = row.select("td");
+                    if (ths.isEmpty() || tds.isEmpty()) continue;
+                    
+                    String th = ths.text().trim();
+                    String td = tds.text().trim();
 
                     if (th.contains("Gender") || th.contains("性別")) {
                         player.setGender(td);
@@ -107,7 +112,8 @@ public class NihonkiinPlayerScraper {
                 }
             }
 
-            Element imgElement = doc.selectFirst("div.player-photo img");
+            // NIHONKIIN uses div.photo img for profile pictures
+            Element imgElement = doc.selectFirst("div.photo img, div.player-photo img");
             if (imgElement != null) {
                 String src = imgElement.absUrl("src");
                 player.setIconPath(src);
