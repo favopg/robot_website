@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light">
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -64,13 +64,14 @@
         <main>
             <!-- 検索窓の追加 -->
             <div class="mb-3">
-                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()">
+                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()" title="イベント検索">
             </div>
 
             <!-- 既存のイベント情報セクション -->
             <section class="mb-4">
                 <h2 class="h4 border-bottom pb-2">イベント情報</h2>
 
+                <!--/* @thymesVar id="events" type="org.springframework.data.domain.Page<com.example.robotwebsite.entity.Event>" */-->
                 <!-- 上部ページングナビゲーション -->
                 <nav th:if="${events.totalPages > 1}" aria-label="Page navigation" class="mb-3">
                     <ul class="pagination justify-content-center">
@@ -101,6 +102,7 @@
                         </thead>
                         <tbody>
                             <tr th:each="event : ${events.content}" class="filterable-item">
+                                <!--/* @thymesVar id="event" type="com.example.robotwebsite.entity.Event" */-->
                                 <td th:text="${event.eventDate}">2026-01-01</td>
                                 <td th:text="${event.title}" class="search-target">イベントタイトル</td>
                                 <td>

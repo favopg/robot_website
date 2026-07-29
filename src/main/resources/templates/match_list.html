@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light">
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,23 +24,12 @@
             overflow-wrap: break-word;
             white-space: normal;
         }
-        .player-icon {
-            width: 30px;
-            height: 30px;
-            object-fit: cover;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        .player-icon-mobile {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 50%;
-            margin-bottom: 5px;
-        }
         /* 本日の対局を強調するカスタムスタイル */
-        .match-card.border-danger {
+        /* noinspection CssUnusedSymbol */
+        .highlight-today {
             box-shadow: 0 0 15px rgba(220, 53, 69, 0.4) !important;
+            border-color: #dc3545 !important;
+            border-width: 3px !important;
         }
     </style>
 </head>
@@ -120,7 +109,7 @@
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
-                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." onkeyup="filterTable()">
+                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." onkeyup="filterTable()" title="対局検索">
                     </div>
                 </div>
                 <div class="col-md-6" th:if="${title.contains('結果')}">
@@ -133,9 +122,11 @@
 
             <!-- PC・モバイル共通のカードグリッド形式 -->
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+                <!--/* @thymesVar id="matches" type="java.util.List<com.example.robotwebsite.entity.Match>" */-->
                 <div th:each="match : ${matches}" class="col match-item" th:data-winner="${match.winnerName}">
-                    <div class="card h-100 shadow-sm border-0 border-top border-4 match-card"
-                         th:classappend="${match.matchDate == today && !title.contains('結果')} ? 'border-danger border-3 shadow' : 'border-primary'">
+                    <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
+                    <div class="card h-100 shadow-sm border-0 border-top border-4 border-primary"
+                         th:classappend="${match.matchDate == today && !title.contains('結果')} ? 'highlight-today' : ''">
                         <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3">
                             <span class="badge bg-secondary" th:text="${match.matchName}">棋戦名</span>
                             <small class="text-muted"><i class="bi bi-calendar3 me-1"></i><span th:text="${match.matchDate}">2026-07-01</span></small>
@@ -147,7 +138,7 @@
                                     <div class="position-relative mb-2">
                                         <img th:if="${match.player1Icon != null}" th:src="${match.player1Icon}" 
                                              class="rounded-circle shadow-sm player-detail-trigger" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;" 
-                                             alt="" th:data-player-name="${match.player1Name}">
+                                             alt="対局者1" th:alt="${match.player1Name}" th:data-player-name="${match.player1Name}">
                                         <div th:unless="${match.player1Icon != null}" 
                                              class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm player-detail-trigger" 
                                              style="width: 60px; height: 60px; cursor: pointer;"
@@ -171,7 +162,7 @@
                                     <div class="position-relative mb-2">
                                         <img th:if="${match.player2Icon != null}" th:src="${match.player2Icon}" 
                                              class="rounded-circle shadow-sm player-detail-trigger" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;" 
-                                             alt="" th:data-player-name="${match.player2Name}">
+                                             alt="対局者2" th:alt="${match.player2Name}" th:data-player-name="${match.player2Name}">
                                         <div th:unless="${match.player2Icon != null}" 
                                              class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm player-detail-trigger" 
                                              style="width: 60px; height: 60px; cursor: pointer;"
@@ -211,7 +202,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
-                    <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
+                    <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="棋士アイコン">
                     <table class="table table-sm text-start">
                         <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
                         <tr><th>段位</th><td id="playerRank"></td></tr>
@@ -262,8 +253,8 @@
             // 結果の表示更新
             if (resultArea) {
                 if (query !== "") {
-                    document.getElementById('winCount').textContent = wins;
-                    document.getElementById('lossCount').textContent = losses;
+                    document.getElementById('winCount').textContent = String(wins);
+                    document.getElementById('lossCount').textContent = String(losses);
                     resultArea.style.display = 'inline';
                 } else {
                     resultArea.style.display = 'none';
@@ -293,6 +284,7 @@
                         profileLink.style.display = 'none';
                     }
                     
+                    // noinspection JSUnresolvedReference
                     new bootstrap.Modal(document.getElementById('playerModal')).show();
                 })
                 .catch(error => {
