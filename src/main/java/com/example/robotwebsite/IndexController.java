@@ -8,11 +8,12 @@ import com.example.robotwebsite.repository.MatchRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import com.example.robotwebsite.entity.Player;
 import com.example.robotwebsite.service.PlayerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,17 +35,20 @@ import java.util.stream.Collectors;
 @Controller
 public class IndexController {
 
-    @Autowired
-    private EventRepository eventRepository;
+    private static final Logger logger = LoggerFactory.getLogger(IndexController.class);
 
-    @Autowired
-    private MatchRepository matchRepository;
+    private final EventRepository eventRepository;
+    private final MatchRepository matchRepository;
+    private final PlayerService playerService;
+    private final YoutubeLiveRepository youtubeLiveRepository;
 
-    @Autowired
-    private PlayerService playerService;
-
-    @Autowired
-    private YoutubeLiveRepository youtubeLiveRepository;
+    public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
+                           PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository) {
+        this.eventRepository = eventRepository;
+        this.matchRepository = matchRepository;
+        this.playerService = playerService;
+        this.youtubeLiveRepository = youtubeLiveRepository;
+    }
 
     @GetMapping("/api/players/{name}")
     @ResponseBody
@@ -79,7 +83,7 @@ public class IndexController {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Failed to get player icons", e);
         }
         return iconNames;
     }
@@ -109,7 +113,7 @@ public class IndexController {
         if (iconPath == null) {
             iconPath = playerService.findByName(name)
                     .map(Player::getIconPath)
-                    .filter(path -> path != null && !path.isEmpty())
+                    .filter(path -> !path.isEmpty())
                     .orElse(null);
         }
 
@@ -159,17 +163,16 @@ public class IndexController {
             titlePrefix = "全データ ";
         } else if (year != null && month != null) {
             LocalDate startDate = LocalDate.of(year, month, 1);
-            LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
             titlePrefix = year + "年" + month + "月 ";
-            List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(startDate, endDate);
+            List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(
+                    startDate, startDate.withDayOfMonth(startDate.lengthOfMonth()));
             results = allMatches.stream()
                     .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
                     .collect(Collectors.toList());
         } else {
             LocalDate today = LocalDate.now();
-            LocalDate startDate = today.minusWeeks(2);
-            LocalDate endDate = today;
-            List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(startDate, endDate);
+            List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateDesc(
+                    today.minusWeeks(2), today);
             results = allMatches.stream()
                     .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
                     .collect(Collectors.toList());
