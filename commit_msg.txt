@@ -1,0 +1,3 @@
+ナビゲーションメニューの改善：ラベル変更、カテゴリ分け、アイコン追加
+
+Co-authored-by: Junie <junie@jetbrains.com>

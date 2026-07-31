@@ -125,13 +125,21 @@ public class IndexController {
     }
 
     @GetMapping("/")
-    public String index(Model model, @RequestParam(defaultValue = "0") int page) {
-        // 既存のイベント情報をページング表示（1ページ20件）
+    public String index(Model model) {
+        // LP用に最新の5件のみ取得
+        Pageable pageable = PageRequest.of(0, 5, Sort.by("eventDate").descending());
+        Page<Event> eventPage = eventRepository.findAll(pageable);
+        model.addAttribute("events", eventPage.getContent());
+        return "index";
+    }
+
+    @GetMapping("/events")
+    public String allEvents(Model model, @RequestParam(defaultValue = "0") int page) {
+        // 全件表示用のページング（1ページ20件）
         Pageable pageable = PageRequest.of(page, 20, Sort.by("eventDate").descending());
         Page<Event> eventPage = eventRepository.findAll(pageable);
         model.addAttribute("events", eventPage);
-
-        return "index";
+        return "event_list";
     }
 
     @GetMapping("/youtube-schedule")

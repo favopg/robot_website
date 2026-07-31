@@ -6,6 +6,8 @@
     <title>制作者が役立つ囲碁情報サイト</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -16,18 +18,36 @@
         .navbar-custom .nav-link:hover {
             color: #d1ecf1;
         }
-        /* タイトルが長い場合に折り返すための設定 */
-        .table td {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
+        .hero-section {
+            background: linear-gradient(rgba(0, 64, 133, 0.8), rgba(0, 64, 133, 0.8)), url('https://images.unsplash.com/photo-1596566847854-554471f4923e?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+        }
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: #004085;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background-color: #004085;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 auto 1rem;
         }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">制作者が役立つ囲碁情報サイト</a>
+            <a class="navbar-brand" href="/">制作者が役立つ囲碁情報サイト</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -35,19 +55,28 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLinkIgo" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            囲碁
+                            <i class="bi bi-info-circle"></i> 囲碁情報
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLinkIgo">
-                            <li><a class="dropdown-item" href="/">イベント一覧</a></li>
+                            <!-- 一般イベント -->
+                            <li><h6 class="dropdown-header">一般イベント</h6></li>
+                            <li><a class="dropdown-item" href="/events"><i class="bi bi-calendar-event me-2"></i>イベント一覧</a></li>
+                            
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/match-list">プロ棋士対局一覧</a></li>
-                            <li><a class="dropdown-item" href="/match-results">プロ棋士対局結果</a></li>
-                            <li><a class="dropdown-item" href="/match-schedule">プロ棋士対局予定</a></li>
-                            <li><a class="dropdown-item" href="/youtube-schedule">YouTube 配信予定</a></li>
+                            
+                            <!-- プロ棋士対局 -->
+                            <li><h6 class="dropdown-header">プロ棋士対局</h6></li>
+                            <li><a class="dropdown-item" href="/match-list"><i class="bi bi-list-ul me-2"></i>対局一覧</a></li>
+                            <li><a class="dropdown-item" href="/match-schedule"><i class="bi bi-clock-history me-2"></i>対局予定</a></li>
+                            <li><a class="dropdown-item" href="/match-results"><i class="bi bi-trophy me-2"></i>対局結果</a></li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- 動画配信 -->
+                            <li><h6 class="dropdown-header">動画配信</h6></li>
+                            <li><a class="dropdown-item" href="/youtube-schedule"><i class="bi bi-youtube me-2"></i>YouTube 配信予定</a></li>
                         </ul>
                     </li>
-                    <!--
-                    -->
                 </ul>
                 <div class="d-flex align-items-center">
                     <div class="form-check form-switch text-light">
@@ -59,114 +88,146 @@
         </div>
     </nav>
 
-    <div class="container mt-3">
-        
-        <main>
-            <!-- 検索窓の追加 -->
-            <div class="mb-3">
-                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()" title="イベント検索">
+    <!-- ヒーローセクション -->
+    <header class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">囲碁の「今」と「これから」を、ひと目で。</h1>
+            <p class="lead mb-4">複数の公式サイトから集めたイベントや対局情報を集約したポータルサイトです。</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="/match-schedule" class="btn btn-primary btn-lg px-4 gap-3">対局予定を見る</a>
+                <a href="/events" class="btn btn-outline-light btn-lg px-4">イベントを探す</a>
             </div>
+        </div>
+    </header>
 
-            <!-- 既存のイベント情報セクション -->
-            <section class="mb-4">
-                <h2 class="h4 border-bottom pb-2">イベント情報</h2>
-
-                <!--/* @thymesVar id="events" type="org.springframework.data.domain.Page<com.example.robotwebsite.entity.Event>" */-->
-                <!-- 上部ページングナビゲーション -->
-                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation" class="mb-3">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
-                            <a class="page-link" th:href="@{/(page=${events.number - 1})}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
-                            <a class="page-link" th:href="@{/(page=${i})}" th:text="${i + 1}">1</a>
-                        </li>
-                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
-                            <a class="page-link" th:href="@{/(page=${events.number + 1})}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>日付</th>
-                                <th>タイトル</th>
-                                <th>詳細</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="event : ${events.content}" class="filterable-item">
-                                <!--/* @thymesVar id="event" type="com.example.robotwebsite.entity.Event" */-->
-                                <td th:text="${event.eventDate}">2026-01-01</td>
-                                <td th:text="${event.title}" class="search-target">イベントタイトル</td>
-                                <td>
-                                    <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
-                                </td>
-                            </tr>
-                            <tr th:if="${events.isEmpty()}">
-                                <td colspan="3" class="text-center">現在、表示できるイベント情報はありません。</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <main>
+        <!-- このサイトでできること -->
+        <section class="container py-5">
+            <h2 class="text-center mb-5">このサイトでできること</h2>
+            <div class="row g-4">
+                <div class="col-md-4 text-center">
+                    <div class="p-3 shadow-sm rounded bg-body">
+                        <i class="bi bi-calendar-event card-icon"></i>
+                        <h4>イベント情報</h4>
+                        <p>各地の囲碁イベントを網羅。参加したい大会や指導碁が見つかります。</p>
+                    </div>
                 </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 shadow-sm rounded bg-body">
+                        <i class="bi bi-clock-history card-icon"></i>
+                        <h4>対局予定一覧</h4>
+                        <p>プロ棋士の今後の対局スケジュールを確認。見逃せない対局をチェックしましょう。</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 shadow-sm rounded bg-body">
+                        <i class="bi bi-trophy card-icon"></i>
+                        <h4>対局結果</h4>
+                        <p>昨日の対局結果もすぐに確認。推し棋士の戦績を追いかけられます。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                <!-- ページングナビゲーション -->
-                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
-                            <a class="page-link" th:href="@{/(page=${events.number - 1})}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
-                            <a class="page-link" th:href="@{/(page=${i})}" th:text="${i + 1}">1</a>
-                        </li>
-                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
-                            <a class="page-link" th:href="@{/(page=${events.number + 1})}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </section>
-        </main>
-    </div>
+        <!-- 使い方・ページの見方ガイド -->
+        <section class="bg-light py-5">
+            <div class="container">
+                <h2 class="text-center mb-5">使い方・ページの見方ガイド</h2>
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary"><i class="bi bi-1-circle-fill me-2"></i>イベント情報の見方</h5>
+                                <ul class="list-unstyled mt-3">
+                                    <li class="mb-2"><strong>何が見れる？:</strong> 日本棋院、関西棋院などの公式サイトから集めた最新の大会、イベント、指導碁情報。</li>
+                                    <li class="mb-2"><strong>使い方のコツ:</strong> 検索窓を使って、自分の住んでいる地域や好きな棋士名でフィルタリングできます。</li>
+                                    <li><strong>リンク:</strong> 「リンク」ボタンから公式サイトの原文へ直接アクセスできます。</li>
+                                </ul>
+                                <a href="/events" class="btn btn-sm btn-outline-primary mt-auto">イベント一覧へ</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary"><i class="bi bi-2-circle-fill me-2"></i>対局予定一覧の見方</h5>
+                                <ul class="list-unstyled mt-3">
+                                    <li class="mb-2"><strong>何が見れる？:</strong> これから行われる公式戦の組み合わせと日時。</li>
+                                    <li class="mb-2"><strong>注目ポイント:</strong> 「今日」の対局は枠が強調されるので、今まさに注目すべき対局がすぐに分かります。</li>
+                                    <li><strong>アイコン:</strong> 棋士の顔写真アイコンが表示されるので、誰と誰の対局か直感的に把握できます。</li>
+                                </ul>
+                                <a href="/match-schedule" class="btn btn-sm btn-outline-primary mt-auto">対局予定へ</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary"><i class="bi bi-3-circle-fill me-2"></i>対局結果の見方</h5>
+                                <ul class="list-unstyled mt-3">
+                                    <li class="mb-2"><strong>何が見れる？:</strong> 過去に行われた対局の勝敗結果。</li>
+                                    <li class="mb-2"><strong>使い方のコツ:</strong> 「月別結果」ボタンで過去の月を選択して、その時期の戦績を振り返ることができます。</li>
+                                    <li><strong>結果の見方:</strong> 「黒番 ○目勝ち」「中押し勝ち」などの詳細な結果を表示しています。</li>
+                                </ul>
+                                <a href="/match-results" class="btn btn-sm btn-outline-primary mt-auto">対局結果へ</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 最新イベント情報（プレビュー版） -->
+        <section class="container py-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h4 border-bottom pb-2 mb-0">最新イベント情報</h2>
+                <a href="/events" class="btn btn-sm btn-outline-secondary">もっと見る</a>
+            </div>
+            <div class="table-responsive shadow-sm">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 150px;">日付</th>
+                            <th>タイトル</th>
+                            <th style="width: 100px;">詳細</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="event : ${events}">
+                            <td th:text="${event.eventDate}">2026-01-01</td>
+                            <td th:text="${event.title}">イベントタイトル</td>
+                            <td>
+                                <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(events)}">
+                            <td colspan="3" class="text-center py-4">現在、表示できるイベント情報はありません。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2026 制作者が役立つ囲碁情報サイト</p>
+        </div>
+    </footer>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        function globalFilter() {
-            const query = document.getElementById('globalSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('.filterable-item');
-
-            rows.forEach(row => {
-                const targetText = row.querySelector('.search-target').textContent.toLowerCase();
-                if (targetText.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
         // ダークモード切り替え機能
         const darkModeSwitch = document.getElementById('darkModeSwitch');
         const htmlElement = document.documentElement;
 
-        // 保存されたテーマを読み込む
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             htmlElement.setAttribute('data-bs-theme', savedTheme);
             darkModeSwitch.checked = (savedTheme === 'dark');
         } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            // システム設定がダークモードの場合
             htmlElement.setAttribute('data-bs-theme', 'dark');
             darkModeSwitch.checked = true;
         }

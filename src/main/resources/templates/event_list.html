@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>プロ棋士対局予定</title>
+    <title>イベント一覧 - 制作者が役立つ囲碁情報サイト</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -18,7 +18,6 @@
         .navbar-custom .nav-link:hover {
             color: #d1ecf1;
         }
-        /* タイトルが長い場合に折り返すための設定 */
         .table td {
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -71,62 +70,86 @@
     </nav>
 
     <div class="container mt-3">
-        <header class="mb-3 border-bottom pb-2">
-            <h1 class="h3 mb-1">プロ棋士対局予定・結果</h1>
-            <p class="text-muted small mb-0">日本棋院から取得した直近1週間の対局結果と今後1週間の対局予定を表示します。</p>
-        </header>
-        
         <main>
-            <!-- 検索窓の追加 -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <input type="text" id="playerSearch" class="form-control form-control-sm" placeholder="棋士名でフィルター..." onkeyup="filterTable()" title="棋士名検索">
-                </div>
+            <div class="mb-3">
+                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()" title="イベント検索">
             </div>
 
-            <div class="table-responsive">
-                <!--/* @thymesVar id="matches" type="java.util.List<com.example.robotwebsite.entity.Match>" */-->
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>対局日</th>
-                            <th>棋戦</th>
-                            <th>対局者</th>
-                            <th>結果</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
-                        <tr th:each="match : ${matches}" class="match-row">
-                            <td th:text="${match.matchDate}">2026-07-01</td>
-                            <td th:text="${match.matchName}">本因坊戦</td>
-                            <td class="player-names">
-                                <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
-                                vs
-                                <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
-                            </td>
-                            <td th:text="${match.result}">-</td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(matches)}">
-                            <td colspan="4" class="text-center">現在、表示できる対局情報はありません。</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <section class="mb-4">
+                <h2 class="h4 border-bottom pb-2">イベント情報</h2>
+
+                <!--/* @thymesVar id="events" type="org.springframework.data.domain.Page<com.example.robotwebsite.entity.Event>" */-->
+                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation" class="mb-3">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
+                            <a class="page-link" th:href="@{/events(page=${events.number - 1})}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
+                            <a class="page-link" th:href="@{/events(page=${i})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
+                            <a class="page-link" th:href="@{/events(page=${events.number + 1})}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>日付</th>
+                                <th>タイトル</th>
+                                <th>詳細</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="event : ${events.content}" class="filterable-item">
+                                <td th:text="${event.eventDate}">2026-01-01</td>
+                                <td th:text="${event.title}" class="search-target">イベントタイトル</td>
+                                <td>
+                                    <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
+                                </td>
+                            </tr>
+                            <tr th:if="${events.isEmpty()}">
+                                <td colspan="3" class="text-center">現在、表示できるイベント情報はありません。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
+                            <a class="page-link" th:href="@{/events(page=${events.number - 1})}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
+                            <a class="page-link" th:href="@{/events(page=${i})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
+                            <a class="page-link" th:href="@{/events(page=${events.number + 1})}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </section>
         </main>
     </div>
 
-    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        function filterTable() {
-            const query = document.getElementById('playerSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('.match-row');
-
+        function globalFilter() {
+            const query = document.getElementById('globalSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('.filterable-item');
             rows.forEach(row => {
-                const text = row.querySelector('.player-names').textContent.toLowerCase();
-                if (text.includes(query)) {
+                const targetText = row.querySelector('.search-target').textContent.toLowerCase();
+                if (targetText.includes(query)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -134,21 +157,16 @@
             });
         }
 
-        // ダークモード切り替え機能
         const darkModeSwitch = document.getElementById('darkModeSwitch');
         const htmlElement = document.documentElement;
-
-        // 保存されたテーマを読み込む
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             htmlElement.setAttribute('data-bs-theme', savedTheme);
             darkModeSwitch.checked = (savedTheme === 'dark');
         } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            // システム設定がダークモードの場合
             htmlElement.setAttribute('data-bs-theme', 'dark');
             darkModeSwitch.checked = true;
         }
-
         darkModeSwitch.addEventListener('change', () => {
             if (darkModeSwitch.checked) {
                 htmlElement.setAttribute('data-bs-theme', 'dark');
