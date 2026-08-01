@@ -1,6 +1,7 @@
 package com.example.robotwebsite.batch;
 
 import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.ElementHandle;
 import com.microsoft.playwright.Page;
@@ -47,7 +48,8 @@ public class SiteSourceCheckTasklet implements Tasklet {
         List<EventRecord> allEvents = new ArrayList<>();
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-            Page page = browser.newPage();
+            BrowserContext context = browser.newContext(new Browser.NewContextOptions().setTimezoneId("Asia/Tokyo"));
+            Page page = context.newPage();
 
             for (Map<String, Object> source : sources) {
                 Long id = (Long) source.get("id");

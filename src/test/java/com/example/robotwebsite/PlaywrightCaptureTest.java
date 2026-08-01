@@ -1,6 +1,7 @@
 package com.example.robotwebsite;
 
 import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -61,7 +62,8 @@ class PlaywrightCaptureTest {
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-            Page page = browser.newPage();
+            BrowserContext context = browser.newContext(new Browser.NewContextOptions().setTimezoneId("Asia/Tokyo"));
+            Page page = context.newPage();
             page.navigate("http://localhost:" + port);
             
             // キャプチャを取得

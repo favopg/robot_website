@@ -43,6 +43,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 並列実行を制限してCI環境でのメモリ不足やハングを防ぐ
+    maxParallelForks = 1
 }
 
 sourceSets {
