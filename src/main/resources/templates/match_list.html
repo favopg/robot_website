@@ -235,6 +235,7 @@
                     <table class="table table-sm text-start">
                         <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
                         <tr><th>段位</th><td id="playerRank"></td></tr>
+                        <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
                         <tr><th>出身地</th><td id="playerPlace"></td></tr>
                         <tr><th>所属</th><td id="playerAffiliation"></td></tr>
                     </table>
@@ -324,6 +325,7 @@
                     document.getElementById('playerName').textContent = data.name;
                     document.getElementById('playerGender').textContent = data.gender || '-';
                     document.getElementById('playerRank').textContent = data.rank || '-';
+                    document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
                     document.getElementById('playerPlace').textContent = data.birthPlace || '-';
                     document.getElementById('playerAffiliation').textContent = data.affiliation || '-';
                     document.getElementById('playerModalIcon').src = data.iconPath || '/images/players/default.jpg';

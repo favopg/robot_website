@@ -21,6 +21,9 @@ public class Player {
     @Column(name = "birth_place")
     private String birthPlace;
 
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     private String affiliation;
 
     @Column(name = "profile_url")
@@ -47,6 +50,9 @@ public class Player {
 
     public String getBirthPlace() { return birthPlace; }
     public void setBirthPlace(String birthPlace) { this.birthPlace = birthPlace; }
+
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
     public String getAffiliation() { return affiliation; }
     public void setAffiliation(String affiliation) { this.affiliation = affiliation; }

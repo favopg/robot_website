@@ -34,6 +34,7 @@ public class PlayerService {
                     existing.setGender(player.getGender());
                     existing.setRank(player.getRank());
                     existing.setBirthPlace(player.getBirthPlace());
+                    existing.setBirthDate(player.getBirthDate());
                     existing.setAffiliation(player.getAffiliation());
                     existing.setProfileUrl(player.getProfileUrl());
                     existing.setIconPath(player.getIconPath());
