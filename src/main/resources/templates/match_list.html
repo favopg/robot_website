@@ -55,7 +55,6 @@
                             
                             <!-- プロ棋士対局 -->
                             <li><h6 class="dropdown-header">プロ棋士対局</h6></li>
-                            <li><a class="dropdown-item" href="/match-list"><i class="bi bi-list-ul me-2"></i>対局一覧</a></li>
                             <li><a class="dropdown-item" href="/match-schedule"><i class="bi bi-clock-history me-2"></i>対局予定</a></li>
                             <li><a class="dropdown-item" href="/match-results"><i class="bi bi-trophy me-2"></i>対局結果</a></li>
                             
@@ -82,7 +81,6 @@
             <h1 class="h3 mb-1" th:text="${title}">対局情報</h1>
             <p class="text-muted small mb-0" th:if="${title.contains('予定')}">今後の対局予定を表示します。</p>
             <p class="text-muted small mb-0" th:if="${title.contains('結果')}">直近の対局結果を表示します。</p>
-            <p class="text-muted small mb-0" th:if="${title.contains('一覧')}">直近および今後の対局情報を表示します。</p>
         </header>
         
         <main>

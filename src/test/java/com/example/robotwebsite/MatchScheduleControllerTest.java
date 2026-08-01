@@ -94,23 +94,6 @@ public class MatchScheduleControllerTest {
                 .andExpect(model().attributeExists("matches"));
     }
 
-    @Test
-    public void testMatchListPage() throws Exception {
-        // Create a match
-        Match match = new Match();
-        match.setMatchDate(LocalDate.now());
-        match.setMatchName("Test Match List");
-        match.setPlayer1Name("Player G");
-        match.setPlayer2Name("Player H");
-        match.setUrl("test-url-4");
-        matchRepository.save(match);
-
-        mockMvc.perform(get("/match-list"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("match_list"))
-                .andExpect(model().attributeExists("matches"))
-                .andExpect(model().attribute("title", "プロ棋士対局一覧"));
-    }
 
     @Test
     public void testMatchScheduleSorting() throws Exception {

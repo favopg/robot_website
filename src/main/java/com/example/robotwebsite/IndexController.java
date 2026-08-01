@@ -56,7 +56,7 @@ public class IndexController {
         Player player = playerService.findByName(name)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
         
-        // アイコンパスの解決（対局一覧と同じロジックを適用）
+        // アイコンパスの解決
         // まずファイルシステムから検索（優先）
         Set<String> localIcons = getPlayerIcons();
         for (String iconName : localIcons) {
@@ -229,17 +229,4 @@ public class IndexController {
         return "match_list";
     }
 
-    @GetMapping("/match-list")
-    public String matchList(Model model) {
-        LocalDate today = LocalDate.now();
-        // 過去2週間から未来2週間分を取得
-        List<Match> allMatches = matchRepository.findByMatchDateBetweenOrderByMatchDateAsc(
-                today.minusWeeks(2), today.plusWeeks(2));
-
-        model.addAttribute("matches", allMatches);
-        setIcons(allMatches);
-        model.addAttribute("today", today);
-        model.addAttribute("title", "プロ棋士対局一覧");
-        return "match_list";
-    }
 }
