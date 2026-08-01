@@ -51,6 +51,12 @@ public class Match {
     @Transient
     private String player2Icon;
 
+    @Transient
+    private LocalDate player1BirthDate;
+
+    @Transient
+    private LocalDate player2BirthDate;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -93,4 +99,10 @@ public class Match {
 
     public String getPlayer2Icon() { return player2Icon; }
     public void setPlayer2Icon(String player2Icon) { this.player2Icon = player2Icon; }
+
+    public LocalDate getPlayer1BirthDate() { return player1BirthDate; }
+    public void setPlayer1BirthDate(LocalDate player1BirthDate) { this.player1BirthDate = player1BirthDate; }
+
+    public LocalDate getPlayer2BirthDate() { return player2BirthDate; }
+    public void setPlayer2BirthDate(LocalDate player2BirthDate) { this.player2BirthDate = player2BirthDate; }
 }

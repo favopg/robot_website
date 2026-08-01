@@ -97,6 +97,16 @@
                 <div class="col-md-4">
                     <input type="text" id="playerSearch" class="form-control form-control-sm" placeholder="棋士名でフィルター..." onkeyup="filterTable()" title="棋士名検索">
                 </div>
+                <div class="col-md-2">
+                    <select id="ageFilter" class="form-select form-select-sm" onchange="filterTable()" title="年代別フィルター">
+                        <option value="">全ての年代</option>
+                        <option value="10">10代</option>
+                        <option value="20">20代</option>
+                        <option value="30">30代</option>
+                        <option value="40">40代</option>
+                        <option value="50">50代以上</option>
+                    </select>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -112,7 +122,9 @@
                     </thead>
                     <tbody>
                         <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
-                        <tr th:each="match : ${matches}" class="match-row">
+                        <tr th:each="match : ${matches}" class="match-row"
+                            th:data-p1-birth="${match.player1BirthDate}"
+                            th:data-p2-birth="${match.player2BirthDate}">
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
@@ -235,11 +247,36 @@
 
         function filterTable() {
             const query = document.getElementById('playerSearch').value.toLowerCase();
+            const ageFilter = document.getElementById('ageFilter').value;
             const rows = document.querySelectorAll('.match-row');
+            const today = new Date();
 
             rows.forEach(row => {
                 const text = row.querySelector('.player-names').textContent.toLowerCase();
-                if (text.includes(query)) {
+                
+                // 年代フィルター判定
+                let ageMatch = true;
+                if (ageFilter !== "") {
+                    const p1Birth = row.getAttribute('data-p1-birth');
+                    const p2Birth = row.getAttribute('data-p2-birth');
+                    
+                    const checkAge = (birthStr) => {
+                        if (!birthStr) return false;
+                        const birth = new Date(birthStr);
+                        let age = today.getFullYear() - birth.getFullYear();
+                        if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+                            age--;
+                        }
+                        if (ageFilter === "50") return age >= 50;
+                        return age >= parseInt(ageFilter) && age < parseInt(ageFilter) + 10;
+                    };
+                    
+                    ageMatch = checkAge(p1Birth) || checkAge(p2Birth);
+                }
+
+                const textMatch = text.includes(query);
+
+                if (textMatch && ageMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
