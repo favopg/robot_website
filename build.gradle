@@ -41,8 +41,16 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+task playwrightInstall(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args = ['install', 'chromium']
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+    // 並列実行を制限してCI環境でのメモリ不足やハングを防ぐ
+    maxParallelForks = 1
 }
 
 sourceSets {

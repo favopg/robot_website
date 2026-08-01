@@ -42,7 +42,9 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
             // Language must be set to Japanese to ensure "予定" (Upcoming) text is present
-            BrowserContext context = browser.newContext(new Browser.NewContextOptions().setLocale("ja-JP"));
+            BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                    .setLocale("ja-JP")
+                    .setTimezoneId("Asia/Tokyo"));
             Page page = context.newPage();
             
             logger.info("Navigating to: {}", YOUTUBE_STREAMS_URL);
