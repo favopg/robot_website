@@ -58,3 +58,7 @@ processResources {
     // 状態追跡を無効化
     doNotTrackState('Build failure workaround for special characters')
 }
+
+tasks.withType(ProcessResources).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
