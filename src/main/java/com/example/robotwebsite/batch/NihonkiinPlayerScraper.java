@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,7 +37,7 @@ public class NihonkiinPlayerScraper {
         if (existingPlayer.isPresent()) {
             // If essential info is missing, re-scrape
             Player p = existingPlayer.get();
-            if (p.getGender() != null && p.getRank() != null && p.getIconPath() != null) {
+            if (p.getGender() != null && p.getRank() != null && p.getIconPath() != null && p.getBirthDate() != null) {
                 return;
             }
             logger.info("Re-scraping player profile to fill missing info: " + playerName);
@@ -88,6 +91,29 @@ public class NihonkiinPlayerScraper {
                 player.setRank(rankElement.text().trim());
             }
 
+            // "プロフィール" セクションのテキストから生年月日を探す
+            Element profileHeading = doc.selectFirst("h2:contains(プロフィール)");
+            if (profileHeading != null) {
+                Element next = profileHeading.nextElementSibling();
+                while (next != null && !next.tagName().equals("h2")) {
+                    String text = next.text();
+                    try {
+                        Pattern p = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
+                        Matcher m = p.matcher(text);
+                        if (m.find()) {
+                            int year = Integer.parseInt(m.group(1));
+                            int month = Integer.parseInt(m.group(2));
+                            int day = Integer.parseInt(m.group(3));
+                            player.setBirthDate(LocalDate.of(year, month, day));
+                            break;
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Failed to parse birth date from profile text: " + text, e);
+                    }
+                    next = next.nextElementSibling();
+                }
+            }
+
             // Target multiple possible table classes
             Elements tables = doc.select("table.inter-table, table.table1, table.table-rank");
             for (Element table : tables) {
@@ -108,6 +134,22 @@ public class NihonkiinPlayerScraper {
                         player.setAffiliation(td);
                     } else if (th.contains("Rank") || th.contains("棋士段位")) {
                         player.setRank(td);
+                    } else if (th.contains("Birthday") || th.contains("生年月日")) {
+                        try {
+                            // "1989年（平成元年）5月24日生" のような形式に対応
+                            Pattern p = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
+                            Matcher m = p.matcher(td);
+                            if (m.find()) {
+                                int year = Integer.parseInt(m.group(1));
+                                int month = Integer.parseInt(m.group(2));
+                                int day = Integer.parseInt(m.group(3));
+                                player.setBirthDate(LocalDate.of(year, month, day));
+                            } else {
+                                logger.warn("Birth date format not matched: " + td + " for player: " + playerName);
+                            }
+                        } catch (Exception e) {
+                            logger.warn("Failed to parse birth date: " + td + " for player: " + playerName, e);
+                        }
                     }
                 }
             }

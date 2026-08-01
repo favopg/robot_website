@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +35,7 @@ public class KansaikiinPlayerScraper {
         Optional<Player> existingPlayer = playerService.findByName(playerName);
         if (existingPlayer.isPresent()) {
             Player p = existingPlayer.get();
-            if (p.getGender() != null && p.getRank() != null) {
+            if (p.getGender() != null && p.getRank() != null && p.getBirthDate() != null) {
                 return true;
             }
             logger.info("Re-scraping Kansaikiin player profile to fill missing info: " + playerName);
@@ -99,9 +102,24 @@ public class KansaikiinPlayerScraper {
             for (Element table : tables) {
                 Elements rows = table.select("tr");
                 for (Element row : rows) {
-                    String text = row.text();
+                    String text = row.text().replaceAll("[\u00a0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]", " ").trim();
                     if (text.contains("生年月日")) {
-                        // 生年月日は現在のPlayerエンティティにフィールドがないためスキップ
+                        String dateStr = text.replace("生年月日", "").trim();
+                        try {
+                            // "1989年（平成元年）5月24日生" のような形式に対応
+                            Pattern p = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
+                            Matcher m = p.matcher(dateStr);
+                            if (m.find()) {
+                                int year = Integer.parseInt(m.group(1));
+                                int month = Integer.parseInt(m.group(2));
+                                int day = Integer.parseInt(m.group(3));
+                                player.setBirthDate(LocalDate.of(year, month, day));
+                            } else {
+                                logger.warn("Birth date format not matched: " + dateStr + " for player: " + playerName);
+                            }
+                        } catch (Exception e) {
+                            logger.warn("Failed to parse birth date: " + dateStr + " for player: " + playerName, e);
+                        }
                     } else if (text.contains("出　　身")) {
                         String birthPlace = text.replace("出　　身", "").trim();
                         player.setBirthPlace(birthPlace);
