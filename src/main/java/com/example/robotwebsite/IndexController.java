@@ -100,12 +100,14 @@ public class IndexController {
         String name = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
         if (name == null) return;
 
-        // Player情報を取得して生年月日を設定
+        // Player情報を取得して生年月日と性別を設定
         playerService.findByName(name).ifPresent(p -> {
             if (playerNum == 1) {
                 m.setPlayer1BirthDate(p.getBirthDate());
+                m.setPlayer1Gender(p.getGender());
             } else {
                 m.setPlayer2BirthDate(p.getBirthDate());
+                m.setPlayer2Gender(p.getGender());
             }
         });
 

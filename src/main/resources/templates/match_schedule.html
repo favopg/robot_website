@@ -151,11 +151,12 @@
                     <h5 class="modal-title">推し棋士を登録しましょう！</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-dark">
                     <p>推し棋士を登録すると、対局予定や結果で強調表示されます。</p>
                     <div class="mb-3">
-                        <label for="favoritePlayerInput" class="form-label">棋士名（例：一力遼）</label>
-                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="棋士名を入力">
+                        <label for="favoritePlayerInput" class="form-label">棋士名（カンマ区切りで最大5人まで）</label>
+                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="例：一力遼, 芝野虎丸">
+                        <div class="form-text">カンマまたはスペースで区切って複数入力できます。</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -171,13 +172,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const favoritePlayer = localStorage.getItem('favoritePlayer');
+            const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchSchedule');
 
-            if (!favoritePlayer && !modalDismissed) {
+            if (!favData && !modalDismissed) {
                 showFavoriteModal(true);
-            } else if (favoritePlayer) {
-                applyHighlight(favoritePlayer);
+            } else {
+                const favs = getFavoritePlayers();
+                if (favs.length > 0) {
+                    applyHighlight(favs);
+                }
             }
 
             // モーダルが閉じられたときにフラグをセットする（再表示防止）
@@ -186,6 +190,23 @@
                 sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
             });
         });
+
+        function getFavoritePlayers() {
+            const favData = localStorage.getItem('favoritePlayers');
+            if (favData) {
+                try {
+                    return JSON.parse(favData);
+                } catch (e) {
+                    return [];
+                }
+            }
+            // 移行対応
+            const oldFav = localStorage.getItem('favoritePlayer');
+            if (oldFav) {
+                return [oldFav];
+            }
+            return [];
+        }
 
         function showFavoriteModal(isFirst = false) {
             const modalEl = document.getElementById('favoritePlayerModal');
@@ -196,7 +217,8 @@
                 closeBtn.style.display = 'none';
             } else {
                 closeBtn.style.display = 'block';
-                input.value = localStorage.getItem('favoritePlayer') || '';
+                const favs = getFavoritePlayers();
+                input.value = favs.join(', ');
             }
             
             const modal = new bootstrap.Modal(modalEl);
@@ -204,9 +226,18 @@
         }
 
         function saveFavoritePlayer() {
-            const name = document.getElementById('favoritePlayerInput').value.trim();
-            if (name) {
-                localStorage.setItem('favoritePlayer', name);
+            const input = document.getElementById('favoritePlayerInput').value.trim();
+            if (input) {
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const uniqueNames = [...new Set(names)];
+                
+                if (uniqueNames.length > 5) {
+                    alert('推し棋士の登録は5人までです。');
+                    return;
+                }
+                
+                localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
+                localStorage.removeItem('favoritePlayer');
                 bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
                 location.reload();
             } else {
@@ -215,6 +246,7 @@
         }
         
         function clearFavoritePlayer() {
+            localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
             sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
@@ -225,23 +257,25 @@
             location.reload();
         }
 
-        function applyHighlight(favName) {
+        function applyHighlight(favNames) {
             const rows = document.querySelectorAll('.match-row');
             
             rows.forEach(row => {
                 const playerNamesContainer = row.querySelector('.player-names');
                 const playerNamesText = playerNamesContainer.textContent;
                 
-                if (playerNamesText.includes(favName)) {
-                    row.classList.add('highlight-favorite');
-                    
-                    const nameSpans = row.querySelectorAll('.player-names span');
-                    nameSpans.forEach(span => {
-                        if (span.textContent.includes(favName)) {
-                            span.classList.add('favorite-name');
-                        }
-                    });
-                }
+                favNames.forEach(favName => {
+                    if (playerNamesText.includes(favName)) {
+                        row.classList.add('highlight-favorite');
+                        
+                        const nameSpans = row.querySelectorAll('.player-names span');
+                        nameSpans.forEach(span => {
+                            if (span.textContent.includes(favName)) {
+                                span.classList.add('favorite-name');
+                            }
+                        });
+                    }
+                });
             });
         }
 

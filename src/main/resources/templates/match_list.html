@@ -151,7 +151,14 @@
                         <option value="50">50代以上</option>
                     </select>
                 </div>
-                <div class="col-md-6" th:if="${title.contains('結果')}">
+                <div class="col-md-2">
+                    <select id="genderFilter" class="form-select form-select-sm shadow-sm" onchange="filterTable()" title="性別フィルター">
+                        <option value="">全ての性別</option>
+                        <option value="男">男性</option>
+                        <option value="女">女性</option>
+                    </select>
+                </div>
+                <div class="col-md-4" th:if="${title.contains('結果')}">
                     <span id="winLossResult" class="fw-bold" style="display:none;">
                         結果: <span id="winCount" class="text-danger">0</span>勝 
                         <span id="lossCount" class="text-primary">0</span>敗
@@ -165,7 +172,9 @@
                 <div th:each="match : ${matches}" class="col match-item" 
                      th:data-winner="${match.winnerName}"
                      th:data-p1-birth="${match.player1BirthDate}"
-                     th:data-p2-birth="${match.player2BirthDate}">
+                     th:data-p2-birth="${match.player2BirthDate}"
+                     th:data-p1-gender="${match.player1Gender}"
+                     th:data-p2-gender="${match.player2Gender}">
                     <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
                     <div class="card h-100 shadow-sm border-0 border-top border-4 border-primary"
                          th:classappend="${match.matchDate == today && !title.contains('結果')} ? 'highlight-today' : ''">
@@ -268,11 +277,12 @@
                     <h5 class="modal-title">推し棋士を登録しましょう！</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-dark">
                     <p>推し棋士を登録すると、対局予定や結果で強調表示されます。</p>
                     <div class="mb-3">
-                        <label for="favoritePlayerInput" class="form-label">棋士名（例：一力遼）</label>
-                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="棋士名を入力">
+                        <label for="favoritePlayerInput" class="form-label">棋士名（カンマ区切りで最大5人まで）</label>
+                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="例：一力遼, 芝野虎丸">
+                        <div class="form-text">カンマまたはスペースで区切って複数入力できます。</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -290,6 +300,7 @@
         function filterTable() {
             const query = document.getElementById('playerSearch').value.toLowerCase();
             const ageFilter = document.getElementById('ageFilter').value;
+            const genderFilter = document.getElementById('genderFilter').value;
             const items = document.querySelectorAll('.match-item');
             const resultArea = document.getElementById('winLossResult');
             const today = new Date();
@@ -323,9 +334,19 @@
                     ageMatch = checkAge(p1Birth) || checkAge(p2Birth);
                 }
 
+                // 性別フィルター判定
+                let genderMatch = true;
+                if (genderFilter !== "") {
+                    const p1Gender = item.getAttribute('data-p1-gender');
+                    const p2Gender = item.getAttribute('data-p2-gender');
+                    // 部分一致または完全一致（DBが'男性'の場合と'男'の場合の両方に対応）
+                    genderMatch = (p1Gender && p1Gender.includes(genderFilter)) || 
+                                  (p2Gender && p2Gender.includes(genderFilter));
+                }
+
                 const textMatch = (query === "" || text.includes(query));
 
-                if (textMatch && ageMatch) {
+                if (textMatch && ageMatch && genderMatch) {
                     item.classList.remove('d-none');
                     
                     if (query !== "") {
@@ -387,15 +408,17 @@
 
         // イベントリスナーの登録
         document.addEventListener('DOMContentLoaded', function() {
-            const favoritePlayer = localStorage.getItem('favoritePlayer');
+            const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchList');
 
             // 1. 初回起動（未登録）チェック
-            if (!favoritePlayer && !modalDismissed) {
+            if (!favData && !modalDismissed) {
                 showFavoriteModal(true);
-            } else if (favoritePlayer) {
-                // 2. 既に登録されている場合は強調処理を実行
-                applyHighlight(favoritePlayer);
+            } else {
+                const favs = getFavoritePlayers();
+                if (favs.length > 0) {
+                    applyHighlight(favs);
+                }
             }
 
             // モーダルが閉じられたときにフラグをセットする（再表示防止）
@@ -416,6 +439,23 @@
         });
 
         // 推し棋士関連の関数
+        function getFavoritePlayers() {
+            const favData = localStorage.getItem('favoritePlayers');
+            if (favData) {
+                try {
+                    return JSON.parse(favData);
+                } catch (e) {
+                    return [];
+                }
+            }
+            // 移行対応
+            const oldFav = localStorage.getItem('favoritePlayer');
+            if (oldFav) {
+                return [oldFav];
+            }
+            return [];
+        }
+
         function showFavoriteModal(isFirst = false) {
             const modalEl = document.getElementById('favoritePlayerModal');
             const closeBtn = document.getElementById('favoriteModalCloseBtn');
@@ -425,7 +465,8 @@
                 closeBtn.style.display = 'none';
             } else {
                 closeBtn.style.display = 'block';
-                input.value = localStorage.getItem('favoritePlayer') || '';
+                const favs = getFavoritePlayers();
+                input.value = favs.join(', ');
             }
             
             const modal = new bootstrap.Modal(modalEl);
@@ -433,9 +474,18 @@
         }
 
         function saveFavoritePlayer() {
-            const name = document.getElementById('favoritePlayerInput').value.trim();
-            if (name) {
-                localStorage.setItem('favoritePlayer', name);
+            const input = document.getElementById('favoritePlayerInput').value.trim();
+            if (input) {
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const uniqueNames = [...new Set(names)];
+                
+                if (uniqueNames.length > 5) {
+                    alert('推し棋士の登録は5人までです。');
+                    return;
+                }
+                
+                localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
+                localStorage.removeItem('favoritePlayer');
                 bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
                 location.reload(); // 反映のためにリロード
             } else {
@@ -444,6 +494,7 @@
         }
         
         function clearFavoritePlayer() {
+            localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
             sessionStorage.setItem('favoriteModalDismissed_matchList', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
@@ -454,26 +505,28 @@
             location.reload();
         }
 
-        function applyHighlight(favName) {
+        function applyHighlight(favNames) {
             const matchItems = document.querySelectorAll('.match-item');
             
             matchItems.forEach(item => {
                 const playerNamesContainer = item.querySelector('.player-names');
                 const playerNamesText = playerNamesContainer.textContent;
                 
-                if (playerNamesText.includes(favName)) {
-                    // カード全体を強調
-                    const cardInner = item.querySelector('.card');
-                    cardInner.classList.add('highlight-favorite');
-                    
-                    // 名前部分を特定して強調
-                    const nameSpans = item.querySelectorAll('.player-names span');
-                    nameSpans.forEach(span => {
-                        if (span.textContent.trim() === favName) {
-                            span.classList.add('favorite-name');
-                        }
-                    });
-                }
+                favNames.forEach(favName => {
+                    if (playerNamesText.includes(favName)) {
+                        // カード全体を強調
+                        const cardInner = item.querySelector('.card');
+                        cardInner.classList.add('highlight-favorite');
+                        
+                        // 名前部分を特定して強調
+                        const nameSpans = item.querySelectorAll('.player-names span');
+                        nameSpans.forEach(span => {
+                            if (span.textContent.trim() === favName) {
+                                span.classList.add('favorite-name');
+                            }
+                        });
+                    }
+                });
             });
         }
 
