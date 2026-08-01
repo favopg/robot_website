@@ -17,8 +17,11 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 
 @Component
 public class YoutubeLiveScraperTasklet implements Tasklet {
@@ -59,6 +62,7 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
             List<ElementHandle> items = page.querySelectorAll("ytd-rich-item-renderer, ytd-video-renderer");
             logger.info("Found {} items on YouTube streams page", items.size());
 
+            Set<String> upcomingUrls = new HashSet<>();
             int count = 0;
             for (ElementHandle item : items) {
                 try {
@@ -146,6 +150,7 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
                     }
                     
                     String videoUrl = "https://www.youtube.com" + href;
+                    upcomingUrls.add(videoUrl);
                     String scheduledText = metadataText.trim();
                     if (scheduledText.isEmpty() && !ariaLabel.isEmpty()) {
                         scheduledText = ariaLabel;
@@ -159,6 +164,15 @@ public class YoutubeLiveScraperTasklet implements Tasklet {
                     count++;
                 } catch (Exception e) {
                     logger.error("Error parsing YouTube item", e);
+                }
+            }
+
+            // Cleanup: remove records that are no longer upcoming
+            List<YoutubeLive> allSaved = youtubeLiveRepository.findAll();
+            for (YoutubeLive saved : allSaved) {
+                if (!upcomingUrls.contains(saved.getLiveUrl())) {
+                    logger.info("Deleting YouTube live record as it is no longer upcoming: {}", saved.getTitle());
+                    youtubeLiveRepository.delete(saved);
                 }
             }
             
