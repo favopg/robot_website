@@ -36,8 +36,8 @@ public class BatchScheduler implements CommandLineRunner {
         runYoutubeLiveScrapeJob();
     }
 
-    // 30分に1回実行 (1,800,000ミリ秒)
-    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 1800000)
+    // 毎週金曜日23時59分に実行
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 59 23 * * FRI")
     public void runJob() {
         try {
             logger.info("Starting siteSourceCheckJob at " + new Date());
@@ -50,8 +50,8 @@ public class BatchScheduler implements CommandLineRunner {
         }
     }
 
-    // 5分間隔で実行 (300,000ミリ秒)
-    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 300000)
+    // 毎週金曜日23時59分に実行
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 59 23 * * FRI")
     public void runNihonkiinMatchJob() {
         try {
             logger.info("Starting nihonkiinMatchJob at " + new Date());
