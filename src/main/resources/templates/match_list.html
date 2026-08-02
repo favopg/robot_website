@@ -126,6 +126,21 @@
                                     2026年6月
                                 </a>
                             </div>
+                            <!-- 最多勝利者の表示エリア -->
+                            <div id="topWinnerArea" class="mt-3 pt-2 border-top" style="display:none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="fw-bold">
+                                        <i class="bi bi-trophy-fill text-warning me-2"></i>
+                                        <span id="topWinnerTitle">最多勝利者</span>
+                                    </div>
+                                    <button id="toggleWinnersBtn" class="btn btn-sm btn-outline-primary" onclick="toggleTopWinners()" style="display:none;">
+                                        もっと見る <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <div id="topWinnersList" class="row row-cols-1 row-cols-md-2 g-2 small">
+                                    <!-- JSで動的に生成 -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -320,12 +335,13 @@
             
             let wins = 0;
             let losses = 0;
+            const winCounts = {};
 
             items.forEach(item => {
                 const playerNames = item.querySelector('.player-names').textContent.toLowerCase();
                 const matchName = item.querySelector('.badge').textContent.toLowerCase();
                 const text = playerNames + " " + matchName;
-                const winnerName = item.getAttribute('data-winner') ? item.getAttribute('data-winner').toLowerCase() : "";
+                const winnerName = item.getAttribute('data-winner') ? item.getAttribute('data-winner') : "";
 
                 // 年代フィルター判定
                 let ageMatch = true;
@@ -369,16 +385,58 @@
                     item.classList.remove('d-none');
                     
                     if (query !== "") {
-                        if (winnerName !== "" && playerNames.includes(query) && winnerName.includes(query)) {
+                        if (winnerName !== "" && playerNames.includes(query) && winnerName.toLowerCase().includes(query)) {
                             wins++;
                         } else if (winnerName !== "" && playerNames.includes(query)) {
                             losses++;
                         }
                     }
+
+                    // 最多勝利者の集計
+                    if (winnerName) {
+                        winCounts[winnerName] = (winCounts[winnerName] || 0) + 1;
+                    }
                 } else {
                     item.classList.add('d-none');
                 }
             });
+
+            // 最多勝利者の表示更新
+            const topWinnerArea = document.getElementById('topWinnerArea');
+            const topWinnersList = document.getElementById('topWinnersList');
+            const topWinnerTitle = document.getElementById('topWinnerTitle');
+            const toggleBtn = document.getElementById('toggleWinnersBtn');
+            
+            if (topWinnerArea && topWinnersList) {
+                // 勝数でソート
+                const sortedWinners = Object.entries(winCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name, count]) => ({ name, count }));
+
+                window.currentTopWinners = sortedWinners.slice(0, 10);
+                window.isWinnersExpanded = false;
+
+                if (sortedWinners.length > 0) {
+                    const titleElement = document.querySelector('h1.h3');
+                    const titleText = titleElement ? titleElement.textContent : "";
+                    const periodMatch = titleText.match(/(\d+年\d+月|直近|全データ)/);
+                    const period = periodMatch ? periodMatch[0] : "現在";
+                    
+                    topWinnerTitle.textContent = `${period}の勝利数ランキング`;
+                    renderWinnersList();
+                    
+                    if (sortedWinners.length > 3) {
+                        toggleBtn.style.display = 'block';
+                        toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+                    } else {
+                        toggleBtn.style.display = 'none';
+                    }
+                    
+                    topWinnerArea.style.display = 'block';
+                } else {
+                    topWinnerArea.style.display = 'none';
+                }
+            }
 
             // 結果の表示更新
             if (resultArea) {
@@ -390,6 +448,48 @@
                     resultArea.style.display = 'none';
                 }
             }
+        }
+
+        function toggleTopWinners() {
+            window.isWinnersExpanded = !window.isWinnersExpanded;
+            const toggleBtn = document.getElementById('toggleWinnersBtn');
+            if (window.isWinnersExpanded) {
+                toggleBtn.innerHTML = '閉じる <i class="bi bi-chevron-up"></i>';
+            } else {
+                toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+            }
+            renderWinnersList();
+        }
+
+        function renderWinnersList() {
+            const listContainer = document.getElementById('topWinnersList');
+            if (!listContainer || !window.currentTopWinners) return;
+
+            const displayCount = window.isWinnersExpanded ? 10 : 3;
+            const toDisplay = window.currentTopWinners.slice(0, displayCount);
+
+            listContainer.innerHTML = '';
+            toDisplay.forEach((winner, index) => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                
+                // 順位に応じたメダルアイコン
+                let icon = '';
+                if (index === 0) icon = '<i class="bi bi-award-fill text-warning"></i> ';
+                else if (index === 1) icon = '<i class="bi bi-award-fill text-secondary"></i> ';
+                else if (index === 2) icon = '<i class="bi bi-award-fill" style="color: #cd7f32;"></i> ';
+                else icon = `<span class="text-muted ms-1">${index + 1}.</span> `;
+
+                col.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                        <span class="player-detail-trigger" style="cursor:pointer;" data-player-name="${winner.name}">
+                            ${icon}<strong>${winner.name}</strong>
+                        </span>
+                        <span class="badge bg-primary rounded-pill">${winner.count}勝</span>
+                    </div>
+                `;
+                listContainer.appendChild(col);
+            });
         }
 
         function showPlayerDetail(name) {
