@@ -158,7 +158,13 @@
                         <option value="女">女性</option>
                     </select>
                 </div>
-                <div class="col-md-4" th:if="${title.contains('結果')}">
+                <div class="col-md-2">
+                    <div class="form-check form-check-inline mt-1">
+                        <input class="form-check-input" type="checkbox" id="favoriteOnlyFilter" onchange="filterTable()">
+                        <label class="form-check-label small" for="favoriteOnlyFilter">推し棋士のみ</label>
+                    </div>
+                </div>
+                <div class="col-md-2" th:if="${title.contains('結果')}">
                     <span id="winLossResult" class="fw-bold" style="display:none;">
                         結果: <span id="winCount" class="text-danger">0</span>勝 
                         <span id="lossCount" class="text-primary">0</span>敗
@@ -301,6 +307,13 @@
             const query = document.getElementById('playerSearch').value.toLowerCase();
             const ageFilter = document.getElementById('ageFilter').value;
             const genderFilter = document.getElementById('genderFilter').value;
+            const filterCheckbox = document.getElementById('favoriteOnlyFilter');
+            const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
+
+            // フィルターの状態を保存
+            localStorage.setItem('favoriteOnly', favoriteOnly);
+
+            const favs = getFavoritePlayers();
             const items = document.querySelectorAll('.match-item');
             const resultArea = document.getElementById('winLossResult');
             const today = new Date();
@@ -344,9 +357,15 @@
                                   (p2Gender && p2Gender.includes(genderFilter));
                 }
 
+                // 推し棋士フィルター判定
+                let favMatch = true;
+                if (favoriteOnly) {
+                    favMatch = favs.some(fav => playerNames.includes(fav.toLowerCase()));
+                }
+
                 const textMatch = (query === "" || text.includes(query));
 
-                if (textMatch && ageMatch && genderMatch) {
+                if (textMatch && ageMatch && genderMatch && favMatch) {
                     item.classList.remove('d-none');
                     
                     if (query !== "") {
@@ -411,6 +430,13 @@
             const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchList');
 
+            // フィルターの初期状態反映
+            const favoriteOnly = localStorage.getItem('favoriteOnly') === 'true';
+            const filterCheckbox = document.getElementById('favoriteOnlyFilter');
+            if (filterCheckbox) {
+                filterCheckbox.checked = favoriteOnly;
+            }
+
             // 1. 初回起動（未登録）チェック
             if (!favData && !modalDismissed) {
                 showFavoriteModal(true);
@@ -419,6 +445,8 @@
                 if (favs.length > 0) {
                     applyHighlight(favs);
                 }
+                // 初回読み込み時にもフィルタリングを実行
+                filterTable();
             }
 
             // モーダルが閉じられたときにフラグをセットする（再表示防止）
@@ -485,6 +513,7 @@
                 }
                 
                 localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
+                localStorage.setItem('favoriteOnly', 'true'); // 登録時にフィルターをONにするフラグをセット
                 localStorage.removeItem('favoritePlayer');
                 bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
                 location.reload(); // 反映のためにリロード
@@ -496,6 +525,7 @@
         function clearFavoritePlayer() {
             localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
+            localStorage.setItem('favoriteOnly', 'false'); // 解除時にフィルターをOFFにする
             sessionStorage.setItem('favoriteModalDismissed_matchList', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);

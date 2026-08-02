@@ -316,6 +316,7 @@
                 }
                 
                 localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
+                localStorage.setItem('favoriteOnly', 'true'); // 登録時にフィルターをONにするフラグをセット
                 localStorage.removeItem('favoritePlayer'); // 旧キー削除
                 bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
                 location.reload();
@@ -327,6 +328,7 @@
         function clearFavoritePlayer() {
             localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
+            localStorage.setItem('favoriteOnly', 'false'); // 解除時にフィルターをOFFにする
             sessionStorage.setItem('favoriteModalDismissed', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
