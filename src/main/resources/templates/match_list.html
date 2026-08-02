@@ -126,19 +126,37 @@
                                     2026年6月
                                 </a>
                             </div>
-                            <!-- 最多勝利者の表示エリア -->
-                            <div id="topWinnerArea" class="mt-3 pt-2 border-top" style="display:none;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div class="fw-bold">
-                                        <i class="bi bi-trophy-fill text-warning me-2"></i>
-                                        <span id="topWinnerTitle">最多勝利者</span>
+                            <!-- 最多勝利者・対局者の表示エリア -->
+                            <div id="rankingArea" class="mt-3 pt-2 border-top" style="display:none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="fw-bold">
+                                                <i class="bi bi-trophy-fill text-warning me-2"></i>
+                                                <span id="topWinnerTitle">最多勝利者</span>
+                                            </div>
+                                            <button id="toggleWinnersBtn" class="btn btn-sm btn-outline-primary" onclick="toggleTopWinners()" style="display:none;">
+                                                もっと見る <i class="bi bi-chevron-down"></i>
+                                            </button>
+                                        </div>
+                                        <div id="topWinnersList" class="row row-cols-1 g-2 small">
+                                            <!-- JSで動的に生成 -->
+                                        </div>
                                     </div>
-                                    <button id="toggleWinnersBtn" class="btn btn-sm btn-outline-primary" onclick="toggleTopWinners()" style="display:none;">
-                                        もっと見る <i class="bi bi-chevron-down"></i>
-                                    </button>
-                                </div>
-                                <div id="topWinnersList" class="row row-cols-1 row-cols-md-2 g-2 small">
-                                    <!-- JSで動的に生成 -->
+                                    <div class="col-md-6 border-start-md">
+                                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3 mt-md-0">
+                                            <div class="fw-bold">
+                                                <i class="bi bi-people-fill text-info me-2"></i>
+                                                <span id="topMatchCountTitle">最多対局者</span>
+                                            </div>
+                                            <button id="toggleMatchCountsBtn" class="btn btn-sm btn-outline-info" onclick="toggleTopMatchCounts()" style="display:none;">
+                                                もっと見る <i class="bi bi-chevron-down"></i>
+                                            </button>
+                                        </div>
+                                        <div id="topMatchCountsList" class="row row-cols-1 g-2 small">
+                                            <!-- JSで動的に生成 -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -220,7 +238,7 @@
                                         <span th:if="${match.player1Sente != null && match.player1Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark">先</span>
                                     </div>
                                     <div th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''">
-                                        <span th:text="${match.player1Name}">棋士A</span>
+                                        <span class="player-name" th:text="${match.player1Name}">棋士A</span>
                                     </div>
                                     <div th:if="${match.winnerName == match.player1Name}" class="mt-1">
                                         <span class="badge rounded-pill bg-danger">勝</span>
@@ -244,7 +262,7 @@
                                         <span th:if="${match.player2Sente != null && match.player2Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark">先</span>
                                     </div>
                                     <div th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''">
-                                        <span th:text="${match.player2Name}">棋士B</span>
+                                        <span class="player-name" th:text="${match.player2Name}">棋士B</span>
                                     </div>
                                     <div th:if="${match.winnerName == match.player2Name}" class="mt-1">
                                         <span class="badge rounded-pill bg-danger">勝</span>
@@ -336,9 +354,16 @@
             let wins = 0;
             let losses = 0;
             const winCounts = {};
+            const matchCounts = {};
 
             items.forEach(item => {
-                const playerNames = item.querySelector('.player-names').textContent.toLowerCase();
+                const namesContainer = item.querySelector('.player-names');
+                const p1NameElement = namesContainer ? namesContainer.querySelector('div:first-child .player-name') : null;
+                const p2NameElement = namesContainer ? namesContainer.querySelector('div:last-child .player-name') : null;
+                const p1Name = p1NameElement ? p1NameElement.textContent.trim() : "";
+                const p2Name = p2NameElement ? p2NameElement.textContent.trim() : "";
+                
+                const playerNames = (p1Name + " " + p2Name).toLowerCase();
                 const matchName = item.querySelector('.badge').textContent.toLowerCase();
                 const text = playerNames + " " + matchName;
                 const winnerName = item.getAttribute('data-winner') ? item.getAttribute('data-winner') : "";
@@ -396,19 +421,32 @@
                     if (winnerName) {
                         winCounts[winnerName] = (winCounts[winnerName] || 0) + 1;
                     }
+
+                    // 最多対局者の集計
+                    if (p1Name) matchCounts[p1Name] = (matchCounts[p1Name] || 0) + 1;
+                    if (p2Name) matchCounts[p2Name] = (matchCounts[p2Name] || 0) + 1;
                 } else {
                     item.classList.add('d-none');
                 }
             });
 
-            // 最多勝利者の表示更新
-            const topWinnerArea = document.getElementById('topWinnerArea');
+            // ランキングの表示更新
+            const rankingArea = document.getElementById('rankingArea');
             const topWinnersList = document.getElementById('topWinnersList');
             const topWinnerTitle = document.getElementById('topWinnerTitle');
-            const toggleBtn = document.getElementById('toggleWinnersBtn');
+            const toggleWinnersBtn = document.getElementById('toggleWinnersBtn');
             
-            if (topWinnerArea && topWinnersList) {
-                // 勝数でソート
+            const topMatchCountsList = document.getElementById('topMatchCountsList');
+            const topMatchCountTitle = document.getElementById('topMatchCountTitle');
+            const toggleMatchCountsBtn = document.getElementById('toggleMatchCountsBtn');
+            
+            if (rankingArea) {
+                const titleElement = document.querySelector('h1.h3');
+                const titleText = titleElement ? titleElement.textContent : "";
+                const periodMatch = titleText.match(/(\d+年\d+月|直近|全データ)/);
+                const period = periodMatch ? periodMatch[0] : "現在";
+
+                // 最多勝利者の処理
                 const sortedWinners = Object.entries(winCounts)
                     .sort(([, a], [, b]) => b - a)
                     .map(([name, count]) => ({ name, count }));
@@ -417,24 +455,41 @@
                 window.isWinnersExpanded = false;
 
                 if (sortedWinners.length > 0) {
-                    const titleElement = document.querySelector('h1.h3');
-                    const titleText = titleElement ? titleElement.textContent : "";
-                    const periodMatch = titleText.match(/(\d+年\d+月|直近|全データ)/);
-                    const period = periodMatch ? periodMatch[0] : "現在";
-                    
                     topWinnerTitle.textContent = `${period}の勝利数ランキング`;
                     renderWinnersList();
                     
                     if (sortedWinners.length > 3) {
-                        toggleBtn.style.display = 'block';
-                        toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+                        toggleWinnersBtn.style.display = 'block';
+                        toggleWinnersBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
                     } else {
-                        toggleBtn.style.display = 'none';
+                        toggleWinnersBtn.style.display = 'none';
                     }
+                }
+
+                // 最多対局者の処理
+                const sortedMatchCounts = Object.entries(matchCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name, count]) => ({ name, count }));
+
+                window.currentTopMatchCounts = sortedMatchCounts.slice(0, 10);
+                window.isMatchCountsExpanded = false;
+
+                if (sortedMatchCounts.length > 0) {
+                    topMatchCountTitle.textContent = `${period}の対局数ランキング`;
+                    renderMatchCountsList();
                     
-                    topWinnerArea.style.display = 'block';
+                    if (sortedMatchCounts.length > 3) {
+                        toggleMatchCountsBtn.style.display = 'block';
+                        toggleMatchCountsBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+                    } else {
+                        toggleMatchCountsBtn.style.display = 'none';
+                    }
+                }
+
+                if (sortedWinners.length > 0 || sortedMatchCounts.length > 0) {
+                    rankingArea.style.display = 'block';
                 } else {
-                    topWinnerArea.style.display = 'none';
+                    rankingArea.style.display = 'none';
                 }
             }
 
@@ -459,6 +514,17 @@
                 toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
             }
             renderWinnersList();
+        }
+
+        function toggleTopMatchCounts() {
+            window.isMatchCountsExpanded = !window.isMatchCountsExpanded;
+            const toggleBtn = document.getElementById('toggleMatchCountsBtn');
+            if (window.isMatchCountsExpanded) {
+                toggleBtn.innerHTML = '閉じる <i class="bi bi-chevron-up"></i>';
+            } else {
+                toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+            }
+            renderMatchCountsList();
         }
 
         function renderWinnersList() {
@@ -486,6 +552,37 @@
                             ${icon}<strong>${winner.name}</strong>
                         </span>
                         <span class="badge bg-primary rounded-pill">${winner.count}勝</span>
+                    </div>
+                `;
+                listContainer.appendChild(col);
+            });
+        }
+
+        function renderMatchCountsList() {
+            const listContainer = document.getElementById('topMatchCountsList');
+            if (!listContainer || !window.currentTopMatchCounts) return;
+
+            const displayCount = window.isMatchCountsExpanded ? 10 : 3;
+            const toDisplay = window.currentTopMatchCounts.slice(0, displayCount);
+
+            listContainer.innerHTML = '';
+            toDisplay.forEach((player, index) => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                
+                // 順位に応じたメダルアイコン
+                let icon = '';
+                if (index === 0) icon = '<i class="bi bi-award-fill text-warning"></i> ';
+                else if (index === 1) icon = '<i class="bi bi-award-fill text-secondary"></i> ';
+                else if (index === 2) icon = '<i class="bi bi-award-fill" style="color: #cd7f32;"></i> ';
+                else icon = `<span class="text-muted ms-1">${index + 1}.</span> `;
+
+                col.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                        <span class="player-detail-trigger" style="cursor:pointer;" data-player-name="${player.name}">
+                            ${icon}<strong>${player.name}</strong>
+                        </span>
+                        <span class="badge bg-info text-dark rounded-pill">${player.count}対局</span>
                     </div>
                 `;
                 listContainer.appendChild(col);
