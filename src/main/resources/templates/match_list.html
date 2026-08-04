@@ -157,6 +157,21 @@
                                             <!-- JSで動的に生成 -->
                                         </div>
                                     </div>
+                                    <!-- 連勝記録ランキングの追加 -->
+                                    <div class="col-12 mt-3 pt-3 border-top">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="fw-bold">
+                                                <i class="bi bi-lightning-fill text-danger me-2"></i>
+                                                <span id="topStreakTitle">連勝記録ランキング</span>
+                                            </div>
+                                            <button id="toggleStreaksBtn" class="btn btn-sm btn-outline-danger" onclick="toggleTopStreaks()" style="display:none;">
+                                                もっと見る <i class="bi bi-chevron-down"></i>
+                                            </button>
+                                        </div>
+                                        <div id="topStreaksList" class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <!-- JSで動的に生成 -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -210,10 +225,13 @@
                 <!--/* @thymesVar id="matches" type="java.util.List<com.example.robotwebsite.entity.Match>" */-->
                 <div th:each="match : ${matches}" class="col match-item" 
                      th:data-winner="${match.winnerName}"
+                     th:data-p1-name="${match.player1Name}"
+                     th:data-p2-name="${match.player2Name}"
                      th:data-p1-birth="${match.player1BirthDate}"
                      th:data-p2-birth="${match.player2BirthDate}"
                      th:data-p1-gender="${match.player1Gender}"
-                     th:data-p2-gender="${match.player2Gender}">
+                     th:data-p2-gender="${match.player2Gender}"
+                     th:data-date="${match.matchDate}">
                     <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
                     <div class="card h-100 shadow-sm border-0 border-top border-4 border-primary"
                          th:classappend="${match.matchDate == today && !title.contains('結果')} ? 'highlight-today' : ''">
@@ -355,13 +373,12 @@
             let losses = 0;
             const winCounts = {};
             const matchCounts = {};
+            const displayedMatches = [];
 
             items.forEach(item => {
-                const namesContainer = item.querySelector('.player-names');
-                const p1NameElement = namesContainer ? namesContainer.querySelector('div:first-child .player-name') : null;
-                const p2NameElement = namesContainer ? namesContainer.querySelector('div:last-child .player-name') : null;
-                const p1Name = p1NameElement ? p1NameElement.textContent.trim() : "";
-                const p2Name = p2NameElement ? p2NameElement.textContent.trim() : "";
+                const p1Name = item.getAttribute('data-p1-name') || "";
+                const p2Name = item.getAttribute('data-p2-name') || "";
+                const matchDate = item.getAttribute('data-date') || "";
                 
                 const playerNames = (p1Name + " " + p2Name).toLowerCase();
                 const matchName = item.querySelector('.badge').textContent.toLowerCase();
@@ -425,6 +442,14 @@
                     // 最多対局者の集計
                     if (p1Name) matchCounts[p1Name] = (matchCounts[p1Name] || 0) + 1;
                     if (p2Name) matchCounts[p2Name] = (matchCounts[p2Name] || 0) + 1;
+
+                    // 表示されている対局データを保持
+                    displayedMatches.push({
+                        p1: p1Name,
+                        p2: p2Name,
+                        winner: winnerName,
+                        date: matchDate
+                    });
                 } else {
                     item.classList.add('d-none');
                 }
@@ -439,6 +464,10 @@
             const topMatchCountsList = document.getElementById('topMatchCountsList');
             const topMatchCountTitle = document.getElementById('topMatchCountTitle');
             const toggleMatchCountsBtn = document.getElementById('toggleMatchCountsBtn');
+            
+            const topStreaksList = document.getElementById('topStreaksList');
+            const topStreakTitle = document.getElementById('topStreakTitle');
+            const toggleStreaksBtn = document.getElementById('toggleStreaksBtn');
             
             if (rankingArea) {
                 const titleElement = document.querySelector('h1.h3');
@@ -486,7 +515,55 @@
                     }
                 }
 
-                if (sortedWinners.length > 0 || sortedMatchCounts.length > 0) {
+                // 連勝記録ランキングの処理
+                const playerStreaks = {};
+                // 日付順（古い順）にソートして連勝を計算
+                const sortedMatches = [...displayedMatches].sort((a, b) => a.date.localeCompare(b.date));
+                
+                sortedMatches.forEach(match => {
+                    const players = [match.p1, match.p2];
+                    players.forEach(p => {
+                        if (!p) return;
+                        if (!playerStreaks[p]) {
+                            playerStreaks[p] = { current: 0, max: 0 };
+                        }
+                        
+                        if (match.winner === p) {
+                            playerStreaks[p].current++;
+                            if (playerStreaks[p].current > playerStreaks[p].max) {
+                                playerStreaks[p].max = playerStreaks[p].current;
+                            }
+                        } else if (match.winner && match.winner !== "") {
+                            // 相手が勝った場合（引き分けや無効試合でない場合）は連勝ストップ
+                            playerStreaks[p].current = 0;
+                        }
+                    });
+                });
+
+                const sortedStreaks = Object.entries(playerStreaks)
+                    .map(([name, streak]) => ({ name, count: streak.max }))
+                    .filter(s => s.count > 1) // 2連勝以上のみ対象
+                    .sort((a, b) => b.count - a.count);
+
+                window.currentTopStreaks = sortedStreaks.slice(0, 10);
+                window.isStreaksExpanded = false;
+
+                if (sortedStreaks.length > 0) {
+                    topStreakTitle.textContent = `${period}の連勝記録ランキング (2連勝以上)`;
+                    renderStreaksList();
+                    
+                    if (sortedStreaks.length > 6) {
+                        toggleStreaksBtn.style.display = 'block';
+                        toggleStreaksBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+                    } else {
+                        toggleStreaksBtn.style.display = 'none';
+                    }
+                } else {
+                    topStreaksList.innerHTML = '<div class="col-12 text-muted">該当する記録はありません。</div>';
+                    toggleStreaksBtn.style.display = 'none';
+                }
+
+                if (sortedWinners.length > 0 || sortedMatchCounts.length > 0 || sortedStreaks.length > 0) {
                     rankingArea.style.display = 'block';
                 } else {
                     rankingArea.style.display = 'none';
@@ -525,6 +602,17 @@
                 toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
             }
             renderMatchCountsList();
+        }
+
+        function toggleTopStreaks() {
+            window.isStreaksExpanded = !window.isStreaksExpanded;
+            const toggleBtn = document.getElementById('toggleStreaksBtn');
+            if (window.isStreaksExpanded) {
+                toggleBtn.innerHTML = '閉じる <i class="bi bi-chevron-up"></i>';
+            } else {
+                toggleBtn.innerHTML = 'もっと見る <i class="bi bi-chevron-down"></i>';
+            }
+            renderStreaksList();
         }
 
         function renderWinnersList() {
@@ -583,6 +671,35 @@
                             ${icon}<strong>${player.name}</strong>
                         </span>
                         <span class="badge bg-info text-dark rounded-pill">${player.count}対局</span>
+                    </div>
+                `;
+                listContainer.appendChild(col);
+            });
+        }
+
+        function renderStreaksList() {
+            const listContainer = document.getElementById('topStreaksList');
+            if (!listContainer || !window.currentTopStreaks) return;
+
+            const displayCount = window.isStreaksExpanded ? 10 : 6;
+            const toDisplay = window.currentTopStreaks.slice(0, displayCount);
+
+            listContainer.innerHTML = '';
+            toDisplay.forEach((streak, index) => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                
+                // 順位に応じたアイコン
+                let icon = '';
+                if (index === 0) icon = '<i class="bi bi-lightning-fill text-danger"></i> ';
+                else icon = `<span class="text-muted ms-1">${index + 1}.</span> `;
+
+                col.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                        <span class="player-detail-trigger" style="cursor:pointer;" data-player-name="${streak.name}">
+                            ${icon}<strong>${streak.name}</strong>
+                        </span>
+                        <span class="badge bg-danger rounded-pill">${streak.count}連勝</span>
                     </div>
                 `;
                 listContainer.appendChild(col);
