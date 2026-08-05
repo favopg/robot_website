@@ -48,11 +48,12 @@ public class NihonkiinPlayerScraper {
         try {
             // Remove rank and titles from the end of the name
             // e.g., "一力遼 名人" -> "一力遼", "芝野虎丸 棋聖" -> "芝野虎丸"
-            String searchName = playerName.replaceAll("[\\s\u3000]*(([一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+).*$", "").trim();
+            String searchName = playerService.normalizeName(playerName);
             
             // 1. Search in /player/dan/ (high reliability)
             String danUrl = "https://www.nihonkiin.or.jp/player/dan/";
             Document danDoc = Jsoup.connect(danUrl).get();
+            // 段位一覧ページには「初段」～「九段」のリンクがある
             Elements links = danDoc.select("a[href*=/player/htm/ki]");
             
             String normalizedSearchName = searchName.replaceAll("[\\s\u3000]+", "");

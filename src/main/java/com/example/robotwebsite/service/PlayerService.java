@@ -20,6 +20,16 @@ public class PlayerService {
         this.playerRepository = playerRepository;
     }
 
+    /**
+     * 名前から称号や段位を取り除いて正規化する
+     * 例: "一力遼 名人" -> "一力遼", "芝野虎丸 棋聖" -> "芝野虎丸", "仲邑菫 三段" -> "仲邑菫"
+     */
+    public String normalizeName(String name) {
+        if (name == null) return null;
+        // 段位や称号（名人、棋聖、本因坊など）を末尾から取り除く
+        return name.replaceAll("[\\s\u3000]*(([初一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+|扇興杯).*$", "").trim();
+    }
+
     @Transactional(readOnly = true)
     public Optional<Player> findByName(String name) {
         return playerRepository.findByName(name);

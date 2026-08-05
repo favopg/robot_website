@@ -32,6 +32,8 @@ public class KansaikiinPlayerScraper {
     public boolean scrapeAndSavePlayer(String playerName) {
         if (playerName == null || playerName.isEmpty()) return false;
 
+        String normalizedSearchName = playerService.normalizeName(playerName).replaceAll("[\\s\u3000]+", "");
+        
         Optional<Player> existingPlayer = playerService.findByName(playerName);
         if (existingPlayer.isPresent()) {
             Player p = existingPlayer.get();
@@ -46,7 +48,6 @@ public class KansaikiinPlayerScraper {
         try {
             Document doc = Jsoup.connect(LIST_URL).get();
             // 名前からリンクを探す（空白を無視して比較）
-            String normalizedSearchName = playerName.replaceAll("[\\s\u3000]+", "");
             
             Elements links = doc.select("a[href*=kisi_prof/]");
             for (Element link : links) {

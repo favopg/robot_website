@@ -110,8 +110,10 @@ public class IndexController {
     }
 
     private void updatePlayerIcon(Match m, int playerNum, Set<String> icons) {
-        String name = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
-        if (name == null) return;
+        String originalName = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
+        if (originalName == null) return;
+
+        String name = playerService.normalizeName(originalName);
 
         // Player情報を取得して生年月日と性別を設定
         playerService.findByName(name).ifPresent(p -> {
@@ -127,7 +129,7 @@ public class IndexController {
         // まずファイルシステムから検索（優先）
         String iconPath = null;
         for (String iconName : icons) {
-            if (name.contains(iconName) || iconName.contains(name)) {
+            if (name.equals(iconName)) {
                 iconPath = "/images/players/" + iconName + ".jpg";
                 break;
             }
