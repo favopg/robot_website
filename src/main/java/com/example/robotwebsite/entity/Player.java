@@ -32,6 +32,9 @@ public class Player {
     @Column(name = "icon_path")
     private String iconPath;
 
+    @Column(name = "likes_count", nullable = false)
+    private int likesCount = 0;
+
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
@@ -62,6 +65,9 @@ public class Player {
 
     public String getIconPath() { return iconPath; }
     public void setIconPath(String iconPath) { this.iconPath = iconPath; }
+
+    public int getLikesCount() { return likesCount; }
+    public void setLikesCount(int likesCount) { this.likesCount = likesCount; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

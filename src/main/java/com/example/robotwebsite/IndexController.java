@@ -24,6 +24,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
@@ -68,6 +69,18 @@ public class IndexController {
         
         // ファイルシステムにない場合はDBの値を保持（既にplayerにセットされている）
         return player;
+    }
+
+    @PostMapping("/api/players/{name}/like")
+    @ResponseBody
+    public int likePlayer(@PathVariable String name) {
+        return playerService.incrementLikes(name);
+    }
+
+    @PostMapping("/api/players/{name}/unlike")
+    @ResponseBody
+    public int unlikePlayer(@PathVariable String name) {
+        return playerService.decrementLikes(name);
     }
 
     private Set<String> getPlayerIcons() {

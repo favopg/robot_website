@@ -305,6 +305,12 @@
                         <tr><th>出身地</th><td id="playerPlace"></td></tr>
                         <tr><th>所属</th><td id="playerAffiliation"></td></tr>
                     </table>
+                    <div class="mt-3">
+                        <button id="likeButton" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-heart-fill"></i> いいね <span id="playerLikesCount" class="badge bg-danger">0</span>
+                        </button>
+                        <div id="likeLimitMessage" class="text-muted small mt-1"></div>
+                    </div>
                     <div class="mt-3 text-end">
                         <a id="playerProfileLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">日本棋院プロフィール <i class="bi bi-box-arrow-up-right"></i></a>
                     </div>
@@ -715,7 +721,13 @@
                     } else {
                         profileLink.style.display = 'none';
                     }
-                    
+
+                    document.getElementById('playerLikesCount').textContent = data.likesCount || 0;
+                    updateLikeButtonState(data.name);
+
+                    const likeBtn = document.getElementById('likeButton');
+                    likeBtn.onclick = () => handleLike(data.name);
+
                     // noinspection JSUnresolvedReference
                     new bootstrap.Modal(document.getElementById('playerModal')).show();
                 })
@@ -724,6 +736,83 @@
                     // 詳細が見つからない場合は名前だけ表示するか、アラートを出す
                     alert('棋士の詳細情報が登録されていません。');
                 });
+        }
+
+        function handleLike(name) {
+            let userLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+            
+            // 既にいいねしている場合は解除処理
+            if (userLikes[name]) {
+                if (!confirm('いいねを解除しますか？')) return;
+                
+                fetch(`/api/players/${encodeURIComponent(name)}/unlike`, { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to unlike');
+                        return response.json();
+                    })
+                    .then(newCount => {
+                        document.getElementById('playerLikesCount').textContent = newCount;
+                        delete userLikes[name];
+                        localStorage.setItem('userLikes', JSON.stringify(userLikes));
+                        updateLikeButtonState(name);
+                    })
+                    .catch(error => console.error('Error unliking player:', error));
+                return;
+            }
+
+            // 1ユーザ合計5回まで
+            let totalLikes = Object.values(userLikes).reduce((a, b) => a + b, 0);
+            if (totalLikes >= 5) {
+                alert('合計で5回までしかいいねできません。');
+                return;
+            }
+
+            fetch(`/api/players/${encodeURIComponent(name)}/like`, { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to like');
+                    return response.json();
+                })
+                .then(newCount => {
+                    document.getElementById('playerLikesCount').textContent = newCount;
+                    userLikes[name] = 1; // 1回固定
+                    localStorage.setItem('userLikes', JSON.stringify(userLikes));
+                    updateLikeButtonState(name);
+                })
+                .catch(error => console.error('Error liking player:', error));
+        }
+
+        function updateLikeButtonState(name) {
+            let userLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+            let totalLikes = Object.values(userLikes).reduce((a, b) => a + b, 0);
+            const msg = document.getElementById('likeLimitMessage');
+            const likeBtn = document.getElementById('likeButton');
+
+            if (userLikes[name]) {
+                likeBtn.disabled = false; // 解除できるように有効化
+                likeBtn.classList.remove('btn-outline-danger');
+                likeBtn.classList.add('btn-danger');
+                likeBtn.innerHTML = `<i class="bi bi-heart-fill"></i> いいね済み <span id="playerLikesCount" class="badge bg-white text-danger">${document.getElementById('playerLikesCount').textContent}</span>`;
+                
+                msg.textContent = 'この棋士には既にいいねしました（クリックで解除）';
+                msg.classList.add('text-success');
+                msg.classList.remove('text-danger');
+            } else {
+                likeBtn.classList.add('btn-outline-danger');
+                likeBtn.classList.remove('btn-danger');
+                likeBtn.innerHTML = `<i class="bi bi-heart-fill"></i> いいね <span id="playerLikesCount" class="badge bg-danger">${document.getElementById('playerLikesCount').textContent}</span>`;
+
+                if (totalLikes >= 5) {
+                    likeBtn.disabled = true;
+                    msg.textContent = '合計いいね数が上限（5回）に達しました';
+                    msg.classList.add('text-danger');
+                    msg.classList.remove('text-success');
+                } else {
+                    likeBtn.disabled = false;
+                    msg.textContent = `あと ${5 - totalLikes} 回いいねできます（一人一回まで）`;
+                    msg.classList.remove('text-danger');
+                    msg.classList.remove('text-success');
+                }
+            }
         }
 
         // イベントリスナーの登録
