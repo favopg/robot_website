@@ -67,4 +67,24 @@ public class PlayerNormalizationTest {
 
         assertEquals("/images/players/一力遼.jpg", iconPath);
     }
+
+    @Test
+    public void testYanagiharaNormalization() {
+        // 柳原 -> 栁原 の変換確認
+        assertEquals("栁原咲輝", playerService.normalizeName("柳原咲輝"));
+        assertEquals("栁原咲輝", playerService.normalizeName("柳原咲輝 二段"));
+
+        // DB登録と検索のシミュレーション
+        Player player = new Player();
+        player.setName("栁原咲輝");
+        player.setIconPath("/images/players/栁原咲輝.jpg");
+        playerRepository.save(player);
+
+        String searchName = "柳原咲輝";
+        String normalizedSearchName = playerService.normalizeName(searchName);
+        assertEquals("栁原咲輝", normalizedSearchName);
+
+        assertTrue(playerRepository.findByName(normalizedSearchName).isPresent());
+        assertEquals("/images/players/栁原咲輝.jpg", playerRepository.findByName(normalizedSearchName).get().getIconPath());
+    }
 }

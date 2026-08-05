@@ -54,14 +54,15 @@ public class IndexController {
     @GetMapping("/api/players/{name}")
     @ResponseBody
     public Player getPlayerInfo(@PathVariable String name) {
-        Player player = playerService.findByName(name)
+        String normalizedName = playerService.normalizeName(name);
+        Player player = playerService.findByName(normalizedName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
         
         // アイコンパスの解決
         // まずファイルシステムから検索（優先）
         Set<String> localIcons = getPlayerIcons();
         for (String iconName : localIcons) {
-            if (name.contains(iconName) || iconName.contains(name)) {
+            if (normalizedName.equals(iconName)) {
                 player.setIconPath("/images/players/" + iconName + ".jpg");
                 return player;
             }
