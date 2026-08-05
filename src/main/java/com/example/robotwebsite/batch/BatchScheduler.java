@@ -31,13 +31,13 @@ public class BatchScheduler implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        runJob();
+        // runJob();
         runNihonkiinMatchJob();
-        runYoutubeLiveScrapeJob();
+        // runYoutubeLiveScrapeJob();
     }
 
     // 毎週金曜日23時59分に実行
-    @org.springframework.scheduling.annotation.Scheduled(cron = "0 59 23 * * FRI")
+    // @org.springframework.scheduling.annotation.Scheduled(cron = "0 59 23 * * FRI")
     public void runJob() {
         try {
             logger.info("Starting siteSourceCheckJob at " + new Date());
@@ -64,7 +64,7 @@ public class BatchScheduler implements CommandLineRunner {
         }
     }
     // 1時間に1回実行 (3,600,000ミリ秒)
-    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 3600000)
+    // @org.springframework.scheduling.annotation.Scheduled(fixedRate = 3600000)
     public void runYoutubeLiveScrapeJob() {
         try {
             logger.info("Starting youtubeLiveScrapeJob at " + new Date());
