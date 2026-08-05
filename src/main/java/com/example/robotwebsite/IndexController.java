@@ -24,6 +24,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
@@ -70,6 +71,18 @@ public class IndexController {
         return player;
     }
 
+    @PostMapping("/api/players/{name}/like")
+    @ResponseBody
+    public int likePlayer(@PathVariable String name) {
+        return playerService.incrementLikes(name);
+    }
+
+    @PostMapping("/api/players/{name}/unlike")
+    @ResponseBody
+    public int unlikePlayer(@PathVariable String name) {
+        return playerService.decrementLikes(name);
+    }
+
     private Set<String> getPlayerIcons() {
         Set<String> iconNames = new HashSet<>();
         try {
@@ -99,6 +112,17 @@ public class IndexController {
     private void updatePlayerIcon(Match m, int playerNum, Set<String> icons) {
         String name = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
         if (name == null) return;
+
+        // Player情報を取得して生年月日と性別を設定
+        playerService.findByName(name).ifPresent(p -> {
+            if (playerNum == 1) {
+                m.setPlayer1BirthDate(p.getBirthDate());
+                m.setPlayer1Gender(p.getGender());
+            } else {
+                m.setPlayer2BirthDate(p.getBirthDate());
+                m.setPlayer2Gender(p.getGender());
+            }
+        });
 
         // まずファイルシステムから検索（優先）
         String iconPath = null;

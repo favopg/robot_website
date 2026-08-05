@@ -48,28 +48,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLinkIgo" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-info-circle"></i> 囲碁情報
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-schedule">
+                            <i class="bi bi-clock-history"></i> 対局予定
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLinkIgo">
-                            <!-- 一般イベント -->
-                            <li><h6 class="dropdown-header">一般イベント</h6></li>
-                            <li><a class="dropdown-item" href="/events"><i class="bi bi-calendar-event me-2"></i>イベント一覧</a></li>
-                            
-                            <li><hr class="dropdown-divider"></li>
-                            
-                            <!-- プロ棋士対局 -->
-                            <li><h6 class="dropdown-header">プロ棋士対局</h6></li>
-                            <li><a class="dropdown-item" href="/match-schedule"><i class="bi bi-clock-history me-2"></i>対局予定</a></li>
-                            <li><a class="dropdown-item" href="/match-results"><i class="bi bi-trophy me-2"></i>対局結果</a></li>
-                            
-                            <li><hr class="dropdown-divider"></li>
-                            
-                            <!-- 動画配信 -->
-                            <li><h6 class="dropdown-header">動画配信</h6></li>
-                            <li><a class="dropdown-item" href="/youtube-schedule"><i class="bi bi-youtube me-2"></i>YouTube 配信予定</a></li>
-                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-results">
+                            <i class="bi bi-trophy"></i> 対局結果
+                        </a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -93,9 +80,25 @@
         
         <main>
             <!-- 検索窓の追加 -->
-            <div class="row mb-3">
+            <div class="row mb-3 align-items-center">
                 <div class="col-md-4">
                     <input type="text" id="playerSearch" class="form-control form-control-sm" placeholder="棋士名でフィルター..." onkeyup="filterTable()" title="棋士名検索">
+                </div>
+                <div class="col-md-2">
+                    <select id="ageFilter" class="form-select form-select-sm" onchange="filterTable()" title="年代別フィルター">
+                        <option value="">全ての年代</option>
+                        <option value="10">10代</option>
+                        <option value="20">20代</option>
+                        <option value="30">30代</option>
+                        <option value="40">40代</option>
+                        <option value="50">50代以上</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="favoriteOnlyFilter" onchange="filterTable()">
+                        <label class="form-check-label small" for="favoriteOnlyFilter">推し棋士のみ表示</label>
+                    </div>
                 </div>
             </div>
 
@@ -112,7 +115,9 @@
                     </thead>
                     <tbody>
                         <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
-                        <tr th:each="match : ${matches}" class="match-row">
+                        <tr th:each="match : ${matches}" class="match-row"
+                            th:data-p1-birth="${match.player1BirthDate}"
+                            th:data-p2-birth="${match.player2BirthDate}">
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
@@ -139,11 +144,12 @@
                     <h5 class="modal-title">推し棋士を登録しましょう！</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-dark">
                     <p>推し棋士を登録すると、対局予定や結果で強調表示されます。</p>
                     <div class="mb-3">
-                        <label for="favoritePlayerInput" class="form-label">棋士名（例：一力遼）</label>
-                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="棋士名を入力">
+                        <label for="favoritePlayerInput" class="form-label">棋士名（カンマ区切りで最大5人まで）</label>
+                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="例：一力遼, 芝野虎丸">
+                        <div class="form-text">カンマまたはスペースで区切って複数入力できます。</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -159,13 +165,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const favoritePlayer = localStorage.getItem('favoritePlayer');
+            const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchSchedule');
 
-            if (!favoritePlayer && !modalDismissed) {
+            // フィルターの初期状態反映
+            const favoriteOnly = localStorage.getItem('favoriteOnly') === 'true';
+            const filterCheckbox = document.getElementById('favoriteOnlyFilter');
+            if (filterCheckbox) {
+                filterCheckbox.checked = favoriteOnly;
+            }
+
+            if (!favData && !modalDismissed) {
                 showFavoriteModal(true);
-            } else if (favoritePlayer) {
-                applyHighlight(favoritePlayer);
+            } else {
+                const favs = getFavoritePlayers();
+                if (favs.length > 0) {
+                    applyHighlight(favs);
+                }
+                // 初回読み込み時にもフィルタリングを実行
+                filterTable();
             }
 
             // モーダルが閉じられたときにフラグをセットする（再表示防止）
@@ -174,6 +192,23 @@
                 sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
             });
         });
+
+        function getFavoritePlayers() {
+            const favData = localStorage.getItem('favoritePlayers');
+            if (favData) {
+                try {
+                    return JSON.parse(favData);
+                } catch (e) {
+                    return [];
+                }
+            }
+            // 移行対応
+            const oldFav = localStorage.getItem('favoritePlayer');
+            if (oldFav) {
+                return [oldFav];
+            }
+            return [];
+        }
 
         function showFavoriteModal(isFirst = false) {
             const modalEl = document.getElementById('favoritePlayerModal');
@@ -184,7 +219,8 @@
                 closeBtn.style.display = 'none';
             } else {
                 closeBtn.style.display = 'block';
-                input.value = localStorage.getItem('favoritePlayer') || '';
+                const favs = getFavoritePlayers();
+                input.value = favs.join(', ');
             }
             
             const modal = new bootstrap.Modal(modalEl);
@@ -192,9 +228,19 @@
         }
 
         function saveFavoritePlayer() {
-            const name = document.getElementById('favoritePlayerInput').value.trim();
-            if (name) {
-                localStorage.setItem('favoritePlayer', name);
+            const input = document.getElementById('favoritePlayerInput').value.trim();
+            if (input) {
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const uniqueNames = [...new Set(names)];
+                
+                if (uniqueNames.length > 5) {
+                    alert('推し棋士の登録は5人までです。');
+                    return;
+                }
+                
+                localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
+                localStorage.setItem('favoriteOnly', 'true'); // 登録時にフィルターをONにするフラグをセット
+                localStorage.removeItem('favoritePlayer');
                 bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
                 location.reload();
             } else {
@@ -203,7 +249,9 @@
         }
         
         function clearFavoritePlayer() {
+            localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
+            localStorage.setItem('favoriteOnly', 'false'); // 解除時にフィルターをOFFにする
             sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
@@ -213,33 +261,73 @@
             location.reload();
         }
 
-        function applyHighlight(favName) {
+        function applyHighlight(favNames) {
             const rows = document.querySelectorAll('.match-row');
             
             rows.forEach(row => {
                 const playerNamesContainer = row.querySelector('.player-names');
                 const playerNamesText = playerNamesContainer.textContent;
                 
-                if (playerNamesText.includes(favName)) {
-                    row.classList.add('highlight-favorite');
-                    
-                    const nameSpans = row.querySelectorAll('.player-names span');
-                    nameSpans.forEach(span => {
-                        if (span.textContent.includes(favName)) {
-                            span.classList.add('favorite-name');
-                        }
-                    });
-                }
+                favNames.forEach(favName => {
+                    if (playerNamesText.includes(favName)) {
+                        row.classList.add('highlight-favorite');
+                        
+                        const nameSpans = row.querySelectorAll('.player-names span');
+                        nameSpans.forEach(span => {
+                            if (span.textContent.includes(favName)) {
+                                span.classList.add('favorite-name');
+                            }
+                        });
+                    }
+                });
             });
         }
 
         function filterTable() {
             const query = document.getElementById('playerSearch').value.toLowerCase();
+            const ageFilter = document.getElementById('ageFilter').value;
+            const filterCheckbox = document.getElementById('favoriteOnlyFilter');
+            const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
+            
+            // フィルターの状態を保存
+            localStorage.setItem('favoriteOnly', favoriteOnly);
+            
+            const favs = getFavoritePlayers();
             const rows = document.querySelectorAll('.match-row');
+            const today = new Date();
 
             rows.forEach(row => {
                 const text = row.querySelector('.player-names').textContent.toLowerCase();
-                if (text.includes(query)) {
+                
+                // 年代フィルター判定
+                let ageMatch = true;
+                if (ageFilter !== "") {
+                    const p1Birth = row.getAttribute('data-p1-birth');
+                    const p2Birth = row.getAttribute('data-p2-birth');
+                    
+                    const checkAge = (birthStr) => {
+                        if (!birthStr) return false;
+                        const birth = new Date(birthStr);
+                        let age = today.getFullYear() - birth.getFullYear();
+                        if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+                            age--;
+                        }
+                        if (ageFilter === "50") return age >= 50;
+                        return age >= parseInt(ageFilter) && age < parseInt(ageFilter) + 10;
+                    };
+                    
+                    ageMatch = checkAge(p1Birth) || checkAge(p2Birth);
+                }
+
+                // 推し棋士フィルター判定
+                let favMatch = true;
+                if (favoriteOnly) {
+                    favMatch = favs.some(fav => text.includes(fav.toLowerCase()));
+                }
+
+                const textMatch = text.includes(query);
+
+                if (textMatch && ageMatch && favMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';

@@ -38,6 +38,7 @@ public class PlayerService {
                     existing.setAffiliation(player.getAffiliation());
                     existing.setProfileUrl(player.getProfileUrl());
                     existing.setIconPath(player.getIconPath());
+                    // likesCount はスクレイピングによる更新対象外とする（保持する）
                     playerRepository.saveAndFlush(existing);
                 },
                 () -> playerRepository.saveAndFlush(player)
@@ -46,5 +47,25 @@ public class PlayerService {
             logger.error("Error saving player in new transaction: " + player.getName(), e);
             throw e;
         }
+    }
+
+    @Transactional
+    public int incrementLikes(String name) {
+        return playerRepository.findByName(name).map(p -> {
+            p.setLikesCount(p.getLikesCount() + 1);
+            playerRepository.save(p);
+            return p.getLikesCount();
+        }).orElse(0);
+    }
+
+    @Transactional
+    public int decrementLikes(String name) {
+        return playerRepository.findByName(name).map(p -> {
+            if (p.getLikesCount() > 0) {
+                p.setLikesCount(p.getLikesCount() - 1);
+                playerRepository.save(p);
+            }
+            return p.getLikesCount();
+        }).orElse(0);
     }
 }
