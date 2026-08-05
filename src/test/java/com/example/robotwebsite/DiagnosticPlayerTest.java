@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @SpringBootTest
-@ActiveProfiles("default")
+@ActiveProfiles("test")
 public class DiagnosticPlayerTest {
 
     @Autowired
