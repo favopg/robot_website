@@ -27,10 +27,17 @@ public class PlayerService {
     public String normalizeName(String name) {
         if (name == null) return null;
 
-        // 段位や称号（名人、棋聖、本因坊など）を末尾から取り除く
-        String normalized = name.replaceAll("[\\s\u3000]*(([初一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+|扇興杯).*$", "").trim();
+        String input = name.trim();
 
-        // 異体字の補正
+        // 特殊な称号・別名の置換（称号を含めた完全一致で判定）
+        if (input.equals("二十四世本因坊秀芳")) {
+            return "石田芳夫";
+        }
+
+        // 段位や称号（名人、棋聖、本因坊など）を末尾から取り除く
+        String normalized = input.replaceAll("[\\s\u3000]*(([初一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+|扇興杯).*$", "").trim();
+
+        // 異体字や別名の補正
         // 柳原咲輝 -> 栁原咲輝
         if ("柳原咲輝".equals(normalized)) {
             normalized = "栁原咲輝";

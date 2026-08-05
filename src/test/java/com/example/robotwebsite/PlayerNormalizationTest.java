@@ -39,6 +39,7 @@ public class PlayerNormalizationTest {
         assertEquals("上野愛咲美", playerService.normalizeName("上野愛咲美 女流名人"));
         assertEquals("栁原咲輝", playerService.normalizeName("柳原咲輝"));
         assertEquals("栁原咲輝", playerService.normalizeName("柳原咲輝 二段"));
+        assertEquals("石田芳夫", playerService.normalizeName("二十四世本因坊秀芳"));
         assertEquals("名無し", playerService.normalizeName("名無し"));
         assertNull(playerService.normalizeName(null));
     }
