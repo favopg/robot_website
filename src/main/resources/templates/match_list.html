@@ -182,10 +182,11 @@
             <div class="row mb-3 align-items-center">
                 <div class="col-md-4">
                     <div class="input-group input-group-sm shadow-sm">
-                        <span class="input-group-text bg-white border-end-0">
+                        <button class="btn btn-outline-secondary border-end-0 bg-white" type="button" onclick="filterTable()" title="検索実行">
                             <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." onkeyup="filterTable()" title="対局検索">
+                        </button>
+                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." title="対局検索"
+                               onkeydown="if(event.key==='Enter') filterTable()">
                     </div>
                 </div>
                 <div class="col-md-2">
