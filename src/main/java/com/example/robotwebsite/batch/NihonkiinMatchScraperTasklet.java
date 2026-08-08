@@ -3,6 +3,7 @@ package com.example.robotwebsite.batch;
 import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.repository.MatchRepository;
 import com.example.robotwebsite.service.MatchService;
+import com.example.robotwebsite.service.PlayerService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,14 +31,16 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
     private static final Logger logger = LoggerFactory.getLogger(NihonkiinMatchScraperTasklet.class);
     private final MatchRepository matchRepository;
     private final MatchService matchService;
+    private final PlayerService playerService;
     private final JdbcTemplate jdbcTemplate;
     private static final String URL = "https://www.nihonkiin.or.jp/match/2week.html";
 
     private final NihonkiinPlayerScraper playerScraper;
 
-    public NihonkiinMatchScraperTasklet(MatchRepository matchRepository, MatchService matchService, JdbcTemplate jdbcTemplate, NihonkiinPlayerScraper playerScraper) {
+    public NihonkiinMatchScraperTasklet(MatchRepository matchRepository, MatchService matchService, PlayerService playerService, JdbcTemplate jdbcTemplate, NihonkiinPlayerScraper playerScraper) {
         this.matchRepository = matchRepository;
         this.matchService = matchService;
+        this.playerService = playerService;
         this.jdbcTemplate = jdbcTemplate;
         this.playerScraper = playerScraper;
     }
@@ -136,12 +139,12 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
 
                     if (p1.isEmpty() || p2.isEmpty()) continue;
 
-                    match.setPlayer1Name(p1);
+                    match.setPlayer1Name(playerService.normalizeName(p1));
                     match.setPlayer1Sente("△".equals(sente1));
                     match.setResult(result);
-                    match.setPlayer2Name(p2);
+                    match.setPlayer2Name(playerService.normalizeName(p2));
                     match.setPlayer2Sente("△".equals(sente2));
-                    match.setWinnerName(p1);
+                    match.setWinnerName(playerService.normalizeName(p1));
                     
                     // 棋士情報の収集トリガー
                     playerScraper.scrapeAndSavePlayer(p1);
@@ -152,8 +155,8 @@ public class NihonkiinMatchScraperTasklet implements Tasklet {
                     match.setMatchName(cells.get(0).text().trim());
                     String p1 = cells.get(1).text().trim();
                     String p2 = cells.get(cells.size() - 1).text().trim();
-                    match.setPlayer1Name(p1);
-                    match.setPlayer2Name(p2);
+                    match.setPlayer1Name(playerService.normalizeName(p1));
+                    match.setPlayer2Name(playerService.normalizeName(p2));
 
                     if (match.getPlayer1Name().isEmpty() || match.getPlayer2Name().isEmpty()) continue;
 

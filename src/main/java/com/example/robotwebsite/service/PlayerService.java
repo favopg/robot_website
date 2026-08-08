@@ -20,6 +20,60 @@ public class PlayerService {
         this.playerRepository = playerRepository;
     }
 
+    /**
+     * 名前から称号や段位を取り除いて正規化する
+     * 例: "一力遼 名人" -> "一力遼", "芝野虎丸 棋聖" -> "芝野虎丸", "仲邑菫 三段" -> "仲邑菫"
+     */
+    public String normalizeName(String name) {
+        if (name == null) return null;
+
+        String input = name.trim();
+
+        // 特殊な称号・別名の置換（称号を含めた完全一致で判定）
+        if (input.equals("二十四世本因坊秀芳")) {
+            return "石田芳夫";
+        }
+
+        // 段位や称号（名人、棋聖、本因坊など）を末尾から取り除く
+        String normalized = input.replaceAll("[\\s\u3000]*(([初一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+|扇興杯).*$", "").trim();
+
+        // 異体字や別名の補正
+        // 柳原咲輝 -> 栁原咲輝
+        if ("柳原咲輝".equals(normalized)) {
+            normalized = "栁原咲輝";
+        }
+        
+        // 張リユウ -> 張豊猷
+        if ("張リユウ".equals(normalized)) {
+            normalized = "張豊猷";
+        }
+
+        // 王銘エン -> 王銘琬
+        if ("王銘エン".equals(normalized)) {
+            normalized = "王銘琬";
+        }
+
+        // 卞聞愷 の正規化
+        // 日本棋院では「卞聞愷」として登録されているが、入力が異なる場合の補正
+        // 依頼内容は「卞聞愷（ビャン　ウォンケイ）四段」として表示できるようにすること。
+        // プロフィールURL等の検索で「卞聞愷」が正しく使われるようにする。
+        if ("卞聞ケイ".equals(normalized) || "卞聞愷".equals(normalized)) {
+            normalized = "卞聞愷";
+        }
+
+        // 高山邊楓実 -> 髙山邊楓実
+        if ("高山邊楓実".equals(normalized)) {
+            normalized = "髙山邊楓実";
+        }
+
+        // フィトラＲ．Ｓ． -> フィトラ・R・S
+        if ("フィトラＲ．Ｓ．".equals(normalized)) {
+            normalized = "フィトラ・R・S";
+        }
+
+        return normalized;
+    }
+
     @Transactional(readOnly = true)
     public Optional<Player> findByName(String name) {
         return playerRepository.findByName(name);
@@ -38,6 +92,7 @@ public class PlayerService {
                     existing.setAffiliation(player.getAffiliation());
                     existing.setProfileUrl(player.getProfileUrl());
                     existing.setIconPath(player.getIconPath());
+                    existing.setKanaName(player.getKanaName());
                     // likesCount はスクレイピングによる更新対象外とする（保持する）
                     playerRepository.saveAndFlush(existing);
                 },

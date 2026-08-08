@@ -32,33 +32,35 @@ public class KansaikiinPlayerScraper {
     public boolean scrapeAndSavePlayer(String playerName) {
         if (playerName == null || playerName.isEmpty()) return false;
 
-        Optional<Player> existingPlayer = playerService.findByName(playerName);
+        String searchName = playerService.normalizeName(playerName);
+        String normalizedSearchName = searchName.replaceAll("[\\s\u3000]+", "");
+        
+        Optional<Player> existingPlayer = playerService.findByName(searchName);
         if (existingPlayer.isPresent()) {
             Player p = existingPlayer.get();
-            if (p.getGender() != null && p.getRank() != null && p.getBirthDate() != null) {
+            if (p.getGender() != null && p.getRank() != null && p.getBirthDate() != null && p.getKanaName() != null && !p.getKanaName().isEmpty()) {
                 return true;
             }
-            logger.info("Re-scraping Kansaikiin player profile to fill missing info: " + playerName);
+            logger.info("Re-scraping Kansaikiin player profile to fill missing info: " + searchName);
         } else {
-            logger.info("Searching for Kansaikiin player profile: " + playerName);
+            logger.info("Searching for Kansaikiin player profile: " + searchName);
         }
 
         try {
             Document doc = Jsoup.connect(LIST_URL).get();
             // 名前からリンクを探す（空白を無視して比較）
-            String normalizedSearchName = playerName.replaceAll("[\\s\u3000]+", "");
             
             Elements links = doc.select("a[href*=kisi_prof/]");
             for (Element link : links) {
                 String linkText = link.text().replaceAll("[\\s\u3000]+", "");
                 if (linkText.equals(normalizedSearchName)) {
                     String detailUrl = link.absUrl("href");
-                    scrapePlayerDetail(playerName, detailUrl);
+                    scrapePlayerDetail(searchName, detailUrl);
                     return true;
                 }
             }
             
-            logger.warn("Profile URL not found in Kansaikiin for player: " + playerName);
+            logger.warn("Profile URL not found in Kansaikiin for player: " + playerName + " (searched as: " + searchName + ")");
         } catch (Exception e) {
             logger.error("Error searching Kansaikiin player: " + playerName, e);
         }
@@ -76,10 +78,10 @@ public class KansaikiinPlayerScraper {
             // 段位の抽出
             // h1やタイトル付近にある "氏名 九段" のようなテキストから抽出
             // murakawadaisuke.html の例: <h1>棋士紹介</h1> ... **村川大介 九段**
-            Elements strongs = doc.select("strong");
+            Elements strongs = doc.select("strong, h1, h2");
             String rank = null;
-            for (Element strong : strongs) {
-                String text = strong.text();
+            for (Element element : strongs) {
+                String text = element.text();
                 if (text.contains("段")) {
                     Pattern pattern = Pattern.compile("([一二三四五六七八九十]|\\d+)段");
                     Matcher matcher = pattern.matcher(text);
@@ -137,16 +139,59 @@ public class KansaikiinPlayerScraper {
             }
 
             // 画像の抽出
-            Element imgElement = doc.selectFirst("img[src*=kisi_img/]");
+            Element imgElement = doc.selectFirst("img[src*=kisi_img/], img[src*=kisi_prof/]");
             if (imgElement != null) {
                 player.setIconPath(imgElement.absUrl("src"));
+                
+                // 画像のalt属性に "村川　大介（ムラカワ　ダイスケ）" のように入っている場合がある
+                String alt = imgElement.attr("alt");
+                String kanaName = null;
+                Pattern p = Pattern.compile("[（(]([\\u30A0-\\u30FF\\s\u3000]+)[^）)]*[）)]");
+
+                if (alt != null && !alt.isEmpty()) {
+                    Matcher m = p.matcher(alt);
+                    if (m.find()) {
+                        kanaName = m.group(1).trim();
+                    }
+                }
+
+                // 見出しタグ<h1>や<h2>からも探してみる
+                if (kanaName == null) {
+                    Elements headers = doc.select("h1, h2");
+                    for (Element h : headers) {
+                        Matcher m = p.matcher(h.text());
+                        if (m.find()) {
+                            kanaName = m.group(1).trim();
+                            break;
+                        }
+                    }
+                }
+
+                if (kanaName != null) {
+                    player.setKanaName(kanaName.replace("　", " "));
+                }
             }
 
             playerService.saveOrUpdate(player);
-            logger.info("Saved Kansaikiin player info for: " + playerName);
+            logger.info("Saved Kansaikiin player info for: " + playerName + " (Kana: " + player.getKanaName() + ")");
 
         } catch (IOException e) {
             logger.error("Failed to fetch Kansaikiin player detail page: " + url, e);
+        }
+    }
+    public void scrapeAllPlayers() {
+        try {
+            Document doc = Jsoup.connect(LIST_URL).get();
+            Elements links = doc.select("a[href*=kisi_prof/]");
+            for (Element link : links) {
+                String name = link.text().replaceAll("[\\s\u3000]+", "");
+                String detailUrl = link.absUrl("href");
+                if (!name.isEmpty() && detailUrl.contains("prof")) {
+                    scrapePlayerDetail(name, detailUrl);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error scraping Kansaikiin all players", e);
         }
     }
 }

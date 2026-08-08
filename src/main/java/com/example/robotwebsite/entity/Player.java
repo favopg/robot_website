@@ -32,6 +32,9 @@ public class Player {
     @Column(name = "icon_path")
     private String iconPath;
 
+    @Column(name = "kana_name")
+    private String kanaName;
+
     @Column(name = "likes_count", nullable = false)
     private int likesCount = 0;
 
@@ -65,6 +68,9 @@ public class Player {
 
     public String getIconPath() { return iconPath; }
     public void setIconPath(String iconPath) { this.iconPath = iconPath; }
+
+    public String getKanaName() { return kanaName; }
+    public void setKanaName(String kanaName) { this.kanaName = kanaName; }
 
     public int getLikesCount() { return likesCount; }
     public void setLikesCount(int likesCount) { this.likesCount = likesCount; }

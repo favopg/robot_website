@@ -59,9 +59,15 @@ public class Match {
 
     @Transient
     private String player1Gender;
-
+    
     @Transient
     private String player2Gender;
+
+    @Transient
+    private String player1Kana;
+
+    @Transient
+    private String player2Kana;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -116,4 +122,9 @@ public class Match {
     public void setPlayer1Gender(String player1Gender) { this.player1Gender = player1Gender; }
     public String getPlayer2Gender() { return player2Gender; }
     public void setPlayer2Gender(String player2Gender) { this.player2Gender = player2Gender; }
+
+    public String getPlayer1Kana() { return player1Kana; }
+    public void setPlayer1Kana(String player1Kana) { this.player1Kana = player1Kana; }
+    public String getPlayer2Kana() { return player2Kana; }
+    public void setPlayer2Kana(String player2Kana) { this.player2Kana = player2Kana; }
 }

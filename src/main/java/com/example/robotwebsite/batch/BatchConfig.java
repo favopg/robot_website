@@ -52,4 +52,18 @@ public class BatchConfig {
                 .tasklet(tasklet, transactionManager)
                 .build();
     }
+
+    @Bean
+    public Job normalizationJob(JobRepository jobRepository, Step normalizationStep) {
+        return new JobBuilder("normalizationJob", jobRepository)
+                .start(normalizationStep)
+                .build();
+    }
+
+    @Bean
+    public Step normalizationStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, PlayerNormalizationTasklet tasklet) {
+        return new StepBuilder("normalizationStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
 }

@@ -1,5 +1,7 @@
 package com.example.robotwebsite;
 
+import com.example.robotwebsite.batch.KansaikiinPlayerScraper;
+import com.example.robotwebsite.batch.NihonkiinPlayerScraper;
 import com.example.robotwebsite.entity.Event;
 import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.entity.YoutubeLive;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,26 +45,56 @@ public class IndexController {
     private final MatchRepository matchRepository;
     private final PlayerService playerService;
     private final YoutubeLiveRepository youtubeLiveRepository;
+    private final NihonkiinPlayerScraper nihonkiinPlayerScraper;
+    private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
 
     public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
-                           PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository) {
+                           PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository,
+                           NihonkiinPlayerScraper nihonkiinPlayerScraper,
+                           KansaikiinPlayerScraper kansaikiinPlayerScraper) {
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
         this.playerService = playerService;
         this.youtubeLiveRepository = youtubeLiveRepository;
+        this.nihonkiinPlayerScraper = nihonkiinPlayerScraper;
+        this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
+    }
+
+    @GetMapping("/api/player/update-kana")
+    @ResponseBody
+    public Player updatePlayerKana(@RequestParam String name) {
+        String normalizedName = playerService.normalizeName(name);
+        // 日本棋院を試す
+        nihonkiinPlayerScraper.scrapeAndSavePlayer(normalizedName);
+        // 関西棋院を試す
+        kansaikiinPlayerScraper.scrapeAndSavePlayer(normalizedName);
+
+        return playerService.findByName(normalizedName).orElse(null);
     }
 
     @GetMapping("/api/players/{name}")
     @ResponseBody
     public Player getPlayerInfo(@PathVariable String name) {
-        Player player = playerService.findByName(name)
+        String normalizedName = playerService.normalizeName(name);
+        Player player = playerService.findByName(normalizedName)
+                .or(() -> playerService.findByName(name)) // フォールバック: 元の名前でも検索
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
         
         // アイコンパスの解決
         // まずファイルシステムから検索（優先）
         Set<String> localIcons = getPlayerIcons();
+        
+        // カタカナ名（スペース除去）での検索を優先
+        String kanaForFile = player.getKanaName() != null ? player.getKanaName().replaceAll("[\\s\u3000]+", "") : null;
+        if (kanaForFile != null && localIcons.contains(kanaForFile)) {
+            player.setIconPath("/images/players/" + kanaForFile + ".jpg");
+            return player;
+        }
+
+        // 漢字名での検索（フォールバック）
         for (String iconName : localIcons) {
-            if (name.contains(iconName) || iconName.contains(name)) {
+            // 正規化名または元の名前でアイコンを検索
+            if (normalizedName.equals(iconName) || name.equals(iconName)) {
                 player.setIconPath("/images/players/" + iconName + ".jpg");
                 return player;
             }
@@ -110,32 +143,52 @@ public class IndexController {
     }
 
     private void updatePlayerIcon(Match m, int playerNum, Set<String> icons) {
-        String name = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
-        if (name == null) return;
+        String originalName = (playerNum == 1) ? m.getPlayer1Name() : m.getPlayer2Name();
+        if (originalName == null) return;
+
+        String name = playerService.normalizeName(originalName);
 
         // Player情報を取得して生年月日と性別を設定
-        playerService.findByName(name).ifPresent(p -> {
+        Optional<Player> playerOpt = playerService.findByName(name);
+        playerOpt.ifPresent(p -> {
             if (playerNum == 1) {
                 m.setPlayer1BirthDate(p.getBirthDate());
                 m.setPlayer1Gender(p.getGender());
+                m.setPlayer1Kana(p.getKanaName());
             } else {
                 m.setPlayer2BirthDate(p.getBirthDate());
                 m.setPlayer2Gender(p.getGender());
+                m.setPlayer2Kana(p.getKanaName());
             }
         });
 
         // まずファイルシステムから検索（優先）
         String iconPath = null;
-        for (String iconName : icons) {
-            if (name.contains(iconName) || iconName.contains(name)) {
-                iconPath = "/images/players/" + iconName + ".jpg";
-                break;
+        
+        // カタカナ名での検索を優先
+        if (playerOpt.isPresent()) {
+            Player p = playerOpt.get();
+            if (p.getKanaName() != null) {
+                String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
+                if (icons.contains(kanaForFile)) {
+                    iconPath = "/images/players/" + kanaForFile + ".jpg";
+                }
+            }
+        }
+
+        // 漢字名での検索（フォールバック）
+        if (iconPath == null) {
+            for (String iconName : icons) {
+                if (name.equals(iconName)) {
+                    iconPath = "/images/players/" + iconName + ".jpg";
+                    break;
+                }
             }
         }
 
         // ファイルシステムにない場合はDBから検索
         if (iconPath == null) {
-            iconPath = playerService.findByName(name)
+            iconPath = playerOpt
                     .map(Player::getIconPath)
                     .filter(path -> !path.isEmpty())
                     .orElse(null);

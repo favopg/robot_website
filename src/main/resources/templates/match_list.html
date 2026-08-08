@@ -159,6 +159,18 @@
                                             <!-- JSで動的に生成 -->
                                         </div>
                                     </div>
+                                    <!-- 連勝ストップ一覧の追加 -->
+                                    <div class="col-12 mt-3 pt-3 border-top">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="fw-bold">
+                                                <i class="bi bi-x-circle-fill text-secondary me-2"></i>
+                                                <span id="streakStopTitle">連勝ストップ一覧</span>
+                                            </div>
+                                        </div>
+                                        <div id="streakStopList" class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <!-- JSで動的に生成 -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -170,10 +182,11 @@
             <div class="row mb-3 align-items-center">
                 <div class="col-md-4">
                     <div class="input-group input-group-sm shadow-sm">
-                        <span class="input-group-text bg-white border-end-0">
+                        <button class="btn btn-outline-secondary border-end-0 bg-white" type="button" onclick="filterTable()" title="検索実行">
                             <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." onkeyup="filterTable()" title="対局検索">
+                        </button>
+                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名または棋戦名で検索・フィルター..." title="対局検索"
+                               onkeydown="if(event.key==='Enter') filterTable()">
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -218,6 +231,8 @@
                      th:data-p2-birth="${match.player2BirthDate}"
                      th:data-p1-gender="${match.player1Gender}"
                      th:data-p2-gender="${match.player2Gender}"
+                     th:data-p1-kana="${match.player1Kana}"
+                     th:data-p2-kana="${match.player2Kana}"
                      th:data-date="${match.matchDate}">
                     <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
                     <div class="card h-100 shadow-sm border-0 border-top border-4 border-primary"
@@ -299,6 +314,13 @@
                 <div class="modal-body text-center">
                     <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="棋士アイコン">
                     <table class="table table-sm text-start">
+                        <tr>
+                            <th style="width: 30%;">読み仮名</th>
+                            <td id="playerKanaNameContainer">
+                                <span id="playerKanaName"></span>
+                                <button id="btnUpdateKana" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" onclick="updateKana()">登録試行</button>
+                            </td>
+                        </tr>
                         <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
                         <tr><th>段位</th><td id="playerRank"></td></tr>
                         <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
@@ -347,8 +369,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // ひらがなをカタカナに変換するユーティリティ
+        function hiraToKata(str) {
+            return str.replace(/[\u3041-\u3096]/g, function(match) {
+                var chr = match.charCodeAt(0) + 0x60;
+                return String.fromCharCode(chr);
+            });
+        }
+
         function filterTable() {
-            const query = document.getElementById('playerSearch').value.toLowerCase();
+            const query = hiraToKata(document.getElementById('playerSearch').value.toLowerCase());
             const ageFilter = document.getElementById('ageFilter').value;
             const genderFilter = document.getElementById('genderFilter').value;
             const filterCheckbox = document.getElementById('favoriteOnlyFilter');
@@ -371,10 +401,12 @@
             items.forEach(item => {
                 const p1Name = item.getAttribute('data-p1-name') || "";
                 const p2Name = item.getAttribute('data-p2-name') || "";
+                const p1Kana = item.getAttribute('data-p1-kana') || "";
+                const p2Kana = item.getAttribute('data-p2-kana') || "";
                 const matchDate = item.getAttribute('data-date') || "";
                 
-                const playerNames = (p1Name + " " + p2Name).toLowerCase();
-                const matchName = item.querySelector('.badge').textContent.toLowerCase();
+                const playerNames = hiraToKata((p1Name + " " + p2Name + " " + p1Kana + " " + p2Kana).toLowerCase());
+                const matchName = hiraToKata(item.querySelector('.badge').textContent.toLowerCase());
                 const text = playerNames + " " + matchName;
                 const winnerName = item.getAttribute('data-winner') ? item.getAttribute('data-winner') : "";
 
@@ -510,6 +542,7 @@
 
                 // 連勝記録ランキングの処理
                 const playerStreaks = {};
+                const streakStops = []; // 連勝ストップを記録する配列
                 // 日付順（古い順）にソートして連勝を計算
                 const sortedMatches = [...displayedMatches].sort((a, b) => a.date.localeCompare(b.date));
                 
@@ -527,7 +560,15 @@
                                 playerStreaks[p].max = playerStreaks[p].current;
                             }
                         } else if (match.winner && match.winner !== "") {
-                            // 相手が勝った場合（引き分けや無効試合でない場合）は連勝ストップ
+                            // 相手が勝った場合、連勝中（3連勝以上）であれば記録
+                            if (playerStreaks[p].current >= 3) {
+                                streakStops.push({
+                                    name: p,
+                                    streak: playerStreaks[p].current,
+                                    opponent: match.winner,
+                                    date: match.date
+                                });
+                            }
                             playerStreaks[p].current = 0;
                         }
                     });
@@ -556,7 +597,10 @@
                     toggleStreaksBtn.style.display = 'none';
                 }
 
-                if (sortedWinners.length > 0 || sortedMatchCounts.length > 0 || sortedStreaks.length > 0) {
+                // 連勝ストップ一覧の表示
+                renderStreakStops(streakStops);
+
+                if (sortedWinners.length > 0 || sortedMatchCounts.length > 0 || sortedStreaks.length > 0 || streakStops.length > 0) {
                     rankingArea.style.display = 'block';
                 } else {
                     rankingArea.style.display = 'none';
@@ -699,6 +743,34 @@
             });
         }
 
+        function renderStreakStops(stops) {
+            const listContainer = document.getElementById('streakStopList');
+            if (!listContainer) return;
+
+            // 新しい順に表示
+            const sortedStops = [...stops].sort((a, b) => b.date.localeCompare(a.date));
+
+            if (sortedStops.length === 0) {
+                listContainer.innerHTML = '<div class="col-12 text-muted">該当する記録はありません。</div>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            sortedStops.forEach(stop => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                col.innerHTML = `
+                    <div class="p-2 border rounded bg-white shadow-sm">
+                        <span class="fw-bold text-danger player-detail-trigger" style="cursor:pointer;" data-player-name="${stop.name}">${stop.name}</span> の連勝が <span class="badge bg-secondary">${stop.streak}</span> でストップ
+                        <div class="text-muted extra-small mt-1">
+                            ${stop.date} 対 <span class="text-dark fw-bold player-detail-trigger" style="cursor:pointer;" data-player-name="${stop.opponent}">${stop.opponent}</span>
+                        </div>
+                    </div>
+                `;
+                listContainer.appendChild(col);
+            });
+        }
+
         function showPlayerDetail(name) {
             fetch(`/api/players/${encodeURIComponent(name)}`)
                 .then(response => {
@@ -707,6 +779,15 @@
                 })
                 .then(data => {
                     document.getElementById('playerName').textContent = data.name;
+                    const kanaName = data.kanaName || '-';
+                    document.getElementById('playerKanaName').textContent = kanaName;
+                    const btnUpdateKana = document.getElementById('btnUpdateKana');
+                    if (kanaName === '-' || !data.kanaName) {
+                        btnUpdateKana.style.display = 'inline-block';
+                        btnUpdateKana.dataset.playerName = data.name;
+                    } else {
+                        btnUpdateKana.style.display = 'none';
+                    }
                     document.getElementById('playerGender').textContent = data.gender || '-';
                     document.getElementById('playerRank').textContent = data.rank || '-';
                     document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
@@ -813,6 +894,35 @@
                     msg.classList.remove('text-success');
                 }
             }
+        }
+
+        function updateKana() {
+            const btn = document.getElementById('btnUpdateKana');
+            const name = btn.dataset.playerName;
+            if (!name) return;
+
+            btn.disabled = true;
+            btn.textContent = '試行中...';
+
+            fetch(`/api/player/update-kana?name=${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.kanaName) {
+                        document.getElementById('playerKanaName').textContent = data.kanaName;
+                        btn.style.display = 'none';
+                        alert('読み仮名を登録しました。');
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = '登録試行';
+                        alert('読み仮名が見つかりませんでした。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating kana:', error);
+                    btn.disabled = false;
+                    btn.textContent = '登録試行';
+                    alert('登録試行中にエラーが発生しました。');
+                });
         }
 
         // イベントリスナーの登録

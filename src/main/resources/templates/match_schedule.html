@@ -82,7 +82,13 @@
             <!-- 検索窓の追加 -->
             <div class="row mb-3 align-items-center">
                 <div class="col-md-4">
-                    <input type="text" id="playerSearch" class="form-control form-control-sm" placeholder="棋士名でフィルター..." onkeyup="filterTable()" title="棋士名検索">
+                    <div class="input-group input-group-sm">
+                        <button class="btn btn-outline-secondary border-end-0 bg-white" type="button" onclick="filterTable()" title="検索実行">
+                            <i class="bi bi-search text-muted"></i>
+                        </button>
+                        <input type="text" id="playerSearch" class="form-control border-start-0 ps-0" placeholder="棋士名でフィルター..." title="棋士名検索"
+                               onkeydown="if(event.key==='Enter') filterTable()">
+                    </div>
                 </div>
                 <div class="col-md-2">
                     <select id="ageFilter" class="form-select form-select-sm" onchange="filterTable()" title="年代別フィルター">
@@ -117,7 +123,9 @@
                         <!--/* @thymesVar id="match" type="com.example.robotwebsite.entity.Match" */-->
                         <tr th:each="match : ${matches}" class="match-row"
                             th:data-p1-birth="${match.player1BirthDate}"
-                            th:data-p2-birth="${match.player2BirthDate}">
+                            th:data-p2-birth="${match.player2BirthDate}"
+                            th:data-p1-kana="${match.player1Kana}"
+                            th:data-p2-kana="${match.player2Kana}">
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
@@ -283,8 +291,16 @@
             });
         }
 
+        // ひらがなをカタカナに変換するユーティリティ
+        function hiraToKata(str) {
+            return str.replace(/[\u3041-\u3096]/g, function(match) {
+                var chr = match.charCodeAt(0) + 0x60;
+                return String.fromCharCode(chr);
+            });
+        }
+
         function filterTable() {
-            const query = document.getElementById('playerSearch').value.toLowerCase();
+            const query = hiraToKata(document.getElementById('playerSearch').value.toLowerCase());
             const ageFilter = document.getElementById('ageFilter').value;
             const filterCheckbox = document.getElementById('favoriteOnlyFilter');
             const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
@@ -297,7 +313,10 @@
             const today = new Date();
 
             rows.forEach(row => {
-                const text = row.querySelector('.player-names').textContent.toLowerCase();
+                const playerNamesText = row.querySelector('.player-names').textContent.toLowerCase();
+                const p1Kana = row.getAttribute('data-p1-kana') || "";
+                const p2Kana = row.getAttribute('data-p2-kana') || "";
+                const text = hiraToKata((playerNamesText + " " + p1Kana + " " + p2Kana).toLowerCase());
                 
                 // 年代フィルター判定
                 let ageMatch = true;

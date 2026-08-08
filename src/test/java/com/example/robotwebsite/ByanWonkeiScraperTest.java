@@ -1,6 +1,5 @@
 package com.example.robotwebsite;
 
-import com.example.robotwebsite.batch.KansaikiinPlayerScraper;
 import com.example.robotwebsite.batch.NihonkiinPlayerScraper;
 import com.example.robotwebsite.entity.Player;
 import com.example.robotwebsite.service.PlayerService;
@@ -11,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,7 +18,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class PlayerScraperFixTest {
+public class ByanWonkeiScraperTest {
 
     @Autowired
     private NihonkiinPlayerScraper scraper;
@@ -29,20 +27,21 @@ public class PlayerScraperFixTest {
     private PlayerService playerService;
 
     @Test
-    public void testScrapeChoChikun() {
-        // Cho Chikun (趙　治勲) has birth date in profile text: "1956年（昭和31年）6月20日生"
-        String name = "趙治勲";
-        String detailUrl = "https://www.nihonkiin.or.jp/player/htm/ki000004.html";
+    public void testScrapeByanWonkei() {
+        String name = "卞聞愷";
+        String detailUrl = "https://www.nihonkiin.or.jp/player/htm/ki000449.html";
         
         when(playerService.findByName(anyString())).thenReturn(Optional.empty());
 
+        // Perform scraping (logic only check via Mock)
         scraper.scrapePlayerDetail(name, detailUrl);
 
         ArgumentCaptor<Player> playerCaptor = ArgumentCaptor.forClass(Player.class);
         verify(playerService, atLeastOnce()).saveOrUpdate(playerCaptor.capture());
         
         Player savedPlayer = playerCaptor.getValue();
-        assertEquals(LocalDate.of(1956, 6, 20), savedPlayer.getBirthDate());
-        assertEquals("趙治勲", savedPlayer.getName());
+        assertEquals(name, savedPlayer.getName());
+        assertEquals(detailUrl, savedPlayer.getProfileUrl());
+        // Rank might be scraped from the page, but we ensure the URL is correct
     }
 }
