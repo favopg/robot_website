@@ -64,6 +64,7 @@ public class PlayerService {
                     existing.setAffiliation(player.getAffiliation());
                     existing.setProfileUrl(player.getProfileUrl());
                     existing.setIconPath(player.getIconPath());
+                    existing.setKanaName(player.getKanaName());
                     // likesCount はスクレイピングによる更新対象外とする（保持する）
                     playerRepository.saveAndFlush(existing);
                 },

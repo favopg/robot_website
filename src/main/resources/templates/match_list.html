@@ -311,6 +311,13 @@
                 <div class="modal-body text-center">
                     <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="棋士アイコン">
                     <table class="table table-sm text-start">
+                        <tr>
+                            <th style="width: 30%;">読み仮名</th>
+                            <td id="playerKanaNameContainer">
+                                <span id="playerKanaName"></span>
+                                <button id="btnUpdateKana" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" onclick="updateKana()">登録試行</button>
+                            </td>
+                        </tr>
                         <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
                         <tr><th>段位</th><td id="playerRank"></td></tr>
                         <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
@@ -759,6 +766,15 @@
                 })
                 .then(data => {
                     document.getElementById('playerName').textContent = data.name;
+                    const kanaName = data.kanaName || '-';
+                    document.getElementById('playerKanaName').textContent = kanaName;
+                    const btnUpdateKana = document.getElementById('btnUpdateKana');
+                    if (kanaName === '-' || !data.kanaName) {
+                        btnUpdateKana.style.display = 'inline-block';
+                        btnUpdateKana.dataset.playerName = data.name;
+                    } else {
+                        btnUpdateKana.style.display = 'none';
+                    }
                     document.getElementById('playerGender').textContent = data.gender || '-';
                     document.getElementById('playerRank').textContent = data.rank || '-';
                     document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
@@ -865,6 +881,35 @@
                     msg.classList.remove('text-success');
                 }
             }
+        }
+
+        function updateKana() {
+            const btn = document.getElementById('btnUpdateKana');
+            const name = btn.dataset.playerName;
+            if (!name) return;
+
+            btn.disabled = true;
+            btn.textContent = '試行中...';
+
+            fetch(`/api/player/update-kana?name=${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.kanaName) {
+                        document.getElementById('playerKanaName').textContent = data.kanaName;
+                        btn.style.display = 'none';
+                        alert('読み仮名を登録しました。');
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = '登録試行';
+                        alert('読み仮名が見つかりませんでした。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating kana:', error);
+                    btn.disabled = false;
+                    btn.textContent = '登録試行';
+                    alert('登録試行中にエラーが発生しました。');
+                });
         }
 
         // イベントリスナーの登録

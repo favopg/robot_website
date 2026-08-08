@@ -1,0 +1,1 @@
+ALTER TABLE players ADD COLUMN kana_name VARCHAR(100);

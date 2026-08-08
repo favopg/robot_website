@@ -32,17 +32,18 @@ public class KansaikiinPlayerScraper {
     public boolean scrapeAndSavePlayer(String playerName) {
         if (playerName == null || playerName.isEmpty()) return false;
 
-        String normalizedSearchName = playerService.normalizeName(playerName).replaceAll("[\\s\u3000]+", "");
+        String searchName = playerService.normalizeName(playerName);
+        String normalizedSearchName = searchName.replaceAll("[\\s\u3000]+", "");
         
-        Optional<Player> existingPlayer = playerService.findByName(playerName);
+        Optional<Player> existingPlayer = playerService.findByName(searchName);
         if (existingPlayer.isPresent()) {
             Player p = existingPlayer.get();
-            if (p.getGender() != null && p.getRank() != null && p.getBirthDate() != null) {
+            if (p.getGender() != null && p.getRank() != null && p.getBirthDate() != null && p.getKanaName() != null && !p.getKanaName().isEmpty()) {
                 return true;
             }
-            logger.info("Re-scraping Kansaikiin player profile to fill missing info: " + playerName);
+            logger.info("Re-scraping Kansaikiin player profile to fill missing info: " + searchName);
         } else {
-            logger.info("Searching for Kansaikiin player profile: " + playerName);
+            logger.info("Searching for Kansaikiin player profile: " + searchName);
         }
 
         try {
@@ -54,12 +55,12 @@ public class KansaikiinPlayerScraper {
                 String linkText = link.text().replaceAll("[\\s\u3000]+", "");
                 if (linkText.equals(normalizedSearchName)) {
                     String detailUrl = link.absUrl("href");
-                    scrapePlayerDetail(playerName, detailUrl);
+                    scrapePlayerDetail(searchName, detailUrl);
                     return true;
                 }
             }
             
-            logger.warn("Profile URL not found in Kansaikiin for player: " + playerName);
+            logger.warn("Profile URL not found in Kansaikiin for player: " + playerName + " (searched as: " + searchName + ")");
         } catch (Exception e) {
             logger.error("Error searching Kansaikiin player: " + playerName, e);
         }
@@ -141,6 +142,31 @@ public class KansaikiinPlayerScraper {
             Element imgElement = doc.selectFirst("img[src*=kisi_img/]");
             if (imgElement != null) {
                 player.setIconPath(imgElement.absUrl("src"));
+                
+                // 画像のalt属性に "村川　大介（ムラカワ　ダイスケ）" のように入っている場合がある
+                String alt = imgElement.attr("alt");
+                String kanaName = null;
+                Pattern p = Pattern.compile("（([\\u30A0-\\u30FF\\s\u3000]+)[^）]*）");
+
+                if (alt != null && !alt.isEmpty()) {
+                    Matcher m = p.matcher(alt);
+                    if (m.find()) {
+                        kanaName = m.group(1).trim();
+                    }
+                }
+
+                // 画像のaltにない場合はページ全体から検索（フォールバック）
+                if (kanaName == null) {
+                    String pageText = doc.text();
+                    Matcher m = p.matcher(pageText);
+                    if (m.find()) {
+                        kanaName = m.group(1).trim();
+                    }
+                }
+
+                if (kanaName != null) {
+                    player.setKanaName(kanaName);
+                }
             }
 
             playerService.saveOrUpdate(player);

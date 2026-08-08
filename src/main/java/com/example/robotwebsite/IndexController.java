@@ -1,5 +1,7 @@
 package com.example.robotwebsite;
 
+import com.example.robotwebsite.batch.KansaikiinPlayerScraper;
+import com.example.robotwebsite.batch.NihonkiinPlayerScraper;
 import com.example.robotwebsite.entity.Event;
 import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.entity.YoutubeLive;
@@ -42,13 +44,31 @@ public class IndexController {
     private final MatchRepository matchRepository;
     private final PlayerService playerService;
     private final YoutubeLiveRepository youtubeLiveRepository;
+    private final NihonkiinPlayerScraper nihonkiinPlayerScraper;
+    private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
 
     public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
-                           PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository) {
+                           PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository,
+                           NihonkiinPlayerScraper nihonkiinPlayerScraper,
+                           KansaikiinPlayerScraper kansaikiinPlayerScraper) {
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
         this.playerService = playerService;
         this.youtubeLiveRepository = youtubeLiveRepository;
+        this.nihonkiinPlayerScraper = nihonkiinPlayerScraper;
+        this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
+    }
+
+    @GetMapping("/api/player/update-kana")
+    @ResponseBody
+    public Player updatePlayerKana(@RequestParam String name) {
+        String normalizedName = playerService.normalizeName(name);
+        // 日本棋院を試す
+        nihonkiinPlayerScraper.scrapeAndSavePlayer(normalizedName);
+        // 関西棋院を試す
+        kansaikiinPlayerScraper.scrapeAndSavePlayer(normalizedName);
+
+        return playerService.findByName(normalizedName).orElse(null);
     }
 
     @GetMapping("/api/players/{name}")
@@ -56,13 +76,15 @@ public class IndexController {
     public Player getPlayerInfo(@PathVariable String name) {
         String normalizedName = playerService.normalizeName(name);
         Player player = playerService.findByName(normalizedName)
+                .or(() -> playerService.findByName(name)) // フォールバック: 元の名前でも検索
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
         
         // アイコンパスの解決
         // まずファイルシステムから検索（優先）
         Set<String> localIcons = getPlayerIcons();
         for (String iconName : localIcons) {
-            if (normalizedName.equals(iconName)) {
+            // 正規化名または元の名前でアイコンを検索
+            if (normalizedName.equals(iconName) || name.equals(iconName)) {
                 player.setIconPath("/images/players/" + iconName + ".jpg");
                 return player;
             }

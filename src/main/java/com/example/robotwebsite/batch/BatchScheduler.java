@@ -19,18 +19,21 @@ public class BatchScheduler implements CommandLineRunner {
     private final JobLauncher jobLauncher;
     private final Job siteSourceCheckJob;
     private final Job nihonkiinMatchJob;
-
     private final Job youtubeLiveScrapeJob;
+    private final Job normalizationJob;
 
-    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob) {
+    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob, Job normalizationJob) {
         this.jobLauncher = jobLauncher;
         this.siteSourceCheckJob = siteSourceCheckJob;
         this.nihonkiinMatchJob = nihonkiinMatchJob;
         this.youtubeLiveScrapeJob = youtubeLiveScrapeJob;
+        this.normalizationJob = normalizationJob;
     }
 
     @Override
     public void run(String... args) {
+        // 移行ジョブを実行
+        runNormalizationJob();
         // runJob();
         runNihonkiinMatchJob();
         // runYoutubeLiveScrapeJob();
@@ -74,6 +77,18 @@ public class BatchScheduler implements CommandLineRunner {
             jobLauncher.run(youtubeLiveScrapeJob, params);
         } catch (Exception e) {
             logger.error("Error executing youtubeLiveScrapeJob", e);
+        }
+    }
+
+    public void runNormalizationJob() {
+        try {
+            logger.info("Starting normalizationJob at " + new Date());
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(normalizationJob, params);
+        } catch (Exception e) {
+            logger.error("Error executing normalizationJob", e);
         }
     }
 }

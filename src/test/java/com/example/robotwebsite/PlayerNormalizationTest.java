@@ -47,19 +47,23 @@ public class PlayerNormalizationTest {
     @Test
     public void testIconMappingWithNormalization() {
         // Setup player with icon
+        String name = "名前C";
+        playerRepository.findByName(name).ifPresent(playerRepository::delete);
+        playerRepository.flush();
+
         Player player = new Player();
-        player.setName("一力遼");
+        player.setName(name);
         player.setIconPath("/images/players/一力遼.jpg");
         playerRepository.save(player);
 
         // Test matching with title
         Match match = new Match();
-        match.setPlayer1Name("一力遼 名人");
+        match.setPlayer1Name(name + " 名人");
         match.setPlayer2Name("芝野虎丸 棋聖");
 
         // We simulate the behavior in IndexController.updatePlayerIcon
         String normalizedName = playerService.normalizeName(match.getPlayer1Name());
-        assertEquals("一力遼", normalizedName);
+        assertEquals(name, normalizedName);
 
         String iconPath = playerRepository.findByName(normalizedName)
                 .map(Player::getIconPath)
@@ -75,8 +79,12 @@ public class PlayerNormalizationTest {
         assertEquals("栁原咲輝", playerService.normalizeName("柳原咲輝 二段"));
 
         // DB登録と検索のシミュレーション
+        String name = "栁原咲輝";
+        playerRepository.findByName(name).ifPresent(playerRepository::delete);
+        playerRepository.flush();
+
         Player player = new Player();
-        player.setName("栁原咲輝");
+        player.setName(name);
         player.setIconPath("/images/players/栁原咲輝.jpg");
         playerRepository.save(player);
 

@@ -32,24 +32,22 @@ public class NihonkiinPlayerScraper {
     
     public void scrapeAndSavePlayer(String playerName) {
         if (playerName == null || playerName.isEmpty()) return;
+
+        String searchName = playerService.normalizeName(playerName);
         
-        Optional<Player> existingPlayer = playerService.findByName(playerName);
+        Optional<Player> existingPlayer = playerService.findByName(searchName);
         if (existingPlayer.isPresent()) {
             // If essential info is missing, re-scrape
             Player p = existingPlayer.get();
-            if (p.getGender() != null && p.getRank() != null && p.getIconPath() != null && p.getBirthDate() != null) {
+            if (p.getGender() != null && p.getRank() != null && p.getIconPath() != null && p.getBirthDate() != null && p.getKanaName() != null && !p.getKanaName().isEmpty()) {
                 return;
             }
-            logger.info("Re-scraping player profile to fill missing info: " + playerName);
+            logger.info("Re-scraping player profile to fill missing info: " + searchName);
         } else {
-            logger.info("Searching for player profile: " + playerName);
+            logger.info("Searching for player profile: " + searchName);
         }
         
         try {
-            // Remove rank and titles from the end of the name
-            // e.g., "一力遼 名人" -> "一力遼", "芝野虎丸 棋聖" -> "芝野虎丸"
-            String searchName = playerService.normalizeName(playerName);
-            
             // 1. Search in /player/dan/ (high reliability)
             String danUrl = "https://www.nihonkiin.or.jp/player/dan/";
             Document danDoc = Jsoup.connect(danUrl).get();
@@ -60,15 +58,20 @@ public class NihonkiinPlayerScraper {
             for (Element link : links) {
                 // Match name (remove all whitespace for comparison)
                 String linkText = link.text().replaceAll("[\\s\u3000]+", "");
-                if (linkText.equals(normalizedSearchName) || link.attr("href").contains(normalizedSearchName)) {
+
+                // Check link text or image alt attribute (for title holders)
+                Element img = link.selectFirst("img");
+                String altText = (img != null) ? img.attr("alt").replaceAll("[\\s\u3000]+", "") : "";
+
+                if (linkText.equals(normalizedSearchName) || altText.equals(normalizedSearchName) || link.attr("href").contains(normalizedSearchName)) {
                     String detailUrl = link.absUrl("href");
-                    scrapePlayerDetail(playerName, detailUrl);
+                    scrapePlayerDetail(searchName, detailUrl);
                     return;
                 }
             }
             
             // 2. Search in Kansaikiin if not found in Nihonkiin
-            if (kansaikiinPlayerScraper.scrapeAndSavePlayer(playerName)) {
+            if (kansaikiinPlayerScraper.scrapeAndSavePlayer(searchName)) {
                 return;
             }
             
@@ -92,6 +95,32 @@ public class NihonkiinPlayerScraper {
                 player.setRank(rankElement.text().trim());
             }
 
+            // プロフィール見出しからカタカナを抽出 (例: "一力　遼（イチリキ　リョウ）")
+            Element nameHeading = doc.selectFirst("h1.player-name, div.player-name h1");
+            String kanaName = null;
+            Pattern p = Pattern.compile("（([\\u30A0-\\u30FF\\s\u3000]+)[^）]*）");
+
+            if (nameHeading != null) {
+                String fullTitle = nameHeading.text();
+                Matcher m = p.matcher(fullTitle);
+                if (m.find()) {
+                    kanaName = m.group(1).trim();
+                }
+            }
+
+            // 見出しにない場合はページ全体から検索（フォールバック）
+            if (kanaName == null) {
+                String pageText = doc.text();
+                Matcher m = p.matcher(pageText);
+                if (m.find()) {
+                    kanaName = m.group(1).trim();
+                }
+            }
+            
+            if (kanaName != null) {
+                player.setKanaName(kanaName);
+            }
+
             // "プロフィール" セクションのテキストから生年月日を探す
             Element profileHeading = doc.selectFirst("h2:contains(プロフィール)");
             if (profileHeading != null) {
@@ -99,8 +128,8 @@ public class NihonkiinPlayerScraper {
                 while (next != null && !next.tagName().equals("h2")) {
                     String text = next.text();
                     try {
-                        Pattern p = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
-                        Matcher m = p.matcher(text);
+                        Pattern pBirth = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
+                        Matcher m = pBirth.matcher(text);
                         if (m.find()) {
                             int year = Integer.parseInt(m.group(1));
                             int month = Integer.parseInt(m.group(2));
@@ -138,8 +167,8 @@ public class NihonkiinPlayerScraper {
                     } else if (th.contains("Birthday") || th.contains("生年月日")) {
                         try {
                             // "1989年（平成元年）5月24日生" のような形式に対応
-                            Pattern p = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
-                            Matcher m = p.matcher(td);
+                            Pattern pBirth = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
+                            Matcher m = pBirth.matcher(td);
                             if (m.find()) {
                                 int year = Integer.parseInt(m.group(1));
                                 int month = Integer.parseInt(m.group(2));
