@@ -42,6 +42,16 @@ public class PlayerService {
         if ("柳原咲輝".equals(normalized)) {
             normalized = "栁原咲輝";
         }
+        
+        // 張リユウ -> 張豊猷
+        if ("張リユウ".equals(normalized)) {
+            normalized = "張豊猷";
+        }
+
+        // 王銘エン -> 王銘琬
+        if ("王銘エン".equals(normalized)) {
+            normalized = "王銘琬";
+        }
 
         return normalized;
     }
