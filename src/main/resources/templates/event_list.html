@@ -217,11 +217,19 @@
             location.reload();
         }
 
+        // ひらがなをカタカナに変換するユーティリティ
+        function hiraToKata(str) {
+            return str.replace(/[\u3041-\u3096]/g, function(match) {
+                var chr = match.charCodeAt(0) + 0x60;
+                return String.fromCharCode(chr);
+            });
+        }
+
         function globalFilter() {
-            const query = document.getElementById('globalSearch').value.toLowerCase();
+            const query = hiraToKata(document.getElementById('globalSearch').value.toLowerCase());
             const rows = document.querySelectorAll('.filterable-item');
             rows.forEach(row => {
-                const targetText = row.querySelector('.search-target').textContent.toLowerCase();
+                const targetText = hiraToKata(row.querySelector('.search-target').textContent.toLowerCase());
                 if (targetText.includes(query)) {
                     row.style.display = '';
                 } else {

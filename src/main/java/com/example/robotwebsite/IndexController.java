@@ -154,9 +154,11 @@ public class IndexController {
             if (playerNum == 1) {
                 m.setPlayer1BirthDate(p.getBirthDate());
                 m.setPlayer1Gender(p.getGender());
+                m.setPlayer1Kana(p.getKanaName());
             } else {
                 m.setPlayer2BirthDate(p.getBirthDate());
                 m.setPlayer2Gender(p.getGender());
+                m.setPlayer2Kana(p.getKanaName());
             }
         });
 
