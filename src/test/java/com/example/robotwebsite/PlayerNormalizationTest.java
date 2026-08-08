@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,7 +54,8 @@ public class PlayerNormalizationTest {
 
         Player player = new Player();
         player.setName(name);
-        player.setIconPath("/images/players/一力遼.jpg");
+        player.setKanaName("ナマエ　シー");
+        player.setIconPath("/images/players/ナマエシー.jpg");
         playerRepository.save(player);
 
         // Test matching with title
@@ -65,11 +67,22 @@ public class PlayerNormalizationTest {
         String normalizedName = playerService.normalizeName(match.getPlayer1Name());
         assertEquals(name, normalizedName);
 
-        String iconPath = playerRepository.findByName(normalizedName)
-                .map(Player::getIconPath)
-                .orElse(null);
-
-        assertEquals("/images/players/一力遼.jpg", iconPath);
+        Optional<Player> pOpt = playerRepository.findByName(normalizedName);
+        assertTrue(pOpt.isPresent());
+        Player p = pOpt.get();
+        
+        String iconPath = null;
+        Set<String> icons = Set.of("ナマエシー", "名前C");
+        
+        // Katakana check
+        if (p.getKanaName() != null) {
+            String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
+            if (icons.contains(kanaForFile)) {
+                iconPath = "/images/players/" + kanaForFile + ".jpg";
+            }
+        }
+        
+        assertEquals("/images/players/ナマエシー.jpg", iconPath);
     }
 
     @Test

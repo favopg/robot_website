@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,6 +83,15 @@ public class IndexController {
         // アイコンパスの解決
         // まずファイルシステムから検索（優先）
         Set<String> localIcons = getPlayerIcons();
+        
+        // カタカナ名（スペース除去）での検索を優先
+        String kanaForFile = player.getKanaName() != null ? player.getKanaName().replaceAll("[\\s\u3000]+", "") : null;
+        if (kanaForFile != null && localIcons.contains(kanaForFile)) {
+            player.setIconPath("/images/players/" + kanaForFile + ".jpg");
+            return player;
+        }
+
+        // 漢字名での検索（フォールバック）
         for (String iconName : localIcons) {
             // 正規化名または元の名前でアイコンを検索
             if (normalizedName.equals(iconName) || name.equals(iconName)) {
@@ -139,7 +149,8 @@ public class IndexController {
         String name = playerService.normalizeName(originalName);
 
         // Player情報を取得して生年月日と性別を設定
-        playerService.findByName(name).ifPresent(p -> {
+        Optional<Player> playerOpt = playerService.findByName(name);
+        playerOpt.ifPresent(p -> {
             if (playerNum == 1) {
                 m.setPlayer1BirthDate(p.getBirthDate());
                 m.setPlayer1Gender(p.getGender());
@@ -151,16 +162,31 @@ public class IndexController {
 
         // まずファイルシステムから検索（優先）
         String iconPath = null;
-        for (String iconName : icons) {
-            if (name.equals(iconName)) {
-                iconPath = "/images/players/" + iconName + ".jpg";
-                break;
+        
+        // カタカナ名での検索を優先
+        if (playerOpt.isPresent()) {
+            Player p = playerOpt.get();
+            if (p.getKanaName() != null) {
+                String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
+                if (icons.contains(kanaForFile)) {
+                    iconPath = "/images/players/" + kanaForFile + ".jpg";
+                }
+            }
+        }
+
+        // 漢字名での検索（フォールバック）
+        if (iconPath == null) {
+            for (String iconName : icons) {
+                if (name.equals(iconName)) {
+                    iconPath = "/images/players/" + iconName + ".jpg";
+                    break;
+                }
             }
         }
 
         // ファイルシステムにない場合はDBから検索
         if (iconPath == null) {
-            iconPath = playerService.findByName(name)
+            iconPath = playerOpt
                     .map(Player::getIconPath)
                     .filter(path -> !path.isEmpty())
                     .orElse(null);

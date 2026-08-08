@@ -185,17 +185,82 @@ public class NihonkiinPlayerScraper {
             }
 
             // NIHONKIIN uses div.photo img for profile pictures
-            Element imgElement = doc.selectFirst("div.photo img, div.player-photo img");
+            Element imgElement = doc.selectFirst("div.photo img, div.player-photo img, img[src*=player/photo]");
             if (imgElement != null) {
                 String src = imgElement.absUrl("src");
                 player.setIconPath(src);
+                
+                String alt = imgElement.attr("alt");
+                if (alt != null && !alt.isEmpty()) {
+                    // "名前（読み）" の形式から抽出を試みる
+                    Pattern kanaPattern = Pattern.compile("[（(]([\\u30A0-\\u30FF\\s\u3000]+)[）)]");
+                    Matcher kanaMatcher = kanaPattern.matcher(alt);
+                    if (kanaMatcher.find()) {
+                        player.setKanaName(kanaMatcher.group(1).trim().replace("　", " "));
+                    }
+                }
+            }
+
+            // ddタグから読み仮名を探す
+            Elements dds = doc.select("dd");
+            for (Element dd : dds) {
+                String text = dd.text().trim();
+                if (text.matches("^[\\u30A0-\\u30FF\\s\u3000]+$") && text.length() > 2) {
+                    player.setKanaName(text.replace("　", " "));
+                    logger.info("Found kana in dd: " + text);
+                }
+            }
+
+            // 日本棋院のページには "読み：" というラベルがある場合がある
+            Elements dts = doc.select("dt");
+            for (Element dt : dts) {
+                if (dt.text().contains("読み")) {
+                    Element dd = dt.nextElementSibling();
+                    if (dd != null && dd.tagName().equals("dd")) {
+                        String kName = dd.text().trim().replace("　", " ");
+                        player.setKanaName(kName);
+                        logger.info("Extracted kana name for " + playerName + ": " + kName);
+                        break;
+                    }
+                }
             }
 
             playerService.saveOrUpdate(player);
-            logger.info("Saved player info for: " + playerName);
+            logger.info("Saved player info for: " + playerName + " (Kana: " + player.getKanaName() + ")");
 
         } catch (IOException e) {
             logger.error("Failed to fetch player detail page: " + url, e);
+        }
+    }
+    public void scrapeAllPlayers() {
+        try {
+            String[] urls = {
+                "https://www.nihonkiin.or.jp/player/htm/ki000001.html", // あ
+                "https://www.nihonkiin.or.jp/player/htm/ki000002.html"  // か (実際にはインデックスページが必要)
+            };
+            // 日本棋院の棋士一覧ページ（あいうえお順）から取得
+            String baseListUrl = "https://www.nihonkiin.or.jp/player/htm/";
+            String[] listPages = {"ki-a.html", "ki-ka.html", "ki-sa.html", "ki-ta.html", "ki-na.html", "ki-ha.html", "ki-ma.html", "ki-ya.html", "ki-ra.html", "ki-wa.html", "ki-foreign.html"};
+            
+            for (String page : listPages) {
+                try {
+                    Document doc = Jsoup.connect(baseListUrl + page).get();
+                    Elements links = doc.select("a[href^=ki]");
+                    for (Element link : links) {
+                        String detailUrl = link.absUrl("href");
+                        if (detailUrl.contains("ki") && !detailUrl.endsWith(".html#top")) {
+                            String name = link.text().replaceAll("[\\s\u3000]+", "");
+                            if (!name.isEmpty()) {
+                                scrapePlayerDetail(name, detailUrl);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error scraping Nihonkiin list page: " + page, e);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error in scrapeAllPlayers", e);
         }
     }
 }
