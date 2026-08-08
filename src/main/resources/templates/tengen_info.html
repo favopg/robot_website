@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>天元戦 詳細情報</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme: 'default'});</script>
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .card-header-custom {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">制作者が役立つ囲碁情報サイト</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/match-schedule">対局予定</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/match-results">対局結果</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">天元戦</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-4">天元戦の仕組み</h1>
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        1. 天元戦の全体像（予選から本戦トーナメント、挑戦手合まで）
+                    </div>
+                    <div class="card-body">
+                        <div class="mermaid text-center">
+graph TD
+    A[予選] --> B[本戦トーナメント<br/>約30名]
+    S[シード棋士] --> B
+    B --> C{挑戦者決定}
+    C --> F[挑戦手合五番勝負]
+    H[現天元] --> F
+    F --> G[天元位獲得]
+
+    style F fill:#f96,stroke:#333,stroke-width:2px
+    style G fill:#f96,stroke:#333,stroke-width:4px
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        2. 本戦トーナメントの仕組み
+                    </div>
+                    <div class="card-body">
+                        <p>天元戦の挑戦者は、全棋士参加の予選を勝ち抜いた棋士とシード棋士による大規模なトーナメント戦で決定されます。</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>本戦形式:</strong> 28〜32名程度によるノックアウトトーナメント。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>挑戦手合:</strong> 挑戦者と天元による五番勝負（1日制）。
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm border-primary">
+            <div class="card-body">
+                <h2 class="card-title h4">基本データ</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>優勝賞金:</strong> 1,200万円</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>現タイトルホルダー:</strong> 一力 遼 天元</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/" class="btn btn-primary">トップページに戻る</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

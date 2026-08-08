@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>棋聖戦 詳細情報</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme: 'default'});</script>
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .card-header-custom {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">制作者が役立つ囲碁情報サイト</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/match-schedule">対局予定</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/match-results">対局結果</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">棋聖戦</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-4">棋聖戦の仕組み</h1>
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        1. 棋聖戦の全体像（S・A・B・Cリーグから挑戦者決定トーナメントまで）
+                    </div>
+                    <div class="card-body">
+                        <div class="mermaid text-center">
+graph TD
+    C[FT 予選] --> CL[Cリーグ]
+    CL --> BL[Bリーグ]
+    BL --> AL[Aリーグ]
+    AL --> SL[Sリーグ]
+    
+    SL1[Sリーグ1位] --> FT[挑戦者決定変則トーナメント]
+    SL2[Sリーグ2位] --> FT
+    AL1[Aリーグ1位] --> FT
+    BL1[Bリーグ1組1位] --> FT
+    
+    FT --> F[挑戦手合七番勝負]
+    H[現棋聖] --> F
+    F --> G[棋聖位獲得]
+
+    style F fill:#f96,stroke:#333,stroke-width:2px
+    style G fill:#f96,stroke:#333,stroke-width:4px
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        2. リーグ戦の仕組み
+                    </div>
+                    <div class="card-body">
+                        <p>棋聖戦は、S・A・B・Cの4つのクラスに分かれたリーグ戦が特徴です。</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Sリーグ:</strong> 最高峰のリーグ（6名）。上位2名が挑戦者決定トーナメントへ。下位2名がAリーグへ降格。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Aリーグ:</strong> 7名ずつ2組。各組1位が挑戦者決定トーナメント進出をかけた対局へ。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Bリーグ:</strong> 8名ずつ2組。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Cリーグ:</strong> 32名。
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm border-primary">
+            <div class="card-body">
+                <h2 class="card-title h4">基本データ</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>優勝賞金:</strong> 4,300万円 (囲碁界最高賞金)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>現タイトルホルダー:</strong> 一力 遼 棋聖</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/" class="btn btn-primary">トップページに戻る</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

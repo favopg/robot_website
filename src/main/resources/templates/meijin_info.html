@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>名人戦 詳細情報</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme: 'default'});</script>
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .card-header-custom {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">制作者が役立つ囲碁情報サイト</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/match-schedule">対局予定</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/match-results">対局結果</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">名人戦</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-4">名人戦の仕組み</h1>
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        1. 名人戦の全体像（予選からリーグ戦、挑戦手合まで）
+                    </div>
+                    <div class="card-body">
+                        <div class="mermaid text-center">
+graph TD
+    A[予選C] --> B[予選B]
+    B --> C1[予選A]
+    C1 --> D[最終予選]
+    D --> E[挑戦者決定リーグ<br/>9名]
+    E --> F[挑戦手合七番勝負]
+    H[現名人] --> F
+    F --> G[名人位獲得]
+
+    style F fill:#f96,stroke:#333,stroke-width:2px
+    style G fill:#f96,stroke:#333,stroke-width:4px
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        2. 挑戦者決定リーグの仕組み
+                    </div>
+                    <div class="card-body">
+                        <p>名人戦の挑戦者は、9名の棋士による総当たりリーグ戦によって決定されます。</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>リーグ構成:</strong> 前期成績上位のシード棋士6名と、最終予選を勝ち抜いた3名の計9名。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>優勝者:</strong> リーグ1位が挑戦者となる。同率1位が複数出た場合は、プレーオフが行われる。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>残留と陥落:</strong> 上位6名が次期シード（残留）となり、下位3名が陥落する。
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm border-primary">
+            <div class="card-body">
+                <h2 class="card-title h4">基本データ</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>優勝賞金:</strong> 3,000万円</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>現タイトルホルダー:</strong> 一力 遼 名人</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/" class="btn btn-primary">トップページに戻る</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
