@@ -12,5 +12,6 @@ import java.util.Optional;
 public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByMatchDateBetweenOrderByMatchDateDesc(LocalDate startDate, LocalDate endDate);
     List<Match> findByMatchDateBetweenOrderByMatchDateAsc(LocalDate startDate, LocalDate endDate);
+    List<Match> findByMatchNameContainingOrderByMatchDateDesc(String matchName);
     Optional<Match> findByUrl(String url);
 }

@@ -306,4 +306,11 @@ public class IndexController {
         return "match_list";
     }
 
+
+    @GetMapping("/honinbo-info")
+    public String honinboInfo(Model model) {
+        model.addAttribute("title", "本因坊戦 詳細情報");
+        return "honinbo_info";
+    }
+
 }
