@@ -78,10 +78,10 @@ public class KansaikiinPlayerScraper {
             // 段位の抽出
             // h1やタイトル付近にある "氏名 九段" のようなテキストから抽出
             // murakawadaisuke.html の例: <h1>棋士紹介</h1> ... **村川大介 九段**
-            Elements strongs = doc.select("strong");
+            Elements strongs = doc.select("strong, h1, h2");
             String rank = null;
-            for (Element strong : strongs) {
-                String text = strong.text();
+            for (Element element : strongs) {
+                String text = element.text();
                 if (text.contains("段")) {
                     Pattern pattern = Pattern.compile("([一二三四五六七八九十]|\\d+)段");
                     Matcher matcher = pattern.matcher(text);

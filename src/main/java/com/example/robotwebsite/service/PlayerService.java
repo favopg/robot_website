@@ -53,6 +53,24 @@ public class PlayerService {
             normalized = "王銘琬";
         }
 
+        // 卞聞愷 の正規化
+        // 日本棋院では「卞聞愷」として登録されているが、入力が異なる場合の補正
+        // 依頼内容は「卞聞愷（ビャン　ウォンケイ）四段」として表示できるようにすること。
+        // プロフィールURL等の検索で「卞聞愷」が正しく使われるようにする。
+        if ("卞聞ケイ".equals(normalized) || "卞聞愷".equals(normalized)) {
+            normalized = "卞聞愷";
+        }
+
+        // 高山邊楓実 -> 髙山邊楓実
+        if ("高山邊楓実".equals(normalized)) {
+            normalized = "髙山邊楓実";
+        }
+
+        // フィトラＲ．Ｓ． -> フィトラ・R・S
+        if ("フィトラＲ．Ｓ．".equals(normalized)) {
+            normalized = "フィトラ・R・S";
+        }
+
         return normalized;
     }
 

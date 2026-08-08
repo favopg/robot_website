@@ -44,6 +44,14 @@ public class PlayerNormalizationTest {
         assertEquals("張豊猷", playerService.normalizeName("張リユウ 九段"));
         assertEquals("王銘琬", playerService.normalizeName("王銘エン"));
         assertEquals("王銘琬", playerService.normalizeName("王銘エン 九段"));
+        assertEquals("卞聞愷", playerService.normalizeName("卞聞愷"));
+        assertEquals("卞聞愷", playerService.normalizeName("卞聞ケイ"));
+        assertEquals("卞聞愷", playerService.normalizeName("卞聞ケイ 四段"));
+        assertEquals("卞聞愷", playerService.normalizeName("卞聞愷 四段"));
+        assertEquals("髙山邊楓実", playerService.normalizeName("高山邊楓実"));
+        assertEquals("髙山邊楓実", playerService.normalizeName("高山邊楓実 初段"));
+        assertEquals("フィトラ・R・S", playerService.normalizeName("フィトラＲ．Ｓ．"));
+        assertEquals("フィトラ・R・S", playerService.normalizeName("フィトラＲ．Ｓ． 二段"));
         assertEquals("石田芳夫", playerService.normalizeName("二十四世本因坊秀芳"));
         assertEquals("名無し", playerService.normalizeName("名無し"));
         assertNull(playerService.normalizeName(null));
