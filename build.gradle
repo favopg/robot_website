@@ -53,6 +53,14 @@ tasks.named('test') {
     maxParallelForks = 1
 }
 
+bootJar {
+    archiveFileName = 'robot-website.jar'
+}
+
+jar {
+    enabled = false
+}
+
 sourceSets {
     main {
         resources {
