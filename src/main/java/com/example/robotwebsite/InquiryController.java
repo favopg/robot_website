@@ -28,6 +28,12 @@ public class InquiryController {
         return "inquiry_form";
     }
 
+    @GetMapping("/list")
+    public String list(Model model) {
+        model.addAttribute("inquiries", inquiryRepository.findAll());
+        return "inquiry_list";
+    }
+
     @PostMapping("/submit")
     public String submit(@ModelAttribute Inquiry inquiry, RedirectAttributes ra) {
         inquiryRepository.save(inquiry);
