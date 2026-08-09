@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>イベント一覧 - 推し棋士が見つかる囲碁棋士情報サイト</title>
-    <!-- Bootstrap CSS -->
+    <title>碁聖戦 詳細情報</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme: 'default'});</script>
     <style>
         .navbar-custom {
-            background-color: #004085; /* 濃い青色 */
+            background-color: #004085;
         }
         .navbar-custom .nav-link, .navbar-custom .navbar-brand {
             color: white;
@@ -18,18 +18,8 @@
         .navbar-custom .nav-link:hover {
             color: #d1ecf1;
         }
-        .table td {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-        }
-
-        /* 推し棋士の強調スタイル */
-        .favorite-name {
-            color: #856404;
-            background-color: #fff3cd;
-            padding: 0 4px;
-            border-radius: 4px;
+        .card-header-custom {
+            background-color: #e9ecef;
             font-weight: bold;
         }
     </style>
@@ -81,92 +71,91 @@
         </div>
     </nav>
 
-    <div class="container mt-3">
-        <main>
-            <div class="mb-3">
-                <input type="text" id="globalSearch" class="form-control" placeholder="イベント名でフィルター..." onkeyup="globalFilter()" title="イベント検索">
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">碁聖戦</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-4">碁聖戦の仕組み</h1>
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        1. 碁聖戦の全体像（予選から本戦トーナメント、挑戦手合まで）
+                    </div>
+                    <div class="card-body">
+                        <div class="mermaid text-center">
+graph TD
+    A[予選] --> B[本戦トーナメント<br/>約16名]
+    S[シード棋士] --> B
+    B --> C{挑戦者決定}
+    C --> F[挑戦手合五番勝負]
+    H[現碁聖] --> F
+    F --> G[碁聖位獲得]
+
+    style F fill:#f96,stroke:#333,stroke-width:2px
+    style G fill:#f96,stroke:#333,stroke-width:4px
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <section class="mb-4">
-                <h2 class="h4 border-bottom pb-2">イベント情報</h2>
-
-                <!--/* @thymesVar id="events" type="org.springframework.data.domain.Page<com.example.robotwebsite.entity.Event>" */-->
-                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation" class="mb-3">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
-                            <a class="page-link" th:href="@{/events(page=${events.number - 1})}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
-                            <a class="page-link" th:href="@{/events(page=${i})}" th:text="${i + 1}">1</a>
-                        </li>
-                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
-                            <a class="page-link" th:href="@{/events(page=${events.number + 1})}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>日付</th>
-                                <th>タイトル</th>
-                                <th>詳細</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="event : ${events.content}" class="filterable-item">
-                                <td th:text="${event.eventDate}">2026-01-01</td>
-                                <td th:text="${event.title}" class="search-target">イベントタイトル</td>
-                                <td>
-                                    <a th:if="${event.url}" th:href="${event.url}" class="btn btn-sm btn-outline-secondary" target="_blank">リンク</a>
-                                </td>
-                            </tr>
-                            <tr th:if="${events.isEmpty()}">
-                                <td colspan="3" class="text-center">現在、表示できるイベント情報はありません。</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        2. 本戦トーナメントの仕組み
+                    </div>
+                    <div class="card-body">
+                        <p>碁聖戦の挑戦者は、全棋士参加の予選勝ち抜き者とシード棋士によるトーナメント戦で決定されます。</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>本戦形式:</strong> 16名程度によるノックアウトトーナメント。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>挑戦手合:</strong> 挑戦者と碁聖による五番勝負（1日制）。
+                            </li>
+                        </ul>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <nav th:if="${events.totalPages > 1}" aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${events.first} ? 'disabled'">
-                            <a class="page-link" th:href="@{/events(page=${events.number - 1})}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, events.totalPages - 1)}" th:classappend="${i == events.number} ? 'active'">
-                            <a class="page-link" th:href="@{/events(page=${i})}" th:text="${i + 1}">1</a>
-                        </li>
-                        <li class="page-item" th:classappend="${events.last} ? 'disabled'">
-                            <a class="page-link" th:href="@{/events(page=${events.number + 1})}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </section>
-        </main>
+        <div class="card mb-4 shadow-sm border-primary">
+            <div class="card-body">
+                <h2 class="card-title h4">基本データ</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>優勝賞金:</strong> 800万円</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>現タイトルホルダー:</strong> 井山 裕太 碁聖</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/" class="btn btn-primary">トップページに戻る</a>
+        </div>
     </div>
 
-    <!-- 推し棋士登録モーダル -->
     <div class="modal fade" id="favoritePlayerModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content text-dark">
                 <div class="modal-header">
                     <h5 class="modal-title">推し棋士を登録しましょう！</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
                 </div>
                 <div class="modal-body">
                     <p>推し棋士を登録すると、対局予定や結果で強調表示されます。</p>
-                    <div class="mb-3">
-                        <label for="favoritePlayerInput" class="form-label">棋士名（例：一力遼）</label>
-                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="棋士名を入力">
+                    <div class="mb-3 text-start">
+                        <label for="favoritePlayerInput" class="form-label">棋士名（カンマ区切りで最大5人まで）</label>
+                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="例：一力遼, 芝野虎丸">
+                        <div class="form-text">カンマまたはスペースで区切って複数入力できます。</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -179,19 +168,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const favoritePlayer = localStorage.getItem('favoritePlayer');
-            const modalDismissed = sessionStorage.getItem('favoriteModalDismissed');
-            if (!favoritePlayer && !modalDismissed) {
-                showFavoriteModal(true);
+        function getFavoritePlayers() {
+            const favData = localStorage.getItem('favoritePlayers');
+            if (favData) {
+                try {
+                    return JSON.parse(favData);
+                } catch (e) {
+                    return [];
+                }
             }
-
-            // モーダルが閉じられたときにフラグをセットする（再表示防止）
-            const modalEl = document.getElementById('favoritePlayerModal');
-            modalEl.addEventListener('hidden.bs.modal', function () {
-                sessionStorage.setItem('favoriteModalDismissed', 'true');
-            });
-        });
+            const oldFav = localStorage.getItem('favoritePlayer');
+            if (oldFav) {
+                return [oldFav];
+            }
+            return [];
+        }
 
         function showFavoriteModal(isFirst = false) {
             const modalEl = document.getElementById('favoritePlayerModal');
@@ -202,7 +193,8 @@
                 closeBtn.style.display = 'none';
             } else {
                 closeBtn.style.display = 'block';
-                input.value = localStorage.getItem('favoritePlayer') || '';
+                const favs = getFavoritePlayers();
+                input.value = favs.join(', ');
             }
             
             const modal = new bootstrap.Modal(modalEl);
@@ -210,9 +202,19 @@
         }
 
         function saveFavoritePlayer() {
-            const name = document.getElementById('favoritePlayerInput').value.trim();
-            if (name) {
-                localStorage.setItem('favoritePlayer', name);
+            const input = document.getElementById('favoritePlayerInput').value.trim();
+            if (input) {
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const uniqueNames = [...new Set(names)];
+                
+                if (uniqueNames.length > 5) {
+                    alert('推し棋士の登録は5人までです。');
+                    return;
+                }
+                
+                localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
+                localStorage.setItem('favoriteOnly', 'true');
+                localStorage.removeItem('favoritePlayer');
                 bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
                 location.reload();
             } else {
@@ -221,8 +223,9 @@
         }
         
         function clearFavoritePlayer() {
+            localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
-            sessionStorage.setItem('favoriteModalDismissed', 'true');
+            localStorage.setItem('favoriteOnly', 'false');
             const modalEl = document.getElementById('favoritePlayerModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
             if (modalInstance) {
@@ -231,29 +234,9 @@
             location.reload();
         }
 
-        // ひらがなをカタカナに変換するユーティリティ
-        function hiraToKata(str) {
-            return str.replace(/[\u3041-\u3096]/g, function(match) {
-                var chr = match.charCodeAt(0) + 0x60;
-                return String.fromCharCode(chr);
-            });
-        }
-
-        function globalFilter() {
-            const query = hiraToKata(document.getElementById('globalSearch').value.toLowerCase());
-            const rows = document.querySelectorAll('.filterable-item');
-            rows.forEach(row => {
-                const targetText = hiraToKata(row.querySelector('.search-target').textContent.toLowerCase());
-                if (targetText.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
         const darkModeSwitch = document.getElementById('darkModeSwitch');
         const htmlElement = document.documentElement;
+
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             htmlElement.setAttribute('data-bs-theme', savedTheme);
@@ -262,6 +245,7 @@
             htmlElement.setAttribute('data-bs-theme', 'dark');
             darkModeSwitch.checked = true;
         }
+
         darkModeSwitch.addEventListener('change', () => {
             if (darkModeSwitch.checked) {
                 htmlElement.setAttribute('data-bs-theme', 'dark');

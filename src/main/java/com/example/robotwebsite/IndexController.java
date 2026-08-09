@@ -306,4 +306,47 @@ public class IndexController {
         return "match_list";
     }
 
+
+    @GetMapping("/honinbo-info")
+    public String honinboInfo(Model model) {
+        model.addAttribute("title", "本因坊戦 詳細情報");
+        return "honinbo_info";
+    }
+
+    @GetMapping("/kisei-info")
+    public String kiseiInfo(Model model) {
+        model.addAttribute("title", "棋聖戦 詳細情報");
+        return "kisei_info";
+    }
+
+    @GetMapping("/meijin-info")
+    public String meijinInfo(Model model) {
+        model.addAttribute("title", "名人戦 詳細情報");
+        return "meijin_info";
+    }
+
+    @GetMapping("/ouza-info")
+    public String ouzaInfo(Model model) {
+        model.addAttribute("title", "王座戦 詳細情報");
+        return "ouza_info";
+    }
+
+    @GetMapping("/tengen-info")
+    public String tengenInfo(Model model) {
+        model.addAttribute("title", "天元戦 詳細情報");
+        return "tengen_info";
+    }
+
+    @GetMapping("/gosei-info")
+    public String goseiInfo(Model model) {
+        model.addAttribute("title", "碁聖戦 詳細情報");
+        return "gosei_info";
+    }
+
+    @GetMapping("/judan-info")
+    public String judanInfo(Model model) {
+        model.addAttribute("title", "十段戦 詳細情報");
+        return "judan_info";
+    }
+
 }
