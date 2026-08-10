@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>バグ報告 - 推し棋士が見つかる囲碁棋士情報サイト</title>
+    <title>要望投稿 - 推し棋士が見つかる囲碁棋士情報サイト</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -54,20 +54,20 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-chat-left-text"></i> 要望投稿
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequest">
-                            <li><a class="dropdown-item" href="/request">要望を投稿する</a></li>
+                            <li><a class="dropdown-item active" href="/request">要望を投稿する</a></li>
                             <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bug"></i> バグ報告
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdownBug">
-                            <li><a class="dropdown-item active" href="/inquiry">バグを報告する</a></li>
+                            <li><a class="dropdown-item" href="/inquiry">バグを報告する</a></li>
                             <li><a class="dropdown-item" href="/inquiry/list">報告一覧</a></li>
                         </ul>
                     </li>
@@ -85,25 +85,25 @@
                 </div>
 
                 <div class="card shadow border-0">
-                    <div class="card-header bg-danger text-white py-3">
-                        <h3 class="mb-0"><i class="bi bi-bug"></i> バグ報告</h3>
+                    <div class="card-header bg-success text-white py-3">
+                        <h3 class="mb-0"><i class="bi bi-chat-left-text"></i> 要望投稿</h3>
                     </div>
                     <div class="card-body p-4">
-                        <p class="text-muted mb-4">サイトの不具合や改善の提案がございましたら、以下のフォームよりお知らせください。</p>
+                        <p class="text-muted mb-4">サイトへの要望や追加してほしい機能などがございましたら、以下のフォームよりお知らせください。</p>
                         
-                        <form th:action="@{/inquiry/submit}" th:object="${inquiry}" method="post">
+                        <form id="requestForm" th:action="@{/request/submit}" th:object="${request}" method="post">
                             <div class="mb-3">
                                 <label for="subject" class="form-label fw-bold">件名 <span class="badge bg-danger">必須</span></label>
-                                <input type="text" class="form-control" id="subject" th:field="*{subject}" placeholder="〇〇ページで表示が崩れている" required>
+                                <input type="text" class="form-control" id="subject" th:field="*{subject}" placeholder="新機能の提案" required>
                             </div>
 
                             <div class="mb-3">
-                                <label for="message" class="form-label fw-bold">バグ内容 <span class="badge bg-danger">必須</span></label>
-                                <textarea class="form-control" id="message" th:field="*{message}" rows="6" placeholder="例：&#10;1. 〇〇ページを開く&#10;2. △△ボタンを押す&#10;3. エラーメッセージが表示される" required></textarea>
+                                <label for="message" class="form-label fw-bold">要望内容 <span class="badge bg-danger">必須</span></label>
+                                <textarea class="form-control" id="message" th:field="*{message}" rows="6" placeholder="例：&#10;〇〇のような機能があると嬉しいです。" required></textarea>
                             </div>
 
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg">報告する</button>
+                                <button type="submit" class="btn btn-primary btn-lg">要望を送信する</button>
                                 <a href="/" class="btn btn-outline-secondary">キャンセル</a>
                             </div>
                         </form>
@@ -121,5 +121,54 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('requestForm');
+            const STORAGE_KEY = 'request_limit_data';
+            const MAX_REQUESTS = 3;
+
+            function getRequestData() {
+                const data = localStorage.getItem(STORAGE_KEY);
+                const now = new Date();
+                const currentMonth = now.getFullYear() + '-' + (now.getMonth() + 1);
+
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.month === currentMonth) {
+                        return parsed;
+                    }
+                }
+                return { month: currentMonth, count: 0 };
+            }
+
+            function saveRequestData(data) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+
+            // 初期ロード時のチェック
+            const initialData = getRequestData();
+            if (initialData.count >= MAX_REQUESTS) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.classList.add('disabled');
+                    submitBtn.title = '今月の要望制限（3件）に達しました。';
+                }
+            }
+
+            form.addEventListener('submit', function(event) {
+                const data = getRequestData();
+
+                if (data.count >= MAX_REQUESTS) {
+                    alert('今月の要望投稿制限（3件）に達したため、送信できません。');
+                    event.preventDefault();
+                    return;
+                }
+
+                // 送信時にカウントアップ
+                data.count++;
+                saveRequestData(data);
+            });
+        });
+    </script>
 </body>
 </html>
