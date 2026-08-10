@@ -175,9 +175,9 @@
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
-                                <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
+                                <span class="player-detail-trigger" style="cursor: pointer;" th:data-player-name="${match.player1Name}" th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
                                 vs
-                                <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
+                                <span class="player-detail-trigger" style="cursor: pointer;" th:data-player-name="${match.player2Name}" th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
                             </td>
                             <td th:text="${match.result}">-</td>
                         </tr>
@@ -209,6 +209,44 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">今は設定しない</button>
                     <button type="button" class="btn btn-primary" onclick="saveFavoritePlayer()">登録する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div class="modal fade" id="playerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="playerName">棋士詳細</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="棋士アイコン">
+                    <table class="table table-sm text-start">
+                        <tr>
+                            <th style="width: 30%;">読み仮名</th>
+                            <td id="playerKanaNameContainer">
+                                <span id="playerKanaName"></span>
+                                <button id="btnUpdateKana" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" onclick="updateKana()">登録試行</button>
+                            </td>
+                        </tr>
+                        <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
+                        <tr><th>段位</th><td id="playerRank"></td></tr>
+                        <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
+                        <tr><th>出身地</th><td id="playerPlace"></td></tr>
+                        <tr><th>所属</th><td id="playerAffiliation"></td></tr>
+                    </table>
+                    <div class="mt-3">
+                        <button id="likeButton" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-heart-fill"></i> いいね <span id="playerLikesCount" class="badge bg-danger">0</span>
+                        </button>
+                        <div id="likeLimitMessage" class="text-muted small mt-1"></div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <a id="playerProfileLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">日本棋院プロフィール <i class="bi bi-box-arrow-up-right"></i></a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -254,6 +292,16 @@
             const modalEl = document.getElementById('favoritePlayerModal');
             modalEl.addEventListener('hidden.bs.modal', function () {
                 sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
+            });
+
+            document.addEventListener('click', function(event) {
+                const trigger = event.target.closest('.player-detail-trigger');
+                if (trigger) {
+                    const playerName = trigger.getAttribute('data-player-name');
+                    if (playerName) {
+                        showPlayerDetail(playerName);
+                    }
+                }
             });
             
             // 初回訪問時かつお気に入り未設定の場合にチュートリアルを勧める（任意）
@@ -308,6 +356,10 @@
                     { 
                         element: '#favoriteSettingBtn', 
                         popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    },
+                    {
+                        element: '.match-row .player-detail-trigger',
+                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
                     }
                 ]
             });
@@ -345,10 +397,157 @@
                     { 
                         element: '#favoriteSettingBtn', 
                         popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    },
+                    {
+                        element: '.match-row .player-detail-trigger',
+                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
                     }
                 ]
             });
             driverObj.drive();
+        }
+
+        function showPlayerDetail(name) {
+            fetch(`/api/player/${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('playerName').textContent = data.name;
+                    const kanaSpan = document.getElementById('playerKanaName');
+                    const btnUpdateKana = document.getElementById('btnUpdateKana');
+                    
+                    if (data.kanaName) {
+                        kanaSpan.textContent = data.kanaName;
+                        btnUpdateKana.style.display = 'none';
+                    } else {
+                        kanaSpan.textContent = '未登録';
+                        btnUpdateKana.style.display = 'inline-block';
+                        btnUpdateKana.dataset.playerName = data.name;
+                    }
+                    
+                    document.getElementById('playerGender').textContent = data.gender || '-';
+                    document.getElementById('playerRank').textContent = data.rank || '-';
+                    document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
+                    document.getElementById('playerPlace').textContent = data.place || '-';
+                    document.getElementById('playerAffiliation').textContent = data.affiliation || '-';
+                    
+                    const iconImg = document.getElementById('playerModalIcon');
+                    if (data.iconUrl) {
+                        iconImg.src = data.iconUrl;
+                    } else {
+                        iconImg.src = '/images/players/default.png';
+                    }
+                    
+                    const profileLink = document.getElementById('playerProfileLink');
+                    if (data.profileUrl) {
+                        profileLink.href = data.profileUrl;
+                        profileLink.style.display = 'inline-block';
+                    } else {
+                        profileLink.style.display = 'none';
+                    }
+                    
+                    // いいねボタンの状態更新
+                    updateLikeButtonState(data.name);
+                    
+                    const likeBtn = document.getElementById('likeButton');
+                    likeBtn.onclick = () => handleLike(data.name);
+
+                    const modal = new bootstrap.Modal(document.getElementById('playerModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching player info:', error);
+                });
+        }
+
+        function handleLike(name) {
+            const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
+            const totalLikes = Object.keys(likedPlayers).length;
+
+            // 既にいいねしている場合は解除処理
+            if (likedPlayers[name]) {
+                if (!confirm('いいねを解除しますか？')) return;
+                
+                fetch(`/api/player/${encodeURIComponent(name)}/unlike`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(count => {
+                        delete likedPlayers[name];
+                        localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
+                        updateLikeButtonState(name);
+                    });
+                return;
+            }
+
+            // 上限チェック
+            if (totalLikes >= 5) {
+                alert('合計で5回までしかいいねできません。');
+                return;
+            }
+
+            fetch(`/api/player/${encodeURIComponent(name)}/like`, { method: 'POST' })
+                .then(response => response.json())
+                .then(count => {
+                    likedPlayers[name] = true;
+                    localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
+                    updateLikeButtonState(name);
+                });
+        }
+
+        function updateLikeButtonState(name) {
+            const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
+            const totalLikes = Object.keys(likedPlayers).length;
+            const likeBtn = document.getElementById('likeButton');
+            const msg = document.getElementById('likeLimitMessage');
+
+            fetch(`/api/player/${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('playerLikesCount').textContent = data.likes || 0;
+                    
+                    if (likedPlayers[name]) {
+                        likeBtn.classList.replace('btn-outline-danger', 'btn-danger');
+                        likeBtn.innerHTML = `<i class="bi bi-heart-fill"></i> いいね済み <span id="playerLikesCount" class="badge bg-white text-danger">${data.likes || 0}</span>`;
+                        msg.textContent = 'この棋士には既にいいねしました（クリックで解除）';
+                        msg.className = 'text-success small mt-1';
+                    } else {
+                        likeBtn.classList.replace('btn-danger', 'btn-outline-danger');
+                        likeBtn.innerHTML = `<i class="bi bi-heart-fill"></i> いいね <span id="playerLikesCount" class="badge bg-danger">${data.likes || 0}</span>`;
+                        
+                        if (totalLikes >= 5) {
+                            msg.textContent = '合計いいね数が上限（5回）に達しました';
+                            msg.className = 'text-danger small mt-1';
+                        } else {
+                            msg.textContent = `あと ${5 - totalLikes} 回いいねできます（一人一回まで）`;
+                            msg.className = 'text-muted small mt-1';
+                        }
+                    }
+                });
+        }
+
+        function updateKana() {
+            const btn = document.getElementById('btnUpdateKana');
+            const name = btn.dataset.playerName;
+            if (!name) return;
+            
+            btn.disabled = true;
+            btn.textContent = '更新中...';
+            
+            fetch(`/api/player/update-kana?name=${encodeURIComponent(name)}`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        alert('読み仮名を更新しました。');
+                        showPlayerDetail(name);
+                    } else {
+                        alert('読み仮名の更新に失敗しました。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating kana:', error);
+                    alert('エラーが発生しました。');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = '登録試行';
+                });
         }
 
         function getFavoritePlayers() {
