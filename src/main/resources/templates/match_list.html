@@ -128,6 +128,13 @@
         </header>
         
         <main>
+            <!-- 推し棋士の対局お知らせアラート -->
+            <div id="favoriteMatchAlert" class="alert alert-warning alert-dismissible fade show shadow-sm d-none" role="alert">
+                <i class="bi bi-megaphone-fill me-2"></i>
+                <strong>本日の対局予定：</strong> <span id="favoriteMatchNames"></span> の対局が本日予定されています！
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
             <!-- 月別リンクの追加 -->
             <div class="row mb-4" th:if="${months != null}">
                 <div class="col-12">
@@ -1082,6 +1089,9 @@
                 }
                 // 初回読み込み時にもフィルタリングを実行
                 filterTable();
+                
+                // 推し棋士の本日対局チェック処理の追加
+                checkFavoriteMatchesToday();
             }
 
             // モーダルが閉じられたときにフラグをセットする（再表示防止）
@@ -1117,6 +1127,46 @@
                 return [oldFav];
             }
             return [];
+        }
+
+        // 本日の推し棋士の対局をチェックしてアラートを表示する関数
+        function checkFavoriteMatchesToday() {
+            const favs = getFavoritePlayers();
+            if (favs.length === 0) return;
+
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${y}-${m}-${d}`;
+
+            const matchItems = document.querySelectorAll('.match-item');
+            const playingFavs = new Set();
+
+            matchItems.forEach(item => {
+                const matchDate = item.getAttribute('data-date');
+                // 本日の対局のみ対象
+                if (matchDate === todayStr) {
+                    const p1Name = item.getAttribute('data-p1-name');
+                    const p2Name = item.getAttribute('data-p2-name');
+
+                    favs.forEach(fav => {
+                        if (p1Name === fav || p2Name === fav) {
+                            playingFavs.add(fav);
+                        }
+                    });
+                }
+            });
+
+            // 該当する推し棋士がいればアラートを表示
+            if (playingFavs.size > 0) {
+                const alertEl = document.getElementById('favoriteMatchAlert');
+                const namesEl = document.getElementById('favoriteMatchNames');
+                if (alertEl && namesEl) {
+                    namesEl.textContent = Array.from(playingFavs).join('、');
+                    alertEl.classList.remove('d-none');
+                }
+            }
         }
 
         function showFavoriteModal(isFirst = false) {
