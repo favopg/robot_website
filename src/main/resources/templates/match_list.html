@@ -415,14 +415,6 @@
                 runScheduleTutorial();
             } else if (currentPath === '/match-results') {
                 runResultsTutorial();
-            } else {
-                // 他のページにいる場合は、どちらのチュートリアルを見たいか尋ねる
-                const choice = confirm('どちらのチュートリアルを開始しますか？\nOK: 対局予定\nキャンセル: 対局結果');
-                if (choice) {
-                    window.location.href = '/match-schedule?startTutorial=true';
-                } else {
-                    window.location.href = '/match-results?startTutorial=true';
-                }
             }
         }
 

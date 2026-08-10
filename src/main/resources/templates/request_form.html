@@ -102,6 +102,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
 
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
                 <div class="card shadow border-0">
                     <div class="card-header bg-success text-white py-3">
                         <h3 class="mb-0"><i class="bi bi-chat-left-text"></i> 要望投稿</h3>
@@ -208,50 +213,8 @@
 
             const form = document.getElementById('requestForm');
             if (form) {
-                const STORAGE_KEY = 'request_limit_data';
-                const MAX_REQUESTS = 3;
-
-                function getRequestData() {
-                    const data = localStorage.getItem(STORAGE_KEY);
-                    const now = new Date();
-                    const currentMonth = now.getFullYear() + '-' + (now.getMonth() + 1);
-
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        if (parsed.month === currentMonth) {
-                            return parsed;
-                        }
-                    }
-                    return { month: currentMonth, count: 0 };
-                }
-
-                function saveRequestData(data) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                }
-
-                // 初期ロード時のチェック
-                const initialData = getRequestData();
-                if (initialData.count >= MAX_REQUESTS) {
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    if (submitBtn) {
-                        submitBtn.classList.add('disabled');
-                        submitBtn.title = '今月の要望制限（3件）に達しました。';
-                    }
-                }
-
-                form.addEventListener('submit', function(event) {
-                    const data = getRequestData();
-
-                    if (data.count >= MAX_REQUESTS) {
-                        alert('今月の要望投稿制限（3件）に達したため、送信できません。');
-                        event.preventDefault();
-                        return;
-                    }
-
-                    // 送信時にカウントアップ
-                    data.count++;
-                    saveRequestData(data);
-                });
+                // クライアントサイドでの制限（localStorage）は、DB全体の件数を正確に把握できないため削除
+                // サーバーサイドで制限チェックを行っています
             }
         });
 

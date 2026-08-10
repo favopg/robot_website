@@ -36,6 +36,12 @@ public class InquiryController {
 
     @PostMapping("/submit")
     public String submit(@ModelAttribute Inquiry inquiry, RedirectAttributes ra) {
+        long count = inquiryRepository.count();
+        if (count >= 10) {
+            ra.addFlashAttribute("error", "バグ報告制限（合計10件）に達したため、送信できませんでした。");
+            return "redirect:/inquiry";
+        }
+
         inquiryRepository.save(inquiry);
         ra.addFlashAttribute("message", "報告ありがとうございました。内容は確認させていただきます。");
         return "redirect:/inquiry";

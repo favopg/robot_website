@@ -102,6 +102,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
 
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
                 <div class="card shadow border-0">
                     <div class="card-header bg-danger text-white py-3">
                         <h3 class="mb-0"><i class="bi bi-bug"></i> バグ報告</h3>
@@ -109,7 +114,7 @@
                     <div class="card-body p-4">
                         <p class="text-muted mb-4">サイトの不具合や改善の提案がございましたら、以下のフォームよりお知らせください。</p>
                         
-                        <form th:action="@{/inquiry/submit}" th:object="${inquiry}" method="post">
+                        <form id="inquiryForm" th:action="@{/inquiry/submit}" th:object="${inquiry}" method="post">
                             <div class="mb-3">
                                 <label for="subject" class="form-label fw-bold">件名 <span class="badge bg-danger">必須</span></label>
                                 <input type="text" class="form-control" id="subject" th:field="*{subject}" placeholder="〇〇ページで表示が崩れている" required>
@@ -203,6 +208,12 @@
                         localStorage.setItem('theme', 'light');
                     }
                 });
+            }
+
+            const form = document.getElementById('inquiryForm');
+            if (form) {
+                // クライアントサイドでの制限（localStorage）は、DB全体の件数を正確に把握できないため削除
+                // サーバーサイドで制限チェックを行っています
             }
         });
 

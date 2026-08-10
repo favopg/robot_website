@@ -36,6 +36,12 @@ public class RequestController {
 
     @PostMapping("/submit")
     public String submit(@ModelAttribute Request request, RedirectAttributes ra) {
+        long count = requestRepository.count();
+        if (count >= 10) {
+            ra.addFlashAttribute("error", "要望投稿制限（合計10件）に達したため、送信できませんでした。");
+            return "redirect:/request";
+        }
+
         requestRepository.save(request);
         ra.addFlashAttribute("message", "要望ありがとうございました。内容は確認させていただきます。");
         return "redirect:/request";

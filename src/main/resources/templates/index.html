@@ -8,8 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- Driver.js CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -108,9 +106,6 @@
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()" title="使い方ガイド">
-                        <i class="bi bi-question-circle"></i> 使い方
-                    </button>
                     <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
@@ -303,105 +298,7 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Driver.js JS -->
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script>
-        function startTutorial() {
-            const currentPath = window.location.pathname;
-            
-            if (currentPath === '/match-schedule') {
-                runScheduleTutorial();
-            } else if (currentPath === '/match-results') {
-                runResultsTutorial();
-            } else {
-                // 他のページにいる場合は、どちらのチュートリアルを見たいか尋ねる
-                const choice = confirm('どちらのチュートリアルを開始しますか？\nOK: 対局予定\nキャンセル: 対局結果');
-                if (choice) {
-                    window.location.href = '/match-schedule?startTutorial=true';
-                } else {
-                    window.location.href = '/match-results?startTutorial=true';
-                }
-            }
-        }
-
-        function runScheduleTutorial() {
-            const driver = window.driver.js.driver;
-            const driverObj = driver({
-                showProgress: true,
-                nextBtnText: '次へ',
-                prevBtnText: '前へ',
-                doneBtnText: '完了',
-                steps: [
-                    { 
-                        element: '#playerSearch', 
-                        popover: { title: '棋士検索', description: '棋士名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#ageFilter', 
-                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#genderFilter', 
-                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#favoriteOnlyFilter', 
-                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#favoriteSettingBtn', 
-                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
-                    },
-                    {
-                        element: '.match-item .player-detail-trigger',
-                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
-                    }
-                ]
-            });
-            driverObj.drive();
-        }
-
-        function runResultsTutorial() {
-            const driver = window.driver.js.driver;
-            const driverObj = driver({
-                showProgress: true,
-                nextBtnText: '次へ',
-                prevBtnText: '前へ',
-                doneBtnText: '完了',
-                steps: [
-                    { 
-                        element: '.card-title.mb-3', 
-                        popover: { title: '月別結果', description: '過去の対局結果を月ごとに切り替えて表示できます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#playerSearch', 
-                        popover: { title: '棋士・棋戦検索', description: '棋士名や棋戦名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#ageFilter', 
-                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#genderFilter', 
-                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#favoriteOnlyFilter', 
-                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#favoriteSettingBtn', 
-                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
-                    },
-                    {
-                        element: '.match-item .player-detail-trigger',
-                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
-                    }
-                ]
-            });
-            driverObj.drive();
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed');
