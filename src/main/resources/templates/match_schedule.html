@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Driver.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -83,7 +85,10 @@
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
+                    <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()" title="使い方ガイド">
+                        <i class="bi bi-question-circle"></i> 使い方
+                    </button>
+                    <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
                     <div class="form-check form-switch text-light">
@@ -123,6 +128,13 @@
                         <option value="50">50代以上</option>
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <select id="genderFilter" class="form-select form-select-sm" onchange="filterTable()" title="性別フィルター">
+                        <option value="">全ての性別</option>
+                        <option value="男">男性</option>
+                        <option value="女">女性</option>
+                    </select>
+                </div>
                 <div class="col-md-3">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="favoriteOnlyFilter" onchange="filterTable()">
@@ -147,6 +159,8 @@
                         <tr th:each="match : ${matches}" class="match-row"
                             th:data-p1-birth="${match.player1BirthDate}"
                             th:data-p2-birth="${match.player2BirthDate}"
+                            th:data-p1-gender="${match.player1Gender}"
+                            th:data-p2-gender="${match.player2Gender}"
                             th:data-p1-kana="${match.player1Kana}"
                             th:data-p2-kana="${match.player2Kana}">
                             <td th:text="${match.matchDate}">2026-07-01</td>
@@ -193,9 +207,19 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Driver.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // URLパラメータにstartTutorial=trueがある場合にチュートリアルを開始
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('startTutorial') === 'true') {
+                startTutorial();
+                // URLからパラメータを除去（履歴を汚さないため）
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchSchedule');
 
@@ -222,7 +246,46 @@
             modalEl.addEventListener('hidden.bs.modal', function () {
                 sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
             });
+            
+            // 初回訪問時かつお気に入り未設定の場合にチュートリアルを勧める（任意）
+            // if (!favData && !sessionStorage.getItem('tutorialShown')) {
+            //     startTutorial();
+            //     sessionStorage.setItem('tutorialShown', 'true');
+            // }
         });
+
+        function startTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    { 
+                        element: '#playerSearch', 
+                        popover: { title: '棋士検索', description: '棋士名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#ageFilter', 
+                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#genderFilter', 
+                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteOnlyFilter', 
+                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteSettingBtn', 
+                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
 
         function getFavoritePlayers() {
             const favData = localStorage.getItem('favoritePlayers');
@@ -325,6 +388,7 @@
         function filterTable() {
             const query = hiraToKata(document.getElementById('playerSearch').value.toLowerCase());
             const ageFilter = document.getElementById('ageFilter').value;
+            const genderFilter = document.getElementById('genderFilter') ? document.getElementById('genderFilter').value : "";
             const filterCheckbox = document.getElementById('favoriteOnlyFilter');
             const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
             
@@ -361,6 +425,15 @@
                     ageMatch = checkAge(p1Birth) || checkAge(p2Birth);
                 }
 
+                // 性別フィルター判定
+                let genderMatch = true;
+                if (genderFilter !== "") {
+                    const p1Gender = row.getAttribute('data-p1-gender');
+                    const p2Gender = row.getAttribute('data-p2-gender');
+                    genderMatch = (p1Gender && p1Gender.includes(genderFilter)) || 
+                                  (p2Gender && p2Gender.includes(genderFilter));
+                }
+
                 // 推し棋士フィルター判定
                 let favMatch = true;
                 if (favoriteOnly) {
@@ -369,7 +442,7 @@
 
                 const textMatch = text.includes(query);
 
-                if (textMatch && ageMatch && favMatch) {
+                if (textMatch && ageMatch && genderMatch && favMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
