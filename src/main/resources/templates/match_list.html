@@ -939,7 +939,8 @@
                     }
                     document.getElementById('playerGender').textContent = data.gender || '-';
                     const genderRow = document.getElementById('playerGenderRow');
-                    if (data.affiliation && data.affiliation.includes('関西棋院')) {
+                    const isKansai = data.affiliation && data.affiliation.includes('関西棋院');
+                    if (isKansai) {
                         genderRow.style.display = 'none';
                     } else {
                         genderRow.style.display = '';
@@ -964,21 +965,30 @@
                     // 棋士成績と対局予定の表示
                     const statsSection = document.getElementById('playerStatsSection');
                     const statsTable = document.getElementById('playerStatsTable');
-                    if (data.recentStats) {
+                    if (data.recentStats && !isKansai) {
                         statsTable.innerHTML = data.recentStats;
+                        statsSection.style.display = 'block';
+                    } else if (isKansai) {
+                        // 関西棋院の場合、枠だけ表示してデータ待ちメッセージを出す（日本棋院の未取得時と同様）
+                        statsTable.innerHTML = '<div class="alert alert-light border small">最新の棋士成績を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        statsSection.style.display = 'block';
                     } else {
                         statsTable.innerHTML = '<div class="alert alert-light border small">最新の棋士成績を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        statsSection.style.display = 'block';
                     }
-                    statsSection.style.display = 'block';
 
                     const matchesSection = document.getElementById('playerMatchesSection');
                     const matchesTable = document.getElementById('playerMatchesTable');
-                    if (data.recentMatches) {
+                    if (data.recentMatches && !isKansai) {
                         matchesTable.innerHTML = data.recentMatches;
+                        matchesSection.style.display = 'block';
+                    } else if (isKansai) {
+                        // 関西棋院の場合、対局予定セクションは非表示のまま（指示に基づき）
+                        matchesSection.style.display = 'none';
                     } else {
                         matchesTable.innerHTML = '<div class="alert alert-light border small">最新の対局結果と今後の予定を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        matchesSection.style.display = 'block';
                     }
-                    matchesSection.style.display = 'block';
 
                     const likeBtn = document.getElementById('likeButton');
                     likeBtn.onclick = () => handleLike(data.name);
