@@ -42,6 +42,9 @@ public class KansaikiinPlayerScraperTest {
         // 生年月日が正しくパースされているか確認 (1990-12-14)
         assertEquals(java.time.LocalDate.of(1990, 12, 14), player.getBirthDate());
         
+        // 読み仮名の取得確認
+        assertEquals("むらかわ　だいすけ", player.getKanaName());
+        
         System.out.println("[DEBUG_LOG] Scraped Player: " + player.getName());
         System.out.println("[DEBUG_LOG] BirthDate: " + player.getBirthDate());
     }

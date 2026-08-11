@@ -179,15 +179,21 @@ public class KansaikiinPlayerScraper {
                     }
                 }
 
-                // 見出しタグ<h1>や<h2>からも探してみる
+                // 見出しタグ、太字タグ、またはページ全体のテキストから探す
                 if (kanaName == null) {
-                    Elements headers = doc.select("h1, h2");
-                    for (Element h : headers) {
-                        Matcher m = pFull.matcher(h.text());
+                    Elements elements = doc.select("h1, h2, h3, strong, p, div");
+                    for (Element e : elements) {
+                        Matcher m = pFull.matcher(e.text());
                         if (m.find()) {
                             kanaName = m.group(1).trim();
-                            break;
+                            if (kanaName != null && !kanaName.isEmpty()) break;
                         }
+                    }
+                }
+                if (kanaName == null) {
+                    Matcher m = pFull.matcher(doc.text());
+                    if (m.find()) {
+                        kanaName = m.group(1).trim();
                     }
                 }
 
