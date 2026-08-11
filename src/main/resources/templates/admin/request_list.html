@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>【管理】要望メンテナンス</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-gear-fill"></i> 要望ステータス管理</h2>
+        <a href="/" class="btn btn-outline-secondary btn-sm">サイトへ戻る</a>
+    </div>
+
+    <table class="table table-bordered table-hover mt-4">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>件名</th>
+                <th>内容</th>
+                <th>現在の状態</th>
+                <th>アクション</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="req : ${requests}">
+                <td th:text="${req.id}">1</td>
+                <td th:text="${req.subject}">件名</td>
+                <td th:text="${req.message}">内容</td>
+                <td>
+                    <span class="badge" 
+                          th:classappend="${req.status == 'NEW' ? 'bg-warning text-dark' : (req.status == 'RESOLVED' ? 'bg-success' : 'bg-info')}" 
+                          th:text="${req.status}">NEW</span>
+                </td>
+                <td>
+                    <form th:action="@{/admin/request/update-status}" method="post" class="d-flex gap-2">
+                        <input type="hidden" name="id" th:value="${req.id}">
+                        <select name="status" class="form-select form-select-sm" style="width: auto;">
+                            <option value="NEW" th:selected="${req.status == 'NEW'}">NEW</option>
+                            <option value="PENDING" th:selected="${req.status == 'PENDING'}">PENDING</option>
+                            <option value="RESOLVED" th:selected="${req.status == 'RESOLVED'}">RESOLVED</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">更新</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(requests)}">
+                <td colspan="5" class="text-center py-5 text-muted">
+                    管理対象の要望はありません。
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
