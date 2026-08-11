@@ -79,6 +79,11 @@ public class PlayerService {
         return playerRepository.findByName(name);
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<Player> findAll() {
+        return playerRepository.findAll();
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveOrUpdate(Player player) {
         try {
@@ -93,7 +98,10 @@ public class PlayerService {
                     existing.setProfileUrl(player.getProfileUrl());
                     existing.setIconPath(player.getIconPath());
                     existing.setKanaName(player.getKanaName());
+                    existing.setRecentStats(player.getRecentStats());
+                    existing.setRecentMatches(player.getRecentMatches());
                     // likesCount はスクレイピングによる更新対象外とする（保持する）
+                    // updatedAt は @UpdateTimestamp (または DB 側) により自動更新されるはず
                     playerRepository.saveAndFlush(existing);
                 },
                 () -> playerRepository.saveAndFlush(player)

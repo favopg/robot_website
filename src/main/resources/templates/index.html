@@ -117,8 +117,13 @@
             </div>
         </div>
     </nav>
+    
+    <div th:if="${isUpdating}" class="alert alert-info alert-dismissible fade show mb-0 rounded-0 text-center" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        現在、最新の棋士情報を取得中です。最新の成績が表示されるまで少々お待ちください。
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
-    <!-- ヒーローセクション -->
     <header class="hero-section text-center">
         <div class="container">
             <h1 class="display-4 fw-bold">あなたの推し囲碁棋士を見つけよう</h1>

@@ -66,4 +66,26 @@ public class BatchConfig {
                 .tasklet(tasklet, transactionManager)
                 .build();
     }
+
+    @Bean
+    public Job playerScrapeJob(JobRepository jobRepository, Step playerBasicScrapeStep, Step playerStatsScrapeStep) {
+        return new JobBuilder("playerScrapeJob", jobRepository)
+                .start(playerBasicScrapeStep)
+                .next(playerStatsScrapeStep)
+                .build();
+    }
+
+    @Bean
+    public Step playerBasicScrapeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, NihonkiinPlayerScraperTasklet tasklet) {
+        return new StepBuilder("playerBasicScrapeStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step playerStatsScrapeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, NihonkiinPlayerScraperTasklet tasklet) {
+        return new StepBuilder("playerStatsScrapeStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
 }
