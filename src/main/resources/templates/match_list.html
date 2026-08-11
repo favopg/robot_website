@@ -371,7 +371,7 @@
                                 <button id="btnUpdateKana" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" onclick="updateKana()">登録試行</button>
                             </td>
                         </tr>
-                        <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
+                        <tr id="playerGenderRow"><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
                         <tr><th>段位</th><td id="playerRank"></td></tr>
                         <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
                         <tr><th>出身地</th><td id="playerPlace"></td></tr>
@@ -938,6 +938,12 @@
                         btnUpdateKana.style.display = 'none';
                     }
                     document.getElementById('playerGender').textContent = data.gender || '-';
+                    const genderRow = document.getElementById('playerGenderRow');
+                    if (data.affiliation && data.affiliation.includes('関西棋院')) {
+                        genderRow.style.display = 'none';
+                    } else {
+                        genderRow.style.display = '';
+                    }
                     document.getElementById('playerRank').textContent = data.rank || '-';
                     document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
                     document.getElementById('playerPlace').textContent = data.birthPlace || '-';
