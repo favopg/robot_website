@@ -2,15 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>【管理】要望メンテナンス</title>
+    <title>【管理】バグ報告メンテナンス</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-gear-fill"></i> 要望ステータス管理</h2>
+        <h2><i class="bi bi-bug-fill"></i> バグ報告ステータス管理</h2>
         <div>
-            <a href="/admin/inquiry" class="btn btn-outline-primary btn-sm me-2">バグ報告管理へ</a>
+            <a href="/admin/request" class="btn btn-outline-primary btn-sm me-2">要望管理へ</a>
             <a href="/" class="btn btn-outline-secondary btn-sm">サイトへ戻る</a>
         </div>
     </div>
@@ -26,30 +26,30 @@
             </tr>
         </thead>
         <tbody>
-            <tr th:each="req : ${requests}">
-                <td th:text="${req.id}">1</td>
-                <td th:text="${req.subject}">件名</td>
-                <td th:text="${req.message}">内容</td>
+            <tr th:each="inq : ${inquiries}">
+                <td th:text="${inq.id}">1</td>
+                <td th:text="${inq.subject}">件名</td>
+                <td th:text="${inq.message}">内容</td>
                 <td>
                     <span class="badge" 
-                          th:classappend="${req.status == 'NEW' ? 'bg-warning text-dark' : (req.status == 'RESOLVED' ? 'bg-success' : 'bg-info')}" 
-                          th:text="${req.status}">NEW</span>
+                          th:classappend="${inq.status == 'NEW' ? 'bg-warning text-dark' : (inq.status == 'RESOLVED' ? 'bg-success' : 'bg-info')}" 
+                          th:text="${inq.status}">NEW</span>
                 </td>
                 <td>
-                    <form th:action="@{/admin/request/update-status}" method="post" class="d-flex gap-2">
-                        <input type="hidden" name="id" th:value="${req.id}">
+                    <form th:action="@{/admin/inquiry/update-status}" method="post" class="d-flex gap-2">
+                        <input type="hidden" name="id" th:value="${inq.id}">
                         <select name="status" class="form-select form-select-sm" style="width: auto;">
-                            <option value="NEW" th:selected="${req.status == 'NEW'}">NEW</option>
-                            <option value="PENDING" th:selected="${req.status == 'PENDING'}">PENDING</option>
-                            <option value="RESOLVED" th:selected="${req.status == 'RESOLVED'}">RESOLVED</option>
+                            <option value="NEW" th:selected="${inq.status == 'NEW'}">NEW</option>
+                            <option value="PENDING" th:selected="${inq.status == 'PENDING'}">PENDING</option>
+                            <option value="RESOLVED" th:selected="${inq.status == 'RESOLVED'}">RESOLVED</option>
                         </select>
                         <button type="submit" class="btn btn-primary btn-sm">更新</button>
                     </form>
                 </td>
             </tr>
-            <tr th:if="${#lists.isEmpty(requests)}">
+            <tr th:if="${#lists.isEmpty(inquiries)}">
                 <td colspan="5" class="text-center py-5 text-muted">
-                    管理対象の要望はありません。
+                    管理対象のバグ報告はありません。
                 </td>
             </tr>
         </tbody>
