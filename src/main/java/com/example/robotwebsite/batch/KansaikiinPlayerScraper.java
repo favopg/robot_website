@@ -103,27 +103,50 @@ public class KansaikiinPlayerScraper {
             Elements tables = doc.select("table");
             for (Element table : tables) {
                 Elements rows = table.select("tr");
-                for (Element row : rows) {
+                for (int i = 0; i < rows.size(); i++) {
+                    Element row = rows.get(i);
                     String text = row.text().replaceAll("[\u00a0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]", " ").trim();
                     if (text.contains("生年月日")) {
                         String dateStr = text.replace("生年月日", "").trim();
+                        // もし同じ行に日付がない場合、次の行を確認する
+                        if (dateStr.isEmpty() && i + 1 < rows.size()) {
+                            dateStr = rows.get(i + 1).text().trim();
+                        }
                         try {
-                            // "1989年（平成元年）5月24日生" のような形式に対応
-                            Pattern p = Pattern.compile("(\\d+)年.*?(\\d+)月(\\d+)日");
-                            Matcher m = p.matcher(dateStr);
-                            if (m.find()) {
-                                int year = Integer.parseInt(m.group(1));
-                                int month = Integer.parseInt(m.group(2));
-                                int day = Integer.parseInt(m.group(3));
+                            // 1. "平成7年(1995年)6月19日" のように和暦の後に西暦が括弧書きされている形式を最優先
+                            Pattern pWithParentheses = Pattern.compile("[\\(（](\\d+)年[\\)）]");
+                            Matcher mWithParentheses = pWithParentheses.matcher(dateStr);
+                            
+                            int year = -1;
+                            if (mWithParentheses.find()) {
+                                year = Integer.parseInt(mWithParentheses.group(1));
+                            }
+
+                            // 2. 括弧がない場合、あるいは括弧内に年がない場合、"1995年6月19日" のような西暦を探す
+                            if (year < 1000) {
+                                Pattern pYear = Pattern.compile("(\\d{4})年");
+                                Matcher mYear = pYear.matcher(dateStr);
+                                if (mYear.find()) {
+                                    year = Integer.parseInt(mYear.group(1));
+                                }
+                            }
+
+                            // 月日の抽出
+                            Pattern pMonthDay = Pattern.compile("(\\d+)月(\\d+)日");
+                            Matcher mMonthDay = pMonthDay.matcher(dateStr);
+
+                            if (year >= 1000 && mMonthDay.find()) {
+                                int month = Integer.parseInt(mMonthDay.group(1));
+                                int day = Integer.parseInt(mMonthDay.group(2));
                                 player.setBirthDate(LocalDate.of(year, month, day));
                             } else {
-                                logger.warn("Birth date format not matched: " + dateStr + " for player: " + playerName);
+                                logger.warn("Could not reliably parse birth date: " + dateStr + " for player: " + playerName);
                             }
                         } catch (Exception e) {
                             logger.warn("Failed to parse birth date: " + dateStr + " for player: " + playerName, e);
                         }
-                    } else if (text.contains("出　　身")) {
-                        String birthPlace = text.replace("出　　身", "").trim();
+                    } else if (text.replaceAll("[\\s\u3000]+", "").contains("出身")) {
+                        String birthPlace = text.replaceAll(".*出身", "").replaceAll("[\\s\u3000]+", "").trim();
                         player.setBirthPlace(birthPlace);
                     }
                 }
@@ -146,10 +169,11 @@ public class KansaikiinPlayerScraper {
                 // 画像のalt属性に "村川　大介（ムラカワ　ダイスケ）" のように入っている場合がある
                 String alt = imgElement.attr("alt");
                 String kanaName = null;
-                Pattern p = Pattern.compile("[（(]([\\u30A0-\\u30FF\\s\u3000]+)[^）)]*[）)]");
+                // カタカナとひらがな、および全角スペースを許可するパターン
+                Pattern pFull = Pattern.compile("[（(]([\\u30A0-\\u30FF\\u3040-\\u309F\\s\u3000]+)[^）)]*[）)]");
 
                 if (alt != null && !alt.isEmpty()) {
-                    Matcher m = p.matcher(alt);
+                    Matcher m = pFull.matcher(alt);
                     if (m.find()) {
                         kanaName = m.group(1).trim();
                     }
@@ -159,7 +183,7 @@ public class KansaikiinPlayerScraper {
                 if (kanaName == null) {
                     Elements headers = doc.select("h1, h2");
                     for (Element h : headers) {
-                        Matcher m = p.matcher(h.text());
+                        Matcher m = pFull.matcher(h.text());
                         if (m.find()) {
                             kanaName = m.group(1).trim();
                             break;
@@ -168,7 +192,8 @@ public class KansaikiinPlayerScraper {
                 }
 
                 if (kanaName != null) {
-                    player.setKanaName(kanaName.replace("　", " "));
+                    // 指示通り全角スペースを保持する
+                    player.setKanaName(kanaName);
                 }
             }
 

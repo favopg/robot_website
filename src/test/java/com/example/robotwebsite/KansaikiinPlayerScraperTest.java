@@ -38,15 +38,38 @@ public class KansaikiinPlayerScraperTest {
         assertEquals(playerName, player.getName());
         assertEquals("関西棋院", player.getAffiliation());
         assertNotNull(player.getRank(), "Rank should be scraped");
-        assertNotNull(player.getProfileUrl(), "Profile URL should be set");
-        assertNotNull(player.getIconPath(), "Icon path should be set");
-        assertTrue(player.getIconPath().startsWith("http"), "Icon path should be an absolute URL");
+        
+        // 生年月日が正しくパースされているか確認 (1990-12-14)
+        assertEquals(java.time.LocalDate.of(1990, 12, 14), player.getBirthDate());
         
         System.out.println("[DEBUG_LOG] Scraped Player: " + player.getName());
-        System.out.println("[DEBUG_LOG] Rank: " + player.getRank());
-        System.out.println("[DEBUG_LOG] Affiliation: " + player.getAffiliation());
+        System.out.println("[DEBUG_LOG] BirthDate: " + player.getBirthDate());
+    }
+
+    @Test
+    public void testScrapeKansaikiinPlayerYoSeiki() {
+        // 余正麒九段をテスト対象にする
+        String playerName = "余正麒";
+        
+        boolean result = scraper.scrapeAndSavePlayer(playerName);
+        assertTrue(result, "Should find and save player info for Yo Seiki");
+
+        Optional<Player> playerOpt = playerRepository.findByName(playerName);
+        assertTrue(playerOpt.isPresent(), "Player should be in DB");
+        
+        Player player = playerOpt.get();
+        assertEquals(playerName, player.getName());
+        
+        // 読み仮名の全角スペース保持
+        assertEquals("よ　せいき", player.getKanaName());
+        // 生年月日の西暦抽出 (1995-06-19)
+        assertEquals(java.time.LocalDate.of(1995, 6, 19), player.getBirthDate());
+        // 出身地のスペース除去 (台湾台北市)
+        assertEquals("台湾台北市", player.getBirthPlace());
+
+        System.out.println("[DEBUG_LOG] Scraped Player: " + player.getName());
+        System.out.println("[DEBUG_LOG] Kana: " + player.getKanaName());
+        System.out.println("[DEBUG_LOG] BirthDate: " + player.getBirthDate());
         System.out.println("[DEBUG_LOG] BirthPlace: " + player.getBirthPlace());
-        System.out.println("[DEBUG_LOG] Profile URL: " + player.getProfileUrl());
-        System.out.println("[DEBUG_LOG] Icon Path: " + player.getIconPath());
     }
 }

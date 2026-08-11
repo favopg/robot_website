@@ -88,4 +88,18 @@ public class BatchConfig {
                 .tasklet(tasklet, transactionManager)
                 .build();
     }
+
+    @Bean
+    public Job kansaikiinPlayerScrapeJob(JobRepository jobRepository, Step kansaikiinPlayerScrapeStep) {
+        return new JobBuilder("kansaikiinPlayerScrapeJob", jobRepository)
+                .start(kansaikiinPlayerScrapeStep)
+                .build();
+    }
+
+    @Bean
+    public Step kansaikiinPlayerScrapeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, KansaikiinPlayerScraperTasklet tasklet) {
+        return new StepBuilder("kansaikiinPlayerScrapeStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
 }
