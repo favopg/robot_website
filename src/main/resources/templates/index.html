@@ -74,11 +74,6 @@
                             <i class="bi bi-trophy"></i> 対局結果
                         </a>
                     </li>
-                    <li class="nav-item" id="step-ranking">
-                        <a class="nav-link" href="/ranking">
-                            <i class="bi bi-heart-fill"></i> 人気ランキング
-                        </a>
-                    </li>
                     <li class="nav-item dropdown" id="step-kisei-titles">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-journal-text"></i> 囲碁棋戦
@@ -92,6 +87,11 @@
                             <li><a class="dropdown-item" href="/gosei-info">碁聖戦の仕組み</a></li>
                             <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
                         </ul>
+                    </li>
+                    <li class="nav-item" id="step-ranking">
+                        <a class="nav-link" href="/ranking">
+                            <i class="bi bi-heart-fill"></i> 人気ランキング
+                        </a>
                     </li>
                     <li class="nav-item dropdown" id="step-request">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -440,12 +440,12 @@
                         popover: { title: '対局結果', description: '過去の対局結果を棋士毎に確認できます', side: "bottom", align: 'start' }
                     },
                     {
-                        element: '#step-ranking',
-                        popover: { title: '人気ランキング', description: '棋士の人気ランキングを表示します。\n対局予定、対局結果のアイコン画像をクリックするといいねボタンが押せるので一定数以上押されたプロ棋士を対象としたランキングを確認できます。', side: "bottom", align: 'start' }
-                    },
-                    {
                         element: '#step-kisei-titles',
                         popover: { title: '囲碁棋戦', description: '七大棋戦などの囲碁棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#step-ranking',
+                        popover: { title: '人気ランキング', description: '棋士の人気ランキングを表示します。\n対局予定、対局結果のアイコン画像をクリックするといいねボタンが押せるので一定数以上押されたプロ棋士を対象としたランキングを確認できます。', side: "bottom", align: 'start' }
                     },
                     {
                         element: '#step-request',
