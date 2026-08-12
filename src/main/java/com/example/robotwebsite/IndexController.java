@@ -10,6 +10,7 @@ import com.example.robotwebsite.repository.MatchRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import com.example.robotwebsite.entity.Player;
 import com.example.robotwebsite.service.PlayerService;
+import com.example.robotwebsite.service.SystemStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,17 +48,20 @@ public class IndexController {
     private final YoutubeLiveRepository youtubeLiveRepository;
     private final NihonkiinPlayerScraper nihonkiinPlayerScraper;
     private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
+    private final SystemStatusService systemStatusService;
 
     public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
                            PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository,
                            NihonkiinPlayerScraper nihonkiinPlayerScraper,
-                           KansaikiinPlayerScraper kansaikiinPlayerScraper) {
+                           KansaikiinPlayerScraper kansaikiinPlayerScraper,
+                           SystemStatusService systemStatusService) {
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
         this.playerService = playerService;
         this.youtubeLiveRepository = youtubeLiveRepository;
         this.nihonkiinPlayerScraper = nihonkiinPlayerScraper;
         this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
+        this.systemStatusService = systemStatusService;
     }
 
     @GetMapping("/api/player/update-kana")
@@ -207,6 +211,7 @@ public class IndexController {
         Pageable pageable = PageRequest.of(0, 5, Sort.by("eventDate").descending());
         Page<Event> eventPage = eventRepository.findAll(pageable);
         model.addAttribute("events", eventPage.getContent());
+        model.addAttribute("isUpdating", systemStatusService.isUpdating());
         return "index";
     }
 
@@ -285,6 +290,7 @@ public class IndexController {
         model.addAttribute("today", LocalDate.now());
         model.addAttribute("months", months);
         model.addAttribute("title", titlePrefix + "プロ棋士対局結果");
+        model.addAttribute("isUpdating", systemStatusService.isUpdating());
         return "match_list";
     }
 
@@ -303,6 +309,7 @@ public class IndexController {
         setIcons(schedules);
         model.addAttribute("today", today);
         model.addAttribute("title", "プロ棋士対局予定");
+        model.addAttribute("isUpdating", systemStatusService.isUpdating());
         return "match_list";
     }
 

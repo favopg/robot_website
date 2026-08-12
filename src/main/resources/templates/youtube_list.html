@@ -59,6 +59,24 @@
                             <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-chat-left-text"></i> 要望投稿
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequest">
+                            <li><a class="dropdown-item" href="/request">要望を投稿する</a></li>
+                            <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bug"></i> バグ報告
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownBug">
+                            <li><a class="dropdown-item" href="/inquiry">バグを報告する</a></li>
+                            <li><a class="dropdown-item" href="/inquiry/list">報告一覧</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
                     <button class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
@@ -124,7 +142,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">解除する</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">今は設定しない</button>
                     <button type="button" class="btn btn-primary" onclick="saveFavoritePlayer()">登録する</button>
                 </div>
             </div>

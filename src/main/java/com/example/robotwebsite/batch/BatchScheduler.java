@@ -21,22 +21,26 @@ public class BatchScheduler implements CommandLineRunner {
     private final Job nihonkiinMatchJob;
     private final Job youtubeLiveScrapeJob;
     private final Job normalizationJob;
+    private final Job playerScrapeJob;
+    private final Job kansaikiinPlayerScrapeJob;
 
-    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob, Job normalizationJob) {
+    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob, Job normalizationJob, Job playerScrapeJob, Job kansaikiinPlayerScrapeJob) {
         this.jobLauncher = jobLauncher;
         this.siteSourceCheckJob = siteSourceCheckJob;
         this.nihonkiinMatchJob = nihonkiinMatchJob;
         this.youtubeLiveScrapeJob = youtubeLiveScrapeJob;
         this.normalizationJob = normalizationJob;
+        this.playerScrapeJob = playerScrapeJob;
+        this.kansaikiinPlayerScrapeJob = kansaikiinPlayerScrapeJob;
     }
 
     @Override
     public void run(String... args) {
-        // 移行ジョブを実行
+        // アプリケーション起動時に実行
         runNormalizationJob();
-        // runJob();
         runNihonkiinMatchJob();
-        // runYoutubeLiveScrapeJob();
+        runPlayerScrapeJob();
+        runKansaikiinPlayerScrapeJob();
     }
 
     // 毎週金曜日23時59分に実行
@@ -89,6 +93,34 @@ public class BatchScheduler implements CommandLineRunner {
             jobLauncher.run(normalizationJob, params);
         } catch (Exception e) {
             logger.error("Error executing normalizationJob", e);
+        }
+    }
+
+    // 毎週金曜日23時59分に実行
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 59 23 * * FRI")
+    public void runPlayerScrapeJob() {
+        try {
+            logger.info("Starting playerScrapeJob at " + new Date());
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(playerScrapeJob, params);
+        } catch (Exception e) {
+            logger.error("Error executing playerScrapeJob", e);
+        }
+    }
+
+    // 毎週金曜日23時59分に実行
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 59 23 * * FRI")
+    public void runKansaikiinPlayerScrapeJob() {
+        try {
+            logger.info("Starting kansaikiinPlayerScrapeJob at " + new Date());
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(kansaikiinPlayerScrapeJob, params);
+        } catch (Exception e) {
+            logger.error("Error executing kansaikiinPlayerScrapeJob", e);
         }
     }
 }

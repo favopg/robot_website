@@ -41,6 +41,9 @@ public class Player {
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
+    private String recentStats;
+    private String recentMatches;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -77,4 +80,10 @@ public class Player {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getRecentStats() { return recentStats; }
+    public void setRecentStats(String recentStats) { this.recentStats = recentStats; }
+
+    public String getRecentMatches() { return recentMatches; }
+    public void setRecentMatches(String recentMatches) { this.recentMatches = recentMatches; }
 }

@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Driver.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -83,9 +85,30 @@
                             <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-chat-left-text"></i> 要望投稿
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequest">
+                            <li><a class="dropdown-item" href="/request">要望を投稿する</a></li>
+                            <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bug"></i> バグ報告
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownBug">
+                            <li><a class="dropdown-item" href="/inquiry">バグを報告する</a></li>
+                            <li><a class="dropdown-item" href="/inquiry/list">報告一覧</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
+                    <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()" title="使い方ガイド">
+                        <i class="bi bi-question-circle"></i> 使い方
+                    </button>
+                    <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
                     <div class="form-check form-switch text-light">
@@ -96,6 +119,12 @@
             </div>
         </div>
     </nav>
+    
+    <div th:if="${isUpdating}" class="alert alert-info alert-dismissible fade show mb-0 rounded-0 text-center" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        現在、最新の棋士情報を取得中です。最新の成績が表示されるまで少々お待ちください。
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
     <div class="container mt-3">
         <header class="mb-3 border-bottom pb-2">
@@ -105,6 +134,13 @@
         </header>
         
         <main>
+            <!-- 推し棋士の対局お知らせアラート -->
+            <div id="favoriteMatchAlert" class="alert alert-warning alert-dismissible fade show shadow-sm d-none" role="alert">
+                <i class="bi bi-megaphone-fill me-2"></i>
+                <strong>本日の対局予定：</strong> <span id="favoriteMatchNames"></span> の対局が本日予定されています！
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
             <!-- 月別リンクの追加 -->
             <div class="row mb-4" th:if="${months != null}">
                 <div class="col-12">
@@ -335,7 +371,7 @@
                                 <button id="btnUpdateKana" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" onclick="updateKana()">登録試行</button>
                             </td>
                         </tr>
-                        <tr><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
+                        <tr id="playerGenderRow"><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
                         <tr><th>段位</th><td id="playerRank"></td></tr>
                         <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
                         <tr><th>出身地</th><td id="playerPlace"></td></tr>
@@ -349,6 +385,15 @@
                     </div>
                     <div class="mt-3 text-end">
                         <a id="playerProfileLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">日本棋院プロフィール <i class="bi bi-box-arrow-up-right"></i></a>
+                    </div>
+                    <hr>
+                    <div id="playerStatsSection" class="text-start mt-3" style="display: none;">
+                        <h6><i class="bi bi-graph-up me-2"></i>棋士成績</h6>
+                        <div id="playerStatsTable" class="table-responsive small"></div>
+                    </div>
+                    <div id="playerMatchesSection" class="text-start mt-3" style="display: none;">
+                        <h6><i class="bi bi-calendar-event me-2"></i>対局結果と今後の予定</h6>
+                        <div id="playerMatchesTable" class="table-responsive small"></div>
                     </div>
                 </div>
             </div>
@@ -372,7 +417,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">解除する</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">今は設定しない</button>
                     <button type="button" class="btn btn-primary" onclick="saveFavoritePlayer()">登録する</button>
                 </div>
             </div>
@@ -381,8 +426,98 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Driver.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
     <script>
+        function startTutorial() {
+            const currentPath = window.location.pathname;
+            
+            if (currentPath === '/match-schedule') {
+                runScheduleTutorial();
+            } else if (currentPath === '/match-results') {
+                runResultsTutorial();
+            }
+        }
+
+        function runScheduleTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    { 
+                        element: '#playerSearch', 
+                        popover: { title: '棋士検索', description: '棋士名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#ageFilter', 
+                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#genderFilter', 
+                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteOnlyFilter', 
+                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteSettingBtn', 
+                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    },
+                    {
+                        element: '.match-item .player-detail-trigger',
+                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
+
+        function runResultsTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    { 
+                        element: '.card-title.mb-3', 
+                        popover: { title: '月別結果', description: '過去の対局結果を月ごとに切り替えて表示できます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#playerSearch', 
+                        popover: { title: '棋士・棋戦検索', description: '棋士名や棋戦名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#ageFilter', 
+                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#genderFilter', 
+                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteOnlyFilter', 
+                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteSettingBtn', 
+                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    },
+                    {
+                        element: '.match-item .player-detail-trigger',
+                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
+
         // ひらがなをカタカナに変換するユーティリティ
         function hiraToKata(str) {
             return str.replace(/[\u3041-\u3096]/g, function(match) {
@@ -803,6 +938,13 @@
                         btnUpdateKana.style.display = 'none';
                     }
                     document.getElementById('playerGender').textContent = data.gender || '-';
+                    const genderRow = document.getElementById('playerGenderRow');
+                    const isKansai = data.affiliation && data.affiliation.includes('関西棋院');
+                    if (isKansai) {
+                        genderRow.style.display = 'none';
+                    } else {
+                        genderRow.style.display = '';
+                    }
                     document.getElementById('playerRank').textContent = data.rank || '-';
                     document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
                     document.getElementById('playerPlace').textContent = data.birthPlace || '-';
@@ -819,6 +961,34 @@
 
                     document.getElementById('playerLikesCount').textContent = data.likesCount || 0;
                     updateLikeButtonState(data.name);
+
+                    // 棋士成績と対局予定の表示
+                    const statsSection = document.getElementById('playerStatsSection');
+                    const statsTable = document.getElementById('playerStatsTable');
+                    if (data.recentStats && !isKansai) {
+                        statsTable.innerHTML = data.recentStats;
+                        statsSection.style.display = 'block';
+                    } else if (isKansai) {
+                        // 関西棋院の場合、枠だけ表示してデータ待ちメッセージを出す（日本棋院の未取得時と同様）
+                        statsTable.innerHTML = '<div class="alert alert-light border small">現在、関西棋院所属の成績について確認できません。実現可能か確認中のためご理解のほどお願いいたします</div>';
+                        statsSection.style.display = 'block';
+                    } else {
+                        statsTable.innerHTML = '<div class="alert alert-light border small">最新の棋士成績を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        statsSection.style.display = 'block';
+                    }
+
+                    const matchesSection = document.getElementById('playerMatchesSection');
+                    const matchesTable = document.getElementById('playerMatchesTable');
+                    if (data.recentMatches && !isKansai) {
+                        matchesTable.innerHTML = data.recentMatches;
+                        matchesSection.style.display = 'block';
+                    } else if (isKansai) {
+                        // 関西棋院の場合、対局予定セクションは非表示のまま（指示に基づき）
+                        matchesSection.style.display = 'none';
+                    } else {
+                        matchesTable.innerHTML = '<div class="alert alert-light border small">最新の対局結果と今後の予定を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        matchesSection.style.display = 'block';
+                    }
 
                     const likeBtn = document.getElementById('likeButton');
                     likeBtn.onclick = () => handleLike(data.name);
@@ -941,6 +1111,14 @@
 
         // イベントリスナーの登録
         document.addEventListener('DOMContentLoaded', function() {
+            // URLパラメータにstartTutorial=trueがある場合にチュートリアルを開始
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('startTutorial') === 'true') {
+                startTutorial();
+                // URLからパラメータを除去（履歴を汚さないため）
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchList');
 
@@ -961,6 +1139,9 @@
                 }
                 // 初回読み込み時にもフィルタリングを実行
                 filterTable();
+                
+                // 推し棋士の本日対局チェック処理の追加
+                checkFavoriteMatchesToday();
             }
 
             // モーダルが閉じられたときにフラグをセットする（再表示防止）
@@ -996,6 +1177,46 @@
                 return [oldFav];
             }
             return [];
+        }
+
+        // 本日の推し棋士の対局をチェックしてアラートを表示する関数
+        function checkFavoriteMatchesToday() {
+            const favs = getFavoritePlayers();
+            if (favs.length === 0) return;
+
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${y}-${m}-${d}`;
+
+            const matchItems = document.querySelectorAll('.match-item');
+            const playingFavs = new Set();
+
+            matchItems.forEach(item => {
+                const matchDate = item.getAttribute('data-date');
+                // 本日の対局のみ対象
+                if (matchDate === todayStr) {
+                    const p1Name = item.getAttribute('data-p1-name');
+                    const p2Name = item.getAttribute('data-p2-name');
+
+                    favs.forEach(fav => {
+                        if (p1Name === fav || p2Name === fav) {
+                            playingFavs.add(fav);
+                        }
+                    });
+                }
+            });
+
+            // 該当する推し棋士がいればアラートを表示
+            if (playingFavs.size > 0) {
+                const alertEl = document.getElementById('favoriteMatchAlert');
+                const namesEl = document.getElementById('favoriteMatchNames');
+                if (alertEl && namesEl) {
+                    namesEl.textContent = Array.from(playingFavs).join('、');
+                    alertEl.classList.remove('d-none');
+                }
+            }
         }
 
         function showFavoriteModal(isFirst = false) {

@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Driver.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -58,9 +60,41 @@
                             <i class="bi bi-trophy"></i> 対局結果
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-text"></i> 囲碁棋戦
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownTitles">
+                            <li><a class="dropdown-item" href="/kisei-info">棋聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/meijin-info">名人戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/honinbo-info">本因坊戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/ouza-info">王座戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/tengen-info">天元戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/gosei-info">碁聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-chat-left-text"></i> 要望投稿
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequest">
+                            <li><a class="dropdown-item" href="/request">要望を投稿する</a></li>
+                            <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bug"></i> バグ報告
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownBug">
+                            <li><a class="dropdown-item" href="/inquiry">バグを報告する</a></li>
+                            <li><a class="dropdown-item" href="/inquiry/list">報告一覧</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
+                    <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
                     <div class="form-check form-switch text-light">
@@ -100,6 +134,13 @@
                         <option value="50">50代以上</option>
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <select id="genderFilter" class="form-select form-select-sm" onchange="filterTable()" title="性別フィルター">
+                        <option value="">全ての性別</option>
+                        <option value="男">男性</option>
+                        <option value="女">女性</option>
+                    </select>
+                </div>
                 <div class="col-md-3">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="favoriteOnlyFilter" onchange="filterTable()">
@@ -124,14 +165,16 @@
                         <tr th:each="match : ${matches}" class="match-row"
                             th:data-p1-birth="${match.player1BirthDate}"
                             th:data-p2-birth="${match.player2BirthDate}"
+                            th:data-p1-gender="${match.player1Gender}"
+                            th:data-p2-gender="${match.player2Gender}"
                             th:data-p1-kana="${match.player1Kana}"
                             th:data-p2-kana="${match.player2Kana}">
                             <td th:text="${match.matchDate}">2026-07-01</td>
                             <td th:text="${match.matchName}">本因坊戦</td>
                             <td class="player-names">
-                                <span th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
+                                <span class="player-detail-trigger" style="cursor: pointer;" th:data-player-name="${match.player1Name}" th:text="${(match.player1Sente != null && match.player1Sente) ? '△' : ''} + ${match.player1Name}">棋士A</span>
                                 vs
-                                <span th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
+                                <span class="player-detail-trigger" style="cursor: pointer;" th:data-player-name="${match.player2Name}" th:text="${(match.player2Sente != null && match.player2Sente) ? '△' : ''} + ${match.player2Name}">棋士B</span>
                             </td>
                             <td th:text="${match.result}">-</td>
                         </tr>
@@ -161,8 +204,55 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">解除する</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">今は設定しない</button>
                     <button type="button" class="btn btn-primary" onclick="saveFavoritePlayer()">登録する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div class="modal fade" id="playerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="playerName">棋士詳細</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="playerModalIcon" src="" class="rounded-circle mb-3 shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="棋士アイコン">
+                    <table class="table table-sm text-start">
+                        <tr>
+                            <th style="width: 30%;">読み仮名</th>
+                            <td id="playerKanaNameContainer">
+                                <span id="playerKanaName"></span>
+                                <button id="btnUpdateKana" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" onclick="updateKana()">登録試行</button>
+                            </td>
+                        </tr>
+                        <tr id="playerGenderRow"><th style="width: 30%;">性別</th><td id="playerGender"></td></tr>
+                        <tr><th>段位</th><td id="playerRank"></td></tr>
+                        <tr><th>生年月日</th><td id="playerBirthDate"></td></tr>
+                        <tr><th>出身地</th><td id="playerPlace"></td></tr>
+                        <tr><th>所属</th><td id="playerAffiliation"></td></tr>
+                    </table>
+                    <div class="mt-3">
+                        <button id="likeButton" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-heart-fill"></i> いいね <span id="playerLikesCount" class="badge bg-danger">0</span>
+                        </button>
+                        <div id="likeLimitMessage" class="text-muted small mt-1"></div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <a id="playerProfileLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">日本棋院プロフィール <i class="bi bi-box-arrow-up-right"></i></a>
+                    </div>
+                    <hr>
+                    <div id="playerStatsSection" class="text-start mt-3" style="display: none;">
+                        <h6><i class="bi bi-graph-up me-2"></i>棋士成績</h6>
+                        <div id="playerStatsTable" class="table-responsive small"></div>
+                    </div>
+                    <div id="playerMatchesSection" class="text-start mt-3" style="display: none;">
+                        <h6><i class="bi bi-calendar-event me-2"></i>対局結果と今後の予定</h6>
+                        <div id="playerMatchesTable" class="table-responsive small"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -170,9 +260,19 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Driver.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // URLパラメータにstartTutorial=trueがある場合にチュートリアルを開始
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('startTutorial') === 'true') {
+                startTutorial();
+                // URLからパラメータを除去（履歴を汚さないため）
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
             const modalDismissed = sessionStorage.getItem('favoriteModalDismissed_matchSchedule');
 
@@ -199,7 +299,289 @@
             modalEl.addEventListener('hidden.bs.modal', function () {
                 sessionStorage.setItem('favoriteModalDismissed_matchSchedule', 'true');
             });
+
+            document.addEventListener('click', function(event) {
+                const trigger = event.target.closest('.player-detail-trigger');
+                if (trigger) {
+                    const playerName = trigger.getAttribute('data-player-name');
+                    if (playerName) {
+                        showPlayerDetail(playerName);
+                    }
+                }
+            });
+            
+            // 初回訪問時かつお気に入り未設定の場合にチュートリアルを勧める（任意）
+            // if (!favData && !sessionStorage.getItem('tutorialShown')) {
+            //     startTutorial();
+            //     sessionStorage.setItem('tutorialShown', 'true');
+            // }
         });
+
+        function startTutorial() {
+            const currentPath = window.location.pathname;
+            
+            if (currentPath === '/match-schedule') {
+                runScheduleTutorial();
+            } else if (currentPath === '/match-results') {
+                runResultsTutorial();
+            }
+        }
+
+        function runScheduleTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    { 
+                        element: '#playerSearch', 
+                        popover: { title: '棋士検索', description: '棋士名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#ageFilter', 
+                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#genderFilter', 
+                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteOnlyFilter', 
+                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteSettingBtn', 
+                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    },
+                    {
+                        element: '.match-row .player-detail-trigger',
+                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
+
+        function runResultsTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    { 
+                        element: '.card-title.mb-3', 
+                        popover: { title: '月別結果', description: '過去の対局結果を月ごとに切り替えて表示できます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#playerSearch', 
+                        popover: { title: '棋士・棋戦検索', description: '棋士名や棋戦名を入力して検索できます。名字や名前の一部でも絞り込みが可能です。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#ageFilter', 
+                        popover: { title: '年代フィルター', description: '特定の年代の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#genderFilter', 
+                        popover: { title: '性別フィルター', description: '男性・女性の棋士の対局のみを表示するように絞り込めます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteOnlyFilter', 
+                        popover: { title: '推し棋士フィルター', description: 'チェックを入れると、登録した「推し棋士」の対局のみが表示されます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#favoriteSettingBtn', 
+                        popover: { title: '推し棋士設定', description: 'ここからお気に入りの棋士を登録できます。登録すると対局表で強調表示されます。', side: "bottom", align: 'end' } 
+                    },
+                    {
+                        element: '.match-row .player-detail-trigger',
+                        popover: { title: '棋士詳細・いいね', description: '棋士のアイコンをクリックすると詳細が表示され、そこから「いいね」を送ることができます。', side: "bottom", align: 'start' }
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
+
+        function showPlayerDetail(name) {
+            fetch(`/api/players/${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('playerName').textContent = data.name;
+                    const kanaSpan = document.getElementById('playerKanaName');
+                    const btnUpdateKana = document.getElementById('btnUpdateKana');
+                    
+                    if (data.kanaName) {
+                        kanaSpan.textContent = data.kanaName;
+                        btnUpdateKana.style.display = 'none';
+                    } else {
+                        kanaSpan.textContent = '未登録';
+                        btnUpdateKana.style.display = 'inline-block';
+                        btnUpdateKana.dataset.playerName = data.name;
+                    }
+                    
+                    document.getElementById('playerGender').textContent = data.gender || '-';
+                    const genderRow = document.getElementById('playerGenderRow');
+                    const isKansai = data.affiliation && data.affiliation.includes('関西棋院');
+                    if (isKansai) {
+                        genderRow.style.display = 'none';
+                    } else {
+                        genderRow.style.display = '';
+                    }
+                    document.getElementById('playerRank').textContent = data.rank || '-';
+                    document.getElementById('playerBirthDate').textContent = data.birthDate || '-';
+                    document.getElementById('playerPlace').textContent = data.place || '-';
+                    document.getElementById('playerAffiliation').textContent = data.affiliation || '-';
+                    
+                    const iconImg = document.getElementById('playerModalIcon');
+                    if (data.iconUrl) {
+                        iconImg.src = data.iconUrl;
+                    } else {
+                        iconImg.src = '/images/players/default.png';
+                    }
+                    
+                    const profileLink = document.getElementById('playerProfileLink');
+                    if (data.profileUrl) {
+                        profileLink.href = data.profileUrl;
+                        profileLink.style.display = 'inline-block';
+                    } else {
+                        profileLink.style.display = 'none';
+                    }
+                    
+                    // いいねボタンの状態更新
+                    updateLikeButtonState(data.name);
+                    
+                    // 棋士成績と対局予定の表示
+                    const statsSection = document.getElementById('playerStatsSection');
+                    const statsTable = document.getElementById('playerStatsTable');
+                    if (data.recentStats && !isKansai) {
+                        statsTable.innerHTML = data.recentStats;
+                        statsSection.style.display = 'block';
+                    } else if (isKansai) {
+                        // 関西棋院の場合、枠だけ表示してデータ待ちメッセージを出す（日本棋院の未取得時と同様）
+                        statsTable.innerHTML = '<div class="alert alert-light border small">現在、関西棋院所属の成績について確認できません。実現可能か確認中のためご理解のほどお願いいたします</div>';
+                        statsSection.style.display = 'block';
+                    } else {
+                        statsTable.innerHTML = '<div class="alert alert-light border small">最新の棋士成績を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        statsSection.style.display = 'block';
+                    }
+
+                    const matchesSection = document.getElementById('playerMatchesSection');
+                    const matchesTable = document.getElementById('playerMatchesTable');
+                    if (data.recentMatches && !isKansai) {
+                        matchesTable.innerHTML = data.recentMatches;
+                        matchesSection.style.display = 'block';
+                    } else if (isKansai) {
+                        // 関西棋院の場合、対局予定セクションは非表示のまま（指示に基づき）
+                        matchesSection.style.display = 'none';
+                    } else {
+                        matchesTable.innerHTML = '<div class="alert alert-light border small">最新の対局結果と今後の予定を取得中です。しばらくしてから再度ご確認ください。</div>';
+                        matchesSection.style.display = 'block';
+                    }
+                    
+                    const likeBtn = document.getElementById('likeButton');
+                    likeBtn.onclick = () => handleLike(data.name);
+
+                    const modal = new bootstrap.Modal(document.getElementById('playerModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching player info:', error);
+                });
+        }
+
+        function handleLike(name) {
+            const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
+            const totalLikes = Object.keys(likedPlayers).length;
+
+            // 既にいいねしている場合は解除処理
+            if (likedPlayers[name]) {
+                if (!confirm('いいねを解除しますか？')) return;
+                
+                fetch(`/api/players/${encodeURIComponent(name)}/unlike`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(count => {
+                        delete likedPlayers[name];
+                        localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
+                        updateLikeButtonState(name);
+                    });
+                return;
+            }
+
+            // 上限チェック
+            if (totalLikes >= 5) {
+                alert('合計で5回までしかいいねできません。');
+                return;
+            }
+
+            fetch(`/api/players/${encodeURIComponent(name)}/like`, { method: 'POST' })
+                .then(response => response.json())
+                .then(count => {
+                    likedPlayers[name] = true;
+                    localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
+                    updateLikeButtonState(name);
+                });
+        }
+
+        function updateLikeButtonState(name) {
+            const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
+            const totalLikes = Object.keys(likedPlayers).length;
+            const likeBtn = document.getElementById('likeButton');
+            const msg = document.getElementById('likeLimitMessage');
+
+            fetch(`/api/players/${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('playerLikesCount').textContent = data.likes || 0;
+                    
+                    if (likedPlayers[name]) {
+                        likeBtn.classList.replace('btn-outline-danger', 'btn-danger');
+                        likeBtn.innerHTML = `<i class="bi bi-heart-fill"></i> いいね済み <span id="playerLikesCount" class="badge bg-white text-danger">${data.likes || 0}</span>`;
+                        msg.textContent = 'この棋士には既にいいねしました（クリックで解除）';
+                        msg.className = 'text-success small mt-1';
+                    } else {
+                        likeBtn.classList.replace('btn-danger', 'btn-outline-danger');
+                        likeBtn.innerHTML = `<i class="bi bi-heart-fill"></i> いいね <span id="playerLikesCount" class="badge bg-danger">${data.likes || 0}</span>`;
+                        
+                        if (totalLikes >= 5) {
+                            msg.textContent = '合計いいね数が上限（5回）に達しました';
+                            msg.className = 'text-danger small mt-1';
+                        } else {
+                            msg.textContent = `あと ${5 - totalLikes} 回いいねできます（一人一回まで）`;
+                            msg.className = 'text-muted small mt-1';
+                        }
+                    }
+                });
+        }
+
+        function updateKana() {
+            const btn = document.getElementById('btnUpdateKana');
+            const name = btn.dataset.playerName;
+            if (!name) return;
+            
+            btn.disabled = true;
+            btn.textContent = '更新中...';
+            
+            fetch(`/api/player/update-kana?name=${encodeURIComponent(name)}`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        alert('読み仮名を更新しました。');
+                        showPlayerDetail(name);
+                    } else {
+                        alert('読み仮名の更新に失敗しました。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating kana:', error);
+                    alert('エラーが発生しました。');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = '登録試行';
+                });
+        }
 
         function getFavoritePlayers() {
             const favData = localStorage.getItem('favoritePlayers');
@@ -302,6 +684,7 @@
         function filterTable() {
             const query = hiraToKata(document.getElementById('playerSearch').value.toLowerCase());
             const ageFilter = document.getElementById('ageFilter').value;
+            const genderFilter = document.getElementById('genderFilter') ? document.getElementById('genderFilter').value : "";
             const filterCheckbox = document.getElementById('favoriteOnlyFilter');
             const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
             
@@ -338,6 +721,15 @@
                     ageMatch = checkAge(p1Birth) || checkAge(p2Birth);
                 }
 
+                // 性別フィルター判定
+                let genderMatch = true;
+                if (genderFilter !== "") {
+                    const p1Gender = row.getAttribute('data-p1-gender');
+                    const p2Gender = row.getAttribute('data-p2-gender');
+                    genderMatch = (p1Gender && p1Gender.includes(genderFilter)) || 
+                                  (p2Gender && p2Gender.includes(genderFilter));
+                }
+
                 // 推し棋士フィルター判定
                 let favMatch = true;
                 if (favoriteOnly) {
@@ -346,7 +738,7 @@
 
                 const textMatch = text.includes(query);
 
-                if (textMatch && ageMatch && favMatch) {
+                if (textMatch && ageMatch && genderMatch && favMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
