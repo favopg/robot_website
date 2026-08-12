@@ -33,6 +33,11 @@
             border-radius: 4px;
             font-weight: bold;
         }
+        
+        /* テーブルの最小幅設定 */
+        .table-responsive table {
+            min-width: 600px;
+        }
     </style>
 </head>
 <body>
@@ -106,8 +111,8 @@
     </nav>
 
     <div class="container my-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="bi bi-list-check"></i> バグ報告一覧</h2>
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+            <h2 class="mb-0"><i class="bi bi-list-check"></i> バグ報告一覧</h2>
             <a href="/inquiry" class="btn btn-primary"><i class="bi bi-plus-lg"></i> 新規報告</a>
         </div>
 

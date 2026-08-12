@@ -8,10 +8,16 @@
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        /* テーブルの最小幅設定 */
+        .table-responsive table {
+            min-width: 600px;
+        }
+    </style>
 </head>
 <body class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-gear-fill"></i> 要望ステータス管理</h2>
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+        <h2 class="mb-0"><i class="bi bi-gear-fill"></i> 要望ステータス管理</h2>
         <div>
             <a href="/admin/inquiry" class="btn btn-outline-primary btn-sm me-2">バグ報告管理へ</a>
             <a href="/" class="btn btn-outline-secondary btn-sm">サイトへ戻る</a>
@@ -25,23 +31,28 @@
             </button>
         </div>
 
-        <table class="table table-bordered table-hover mt-4">
-            <thead class="table-dark">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mt-4">
+                <thead class="table-dark">
                 <tr>
                     <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
-                    <th>No</th>
-                    <th>件名</th>
+                    <th style="width: 60px;">No</th>
+                    <th style="width: 200px;">件名</th>
                     <th>内容</th>
-                    <th>現在の状態</th>
-                    <th>アクション</th>
+                    <th style="width: 120px;">現在の状態</th>
+                    <th style="width: 150px;">アクション</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="req, stat : ${requests}">
                     <td><input type="checkbox" name="ids" th:value="${req.id}" class="row-checkbox"></td>
                     <td th:text="${stat.count}">1</td>
-                    <td th:text="${req.subject}">件名</td>
-                    <td th:text="${req.message}">内容</td>
+                    <td class="fw-bold" th:text="${req.subject}">件名</td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 400px;" th:text="${req.message}">
+                            内容
+                        </div>
+                    </td>
                     <td>
                         <span class="badge" 
                               th:classappend="${req.status == 'NEW' ? 'bg-warning text-dark' : (req.status == 'RESOLVED' ? 'bg-success' : 'bg-info')}" 
@@ -68,7 +79,8 @@
                 </tr>
             </tbody>
         </table>
-    </form>
+    </div>
+</form>
 
     <script>
         document.getElementById('selectAll').addEventListener('change', function() {
