@@ -215,6 +215,41 @@ public class IndexController {
         return "index";
     }
 
+    @GetMapping("/ranking")
+    public String ranking(Model model) {
+        List<Player> players = playerService.getPopularPlayers();
+        // アイコン設定
+        Set<String> icons = getPlayerIcons();
+        for (Player p : players) {
+            String name = playerService.normalizeName(p.getName());
+            String iconPath = null;
+            
+            // カタカナ名での検索を優先
+            if (p.getKanaName() != null) {
+                String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
+                if (icons.contains(kanaForFile)) {
+                    iconPath = "/images/players/" + kanaForFile + ".jpg";
+                }
+            }
+            
+            // 漢字名での検索（フォールバック）
+            if (iconPath == null) {
+                if (icons.contains(name)) {
+                    iconPath = "/images/players/" + name + ".jpg";
+                }
+            }
+            
+            // DBに保存されているパスがあればそれを使う（もしあれば）
+            if (iconPath == null && p.getIconPath() != null && !p.getIconPath().isEmpty()) {
+                iconPath = p.getIconPath();
+            }
+            
+            p.setIconPath(iconPath);
+        }
+        model.addAttribute("players", players);
+        return "ranking";
+    }
+
     @GetMapping("/events")
     public String allEvents(Model model, @RequestParam(defaultValue = "0") int page) {
         // 全件表示用のページング（1ページ20件）

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>人気棋士ランキング - 推し棋士が見つかる囲碁棋士情報サイト</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .player-icon {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .rank-badge {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        .rank-1 { background-color: #ffd700; color: #000; }
+        .rank-2 { background-color: #c0c0c0; color: #000; }
+        .rank-3 { background-color: #cd7f32; color: #fff; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">推し棋士が見つかる囲碁棋士情報サイト</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-schedule">
+                            <i class="bi bi-clock-history"></i> 対局予定
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-results">
+                            <i class="bi bi-trophy"></i> 対局結果
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ranking">
+                            <i class="bi bi-heart-fill"></i> 人気ランキング
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <h2 class="mb-4 text-center"><i class="bi bi-heart-fill text-danger"></i> 人気棋士ランキング</h2>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" style="width: 80px;">順位</th>
+                                    <th>棋士</th>
+                                    <th>段位/所属</th>
+                                    <th class="text-center">いいね数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="player, stat : ${players}">
+                                    <td class="text-center align-middle">
+                                        <span th:if="${stat.count == 1}" class="rank-badge rank-1">1</span>
+                                        <span th:if="${stat.count == 2}" class="rank-badge rank-2">2</span>
+                                        <span th:if="${stat.count == 3}" class="rank-badge rank-3">3</span>
+                                        <span th:if="${stat.count > 3}" th:text="${stat.count}">4</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <img th:src="${player.iconPath != null ? player.iconPath : '/images/players/default.jpg'}" 
+                                                 class="player-icon me-3 border" 
+                                                 onerror="this.src='/images/players/default.jpg'">
+                                            <div>
+                                                <strong th:text="${player.name}">棋士名</strong>
+                                                <div class="small text-muted" th:text="${player.kanaName}">きしめい</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="badge bg-secondary" th:text="${player.rank}">九段</span>
+                                        <div class="small text-muted" th:text="${player.affiliation}">日本棋院</div>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <span class="h5 text-primary">
+                                            <i class="bi bi-heart-fill"></i> <span th:text="${player.likesCount}">0</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(players)}">
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="h5 text-muted">
+                                            <i class="bi bi-info-circle"></i> データが不足しています
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-primary">トップページに戻る</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-4 mt-auto">
+        <div class="container text-center">
+            <p class="text-muted mb-0">&copy; 2026 囲碁棋士情報サイト</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -84,6 +84,11 @@ public class PlayerService {
         return playerRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<Player> getPopularPlayers() {
+        return playerRepository.findTop20ByLikesCountGreaterThanEqualOrderByLikesCountDesc(5);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveOrUpdate(Player player) {
         try {
