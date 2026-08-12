@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Driver.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -62,22 +64,22 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
+                    <li class="nav-item" id="step-match-schedule">
                         <a class="nav-link" href="/match-schedule">
                             <i class="bi bi-clock-history"></i> 対局予定
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" id="step-match-results">
                         <a class="nav-link" href="/match-results">
                             <i class="bi bi-trophy"></i> 対局結果
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" id="step-ranking">
                         <a class="nav-link" href="/ranking">
                             <i class="bi bi-heart-fill"></i> 人気ランキング
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" id="step-kisei-titles">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-journal-text"></i> 囲碁棋戦
                         </a>
@@ -91,7 +93,7 @@
                             <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" id="step-request">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-chat-left-text"></i> 要望投稿
                         </a>
@@ -100,7 +102,7 @@
                             <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" id="step-bug-report">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bug"></i> バグ報告
                         </a>
@@ -111,10 +113,13 @@
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()">
+                        <i class="bi bi-question-circle"></i> 使い方
+                    </button>
                     <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
-                    <div class="form-check form-switch text-light">
+                    <div class="form-check form-switch text-light" id="step-dark-mode">
                         <input class="form-check-input" type="checkbox" id="darkModeSwitch">
                         <label class="form-check-label" for="darkModeSwitch">ダークモード</label>
                     </div>
@@ -308,6 +313,8 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Driver.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
@@ -415,6 +422,51 @@
                 localStorage.setItem('theme', 'light');
             }
         });
+
+        function startTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    {
+                        element: '#step-match-schedule',
+                        popover: { title: '対局予定', description: '今後の対局予定をここで確認できます。', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#step-match-results',
+                        popover: { title: '対局結果', description: '過去の対局結果を棋士毎に確認できます', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#step-ranking',
+                        popover: { title: '人気ランキング', description: '棋士の人気ランキングを表示します。\n対局予定、対局結果のアイコン画像をクリックするといいねボタンが押せるので一定数以上押されたプロ棋士を対象としたランキングを確認できます。', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#step-kisei-titles',
+                        popover: { title: '囲碁棋戦', description: '七大棋戦などの囲碁棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#step-request',
+                        popover: { title: '要望投稿', description: 'サイトへの機能追加などの要望を投稿できます。', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#step-bug-report',
+                        popover: { title: 'バグ報告', description: 'サイトの不具合を見つけた際はこちらから報告をお願いします。', side: "bottom", align: 'start' }
+                    },
+                    {
+                        element: '#favoriteSettingBtn',
+                        popover: { title: '推し棋士設定', description: 'お気に入りの棋士を登録して、情報を素早くチェックできます。', side: "bottom", align: 'end' }
+                    },
+                    {
+                        element: '#step-dark-mode',
+                        popover: { title: 'ダークモード', description: '画面の配色をダークモードに切り替えることができます。', side: "bottom", align: 'end' }
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
     </script>
 </body>
 </html>
