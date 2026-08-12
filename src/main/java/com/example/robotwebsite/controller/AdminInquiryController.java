@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/admin/inquiry")
 public class AdminInquiryController {
@@ -27,6 +29,12 @@ public class AdminInquiryController {
         Inquiry inquiry = inquiryRepository.findById(id).orElseThrow();
         inquiry.setStatus(status);
         inquiryRepository.save(inquiry);
+        return "redirect:/admin/inquiry";
+    }
+
+    @PostMapping("/delete")
+    public String deleteInquiries(@RequestParam("ids") List<Long> ids) {
+        inquiryRepository.deleteAllById(ids);
         return "redirect:/admin/inquiry";
     }
 }

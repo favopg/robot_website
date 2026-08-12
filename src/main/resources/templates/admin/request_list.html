@@ -15,44 +15,74 @@
         </div>
     </div>
 
-    <table class="table table-bordered table-hover mt-4">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>件名</th>
-                <th>内容</th>
-                <th>現在の状態</th>
-                <th>アクション</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="req : ${requests}">
-                <td th:text="${req.id}">1</td>
-                <td th:text="${req.subject}">件名</td>
-                <td th:text="${req.message}">内容</td>
-                <td>
-                    <span class="badge" 
-                          th:classappend="${req.status == 'NEW' ? 'bg-warning text-dark' : (req.status == 'RESOLVED' ? 'bg-success' : 'bg-info')}" 
-                          th:text="${req.status}">NEW</span>
-                </td>
-                <td>
-                    <form th:action="@{/admin/request/update-status}" method="post" class="d-flex gap-2">
-                        <input type="hidden" name="id" th:value="${req.id}">
-                        <select name="status" class="form-select form-select-sm" style="width: auto;">
-                            <option value="NEW" th:selected="${req.status == 'NEW'}">NEW</option>
-                            <option value="PENDING" th:selected="${req.status == 'PENDING'}">PENDING</option>
-                            <option value="RESOLVED" th:selected="${req.status == 'RESOLVED'}">RESOLVED</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary btn-sm">更新</button>
-                    </form>
-                </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(requests)}">
-                <td colspan="5" class="text-center py-5 text-muted">
-                    管理対象の要望はありません。
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <form id="deleteForm" th:action="@{/admin/request/delete}" method="post">
+        <div class="mb-3">
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                <i class="bi bi-trash"></i> 選択した項目を削除
+            </button>
+        </div>
+
+        <table class="table table-bordered table-hover mt-4">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
+                    <th>No</th>
+                    <th>件名</th>
+                    <th>内容</th>
+                    <th>現在の状態</th>
+                    <th>アクション</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="req, stat : ${requests}">
+                    <td><input type="checkbox" name="ids" th:value="${req.id}" class="row-checkbox"></td>
+                    <td th:text="${stat.count}">1</td>
+                    <td th:text="${req.subject}">件名</td>
+                    <td th:text="${req.message}">内容</td>
+                    <td>
+                        <span class="badge" 
+                              th:classappend="${req.status == 'NEW' ? 'bg-warning text-dark' : (req.status == 'RESOLVED' ? 'bg-success' : 'bg-info')}" 
+                              th:text="${req.status}">NEW</span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <form th:action="@{/admin/request/update-status}" method="post" class="d-flex gap-2 m-0">
+                                <input type="hidden" name="id" th:value="${req.id}">
+                                <select name="status" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="NEW" th:selected="${req.status == 'NEW'}">NEW</option>
+                                    <option value="PENDING" th:selected="${req.status == 'PENDING'}">PENDING</option>
+                                    <option value="RESOLVED" th:selected="${req.status == 'RESOLVED'}">RESOLVED</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm">更新</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(requests)}">
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        管理対象の要望はありません。
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <script>
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        function confirmDelete() {
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            if (checked.length === 0) {
+                alert('削除する項目を選択してください。');
+                return;
+            }
+            if (confirm('選択した項目を削除してもよろしいですか？')) {
+                document.getElementById('deleteForm').submit();
+            }
+        }
+    </script>
 </body>
 </html>

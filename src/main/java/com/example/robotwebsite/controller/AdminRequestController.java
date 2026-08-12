@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/admin")
 public class AdminRequestController {
@@ -32,6 +34,12 @@ public class AdminRequestController {
         Request request = requestRepository.findById(id).orElseThrow();
         request.setStatus(status);
         requestRepository.save(request);
+        return "redirect:/admin/request";
+    }
+
+    @PostMapping("/request/delete")
+    public String deleteRequests(@RequestParam("ids") List<Long> ids) {
+        requestRepository.deleteAllById(ids);
         return "redirect:/admin/request";
     }
 }
