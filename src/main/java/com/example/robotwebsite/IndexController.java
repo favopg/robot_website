@@ -7,6 +7,7 @@ import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.entity.YoutubeLive;
 import com.example.robotwebsite.repository.EventRepository;
 import com.example.robotwebsite.repository.MatchRepository;
+import com.example.robotwebsite.repository.ReleaseInfoRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import com.example.robotwebsite.entity.Player;
 import com.example.robotwebsite.service.PlayerService;
@@ -46,12 +47,14 @@ public class IndexController {
     private final MatchRepository matchRepository;
     private final PlayerService playerService;
     private final YoutubeLiveRepository youtubeLiveRepository;
+    private final ReleaseInfoRepository releaseInfoRepository;
     private final NihonkiinPlayerScraper nihonkiinPlayerScraper;
     private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
     private final SystemStatusService systemStatusService;
 
     public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
                            PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository,
+                           ReleaseInfoRepository releaseInfoRepository,
                            NihonkiinPlayerScraper nihonkiinPlayerScraper,
                            KansaikiinPlayerScraper kansaikiinPlayerScraper,
                            SystemStatusService systemStatusService) {
@@ -59,6 +62,7 @@ public class IndexController {
         this.matchRepository = matchRepository;
         this.playerService = playerService;
         this.youtubeLiveRepository = youtubeLiveRepository;
+        this.releaseInfoRepository = releaseInfoRepository;
         this.nihonkiinPlayerScraper = nihonkiinPlayerScraper;
         this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
         this.systemStatusService = systemStatusService;
@@ -212,6 +216,11 @@ public class IndexController {
         Page<Event> eventPage = eventRepository.findAll(pageable);
         model.addAttribute("events", eventPage.getContent());
         model.addAttribute("isUpdating", systemStatusService.isUpdating());
+
+        // リリース情報取得
+        model.addAttribute("releaseInfos", releaseInfoRepository.findTop5ByOrderByCreatedAtDesc());
+        model.addAttribute("totalReleaseCount", releaseInfoRepository.count());
+
         return "index";
     }
 

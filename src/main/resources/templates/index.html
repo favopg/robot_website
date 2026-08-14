@@ -350,6 +350,25 @@
             </div>
             <!-- 省略または既存の対局予定表示があれば差し替え -->
         </section>
+
+        <!-- リリースノート -->
+        <section class="container py-5">
+            <h2 class="h4 border-bottom pb-2 mb-4">リリースノート</h2>
+            <div class="list-group list-group-flush mb-3">
+                <a th:each="info : ${releaseInfos}"
+                   th:href="@{/release/{id}(id=${info.id})}"
+                   class="list-group-item list-group-item-action d-flex align-items-center">
+                    <small class="text-muted me-3" th:text="${#temporals.format(info.createdAt, 'yyyy/MM/dd')}">2026/08/14</small>
+                    <span th:text="${info.subject}">リリース件名</span>
+                </a>
+                <div th:if="${#lists.isEmpty(releaseInfos)}" class="list-group-item text-muted">
+                    リリース情報はありません。
+                </div>
+            </div>
+            <div class="text-end" th:if="${totalReleaseCount > 5}">
+                <a th:href="@{/release/list}" class="btn btn-link">もっと見る <i class="bi bi-chevron-right"></i></a>
+            </div>
+        </section>
     </main>
 
     <footer class="bg-dark text-white py-4 mt-5">

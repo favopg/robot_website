@@ -4,12 +4,11 @@ import com.example.robotwebsite.entity.ReleaseInfo;
 import com.example.robotwebsite.repository.InquiryRepository;
 import com.example.robotwebsite.repository.ReleaseInfoRepository;
 import com.example.robotwebsite.repository.RequestRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/release")
 public class ReleaseInfoController {
 
     private final ReleaseInfoRepository releaseInfoRepository;
@@ -32,7 +30,7 @@ public class ReleaseInfoController {
         this.requestRepository = requestRepository;
     }
 
-    @GetMapping
+    @GetMapping("/admin/release")
     public String showReleaseForm(Model model) {
         if (!model.containsAttribute("releaseInfo")) {
             model.addAttribute("releaseInfo", new ReleaseInfo());
@@ -50,7 +48,7 @@ public class ReleaseInfoController {
         return "admin/release_form";
     }
 
-    @PostMapping("/submit")
+    @PostMapping("/admin/release/submit")
     public String submitReleaseInfo(@ModelAttribute ReleaseInfo releaseInfo, RedirectAttributes redirectAttributes) {
         try {
             releaseInfoRepository.save(releaseInfo);
@@ -59,5 +57,19 @@ public class ReleaseInfoController {
             redirectAttributes.addFlashAttribute("error", "登録に失敗しました: " + e.getMessage());
         }
         return "redirect:/admin/release";
+    }
+
+    @GetMapping("/release/list")
+    public String listReleaseInfos(Model model) {
+        model.addAttribute("releaseInfos", releaseInfoRepository.findAllByOrderByCreatedAtDesc());
+        return "release_list";
+    }
+
+    @GetMapping("/release/{id}")
+    public String showReleaseDetail(@PathVariable Long id, Model model) {
+        ReleaseInfo releaseInfo = releaseInfoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release info not found"));
+        model.addAttribute("releaseInfo", releaseInfo);
+        return "release_detail";
     }
 }

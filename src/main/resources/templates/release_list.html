@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>リリースノート一覧 - 推し囲碁棋士を見つけよう</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .navbar-custom { background-color: #004085; }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand { color: white; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">推し囲碁棋士を見つけよう</a>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">リリースノート一覧</li>
+            </ol>
+        </nav>
+
+        <h1 class="h3 mb-4 border-bottom pb-2">リリースノート一覧</h1>
+
+        <div class="list-group shadow-sm">
+            <a th:each="info : ${releaseInfos}"
+               th:href="@{/release/{id}(id=${info.id})}"
+               class="list-group-item list-group-item-action py-3">
+                <div class="d-flex align-items-center">
+                    <small class="text-muted me-3" th:text="${#temporals.format(info.createdAt, 'yyyy/MM/dd')}">2026/08/14</small>
+                    <h5 class="mb-0" th:text="${info.subject}">リリース件名</h5>
+                </div>
+                <p class="mb-1 mt-2 text-truncate text-muted small" th:text="${info.comment}">コメントの抜粋...</p>
+            </a>
+            <div th:if="${#lists.isEmpty(releaseInfos)}" class="list-group-item text-center py-5 text-muted">
+                リリース情報はまだありません。
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <a href="/" class="btn btn-primary">トップページに戻る</a>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2026 推し囲碁棋士を見つけよう</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        }
+    </script>
+</body>
+</html>
