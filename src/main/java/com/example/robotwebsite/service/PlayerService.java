@@ -35,7 +35,9 @@ public class PlayerService {
         }
 
         // 段位や称号（名人、棋聖、本因坊など）を末尾から取り除く
-        String normalized = input.replaceAll("[\\s\u3000]*(([初一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+|扇興杯).*$", "").trim();
+        // スペースが含まれる場合は、スペース以降を取り除くことで名誉名等に対応する
+        String normalized = input.split("[\\s\u3000]")[0];
+        normalized = normalized.replaceAll("(([初一二三四五六七八九十]|\\d+)段|名人|本因坊|棋聖|碁聖|十段|天元|王座|女流[^\u3000\\s]+|扇興杯).*$", "").trim();
 
         // 異体字や別名の補正
         // 柳原咲輝 -> 栁原咲輝

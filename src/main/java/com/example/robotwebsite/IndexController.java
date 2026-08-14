@@ -101,8 +101,8 @@ public class IndexController {
 
         // 漢字名での検索（フォールバック）
         for (String iconName : localIcons) {
-            // 正規化名または元の名前でアイコンを検索
-            if (normalizedName.equals(iconName) || name.equals(iconName)) {
+            // 正規化名でアイコンを検索
+            if (normalizedName.equals(iconName)) {
                 player.setIconPath("/images/players/" + iconName + ".jpg");
                 return player;
             }
@@ -186,11 +186,8 @@ public class IndexController {
 
         // 漢字名での検索（フォールバック）
         if (iconPath == null) {
-            for (String iconName : icons) {
-                if (name.equals(iconName)) {
-                    iconPath = "/images/players/" + iconName + ".jpg";
-                    break;
-                }
+            if (icons.contains(name)) {
+                iconPath = "/images/players/" + name + ".jpg";
             }
         }
 
