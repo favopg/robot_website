@@ -418,21 +418,15 @@ public class IndexController {
         return "female_kisei_info";
     }
 
-    @GetMapping("/female-tachiaoi-info")
-    public String femaleTachiaoiInfo(Model model) {
-        model.addAttribute("title", "女流立葵杯 詳細情報");
-        return "female_tachiaoi_info";
-    }
-
     @GetMapping("/senko-info")
     public String senkoInfo(Model model) {
         model.addAttribute("title", "扇興杯 詳細情報");
         return "senko_info";
     }
 
-    @GetMapping("/female-legend-info")
-    public String femaleLegendInfo(Model model) {
-        model.addAttribute("title", "女流レジェンド戦 詳細情報");
-        return "female_legend_info";
+    @GetMapping("/nhk-info")
+    public String nhkInfo(Model model) {
+        model.addAttribute("title", "NHK杯 詳細情報");
+        return "nhk_info";
     }
 }
