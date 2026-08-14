@@ -208,10 +208,6 @@ public class IndexController {
 
     @GetMapping("/")
     public String index(Model model) {
-        // LP用に最新の5件のみ取得
-        Pageable pageable = PageRequest.of(0, 5, Sort.by("eventDate").descending());
-        Page<Event> eventPage = eventRepository.findAll(pageable);
-        model.addAttribute("events", eventPage.getContent());
         model.addAttribute("isUpdating", systemStatusService.isUpdating());
 
         // リリース情報取得

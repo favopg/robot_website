@@ -162,14 +162,14 @@
                     <div class="p-3 shadow-sm rounded bg-body">
                         <i class="bi bi-clock-history card-icon"></i>
                         <h4>対局予定一覧</h4>
-                        <p>プロ棋士の今後の対局スケジュールを確認。見逃せない対局をチェックしましょう。</p>
+                        <p>プロ棋士の今後の対局スケジュールを確認。見逃せない対局をチェックしましょう。毎週金曜日の深夜に最新情報に更新されます。</p>
                     </div>
                 </div>
                 <div class="col-md-6 text-center">
                     <div class="p-3 shadow-sm rounded bg-body">
                         <i class="bi bi-trophy card-icon"></i>
                         <h4>対局結果</h4>
-                        <p>昨日の対局結果もすぐに確認。推し棋士の戦績を追いかけられます。</p>
+                        <p>推し棋士の戦績を追いかけられます。毎週金曜日の深夜に最新情報に更新されます。</p>
                     </div>
                 </div>
             </div>
@@ -332,18 +332,9 @@
             </div>
         </section>
 
-        <!-- 対局予定情報（プレビュー版） -->
-        <section class="container py-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="h4 border-bottom pb-2 mb-0">最新対局予定</h2>
-                <a href="/match-schedule" class="btn btn-sm btn-outline-secondary">もっと見る</a>
-            </div>
-            <!-- 省略または既存の対局予定表示があれば差し替え -->
-        </section>
-
         <!-- リリースノート -->
         <section class="container py-5">
-            <h2 class="h4 border-bottom pb-2 mb-4">リリースノート</h2>
+            <h2 class="h4 border-bottom pb-2 mb-4 text-center">リリースノート</h2>
             <div class="list-group list-group-flush mb-3">
                 <a th:each="info : ${releaseInfos}"
                    th:href="@{/release/{id}(id=${info.id})}"
