@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">女流棋戦 詳細情報</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme: 'default'});</script>
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #d1ecf1;
+        }
+        .card-header-custom {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">推し囲碁棋士を見つけよう</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-schedule">
+                            <i class="bi bi-clock-history"></i> 対局予定
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-results">
+                            <i class="bi bi-trophy"></i> 対局結果
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-text"></i> 囲碁棋戦
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownTitles">
+                            <li><a class="dropdown-item" href="/kisei-info">棋聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/meijin-info">名人戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/honinbo-info">本因坊戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/ouza-info">王座戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/tengen-info">天元戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/gosei-info">碁聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownFemaleTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-text"></i> 女流棋戦
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownFemaleTitles">
+                            <li><a class="dropdown-item" href="/female-honinbo-info">女流本因坊戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-meijin-info">女流名人戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-kisei-info">女流棋聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-tachiaoi-info">女流立葵杯の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/senko-info">扇興杯の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-legend-info">女流レジェンド戦の仕組み</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ranking">
+                            <i class="bi bi-heart-fill"></i> 人気ランキング
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${title}">女流棋戦</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-4" th:text="${title}">女流棋戦の仕組み</h1>
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        棋戦の概要
+                    </div>
+                    <div class="card-body">
+                        <p>女流名人戦は、1988年に創設された女流棋戦です。かつてはトーナメント方式でしたが、第21期よりリーグ戦方式が採用されました（一部の期を除く）。現在、7名によるリーグ戦を行い、その優勝者が女流名人と三番勝負を行います。</p>
+                        
+                        <div class="mermaid text-center">
+graph TD
+    P[予選] --> L[挑戦者決定リーグ計7名]
+    L --> C[リーグ1位]
+    C --> F[挑戦手合三番勝負]
+    H[現女流名人] --> F
+    F --> W[女流名人獲得]
+
+    style F fill:#f9f,stroke:#333,stroke-width:2px
+    style W fill:#f9f,stroke:#333,stroke-width:4px
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm border-primary">
+            <div class="card-body">
+                <h2 class="card-title h4">基本データ</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>優勝賞金:</strong> 1,000万円</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>現タイトルホルダー:</strong> 上野 愛咲美 女流名人</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/" class="btn btn-primary">トップページに戻る</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

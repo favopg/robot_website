@@ -391,4 +391,39 @@ public class IndexController {
         return "judan_info";
     }
 
+    @GetMapping("/female-honinbo-info")
+    public String femaleHoninboInfo(Model model) {
+        model.addAttribute("title", "女流本因坊戦 詳細情報");
+        return "female_honinbo_info";
+    }
+
+    @GetMapping("/female-meijin-info")
+    public String femaleMeijinInfo(Model model) {
+        model.addAttribute("title", "女流名人戦 詳細情報");
+        return "female_meijin_info";
+    }
+
+    @GetMapping("/female-kisei-info")
+    public String femaleKiseiInfo(Model model) {
+        model.addAttribute("title", "女流棋聖戦 詳細情報");
+        return "female_kisei_info";
+    }
+
+    @GetMapping("/female-tachiaoi-info")
+    public String femaleTachiaoiInfo(Model model) {
+        model.addAttribute("title", "女流立葵杯 詳細情報");
+        return "female_tachiaoi_info";
+    }
+
+    @GetMapping("/senko-info")
+    public String senkoInfo(Model model) {
+        model.addAttribute("title", "扇興杯 詳細情報");
+        return "senko_info";
+    }
+
+    @GetMapping("/female-legend-info")
+    public String femaleLegendInfo(Model model) {
+        model.addAttribute("title", "女流レジェンド戦 詳細情報");
+        return "female_legend_info";
+    }
 }

@@ -91,6 +91,19 @@
                             <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown" id="step-female-titles">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownFemaleTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-text"></i> 女流棋戦
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownFemaleTitles">
+                            <li><a class="dropdown-item" href="/female-honinbo-info">女流本因坊戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-meijin-info">女流名人戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-kisei-info">女流棋聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-tachiaoi-info">女流立葵杯の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/senko-info">扇興杯の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-legend-info">女流レジェンド戦の仕組み</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item" id="step-ranking">
                         <a class="nav-link" href="/ranking">
                             <i class="bi bi-heart-fill"></i> 人気ランキング
@@ -268,6 +281,67 @@
             </div>
         </section>
 
+        <!-- 女流棋戦の説明 -->
+        <section class="container py-5">
+            <h2 class="text-center mb-5">女流棋戦</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">女流本因坊戦</h5>
+                            <p class="card-text small text-secondary">女流棋戦の中で最も歴史があり、権威ある棋戦の一つです。共同通信社主催。</p>
+                            <a href="/female-honinbo-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">女流名人戦</h5>
+                            <p class="card-text small text-secondary">女流二大タイトルの一つ。日本棋院主催。多くのスター選手を輩出しています。</p>
+                            <a href="/female-meijin-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">女流棋聖戦</h5>
+                            <p class="card-text small text-secondary">持ち時間が極めて短い早碁棋戦。ドコモが協賛しており、スピーディーな対局が楽しめます。</p>
+                            <a href="/female-kisei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">女流立葵杯</h5>
+                            <p class="card-text small text-secondary">福島県会津若松市を舞台に行われる、華やかな女流棋戦です。</p>
+                            <a href="/female-tachiaoi-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">扇興杯</h5>
+                            <p class="card-text small text-secondary">女流最強を決定するトーナメント棋戦。扇興通商が主催。</p>
+                            <a href="/senko-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">女流レジェンド戦</h5>
+                            <p class="card-text small text-secondary">45歳以上等の条件を満たしたベテラン女流棋士による棋戦です。</p>
+                            <a href="/female-legend-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- 対局予定情報（プレビュー版） -->
         <section class="container py-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -439,7 +513,11 @@
                     {
                         element: '#step-kisei-titles',
                         popover: { title: '囲碁棋戦', description: '七大棋戦などの囲碁棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
-                    },
+                },
+                {
+                  element: '#step-female-titles',
+                  popover: { title: '女流棋戦', description: '女流棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
+                },
                     {
                         element: '#step-ranking',
                         popover: { title: '人気ランキング', description: '棋士の人気ランキングを表示します。\n対局予定、対局結果のアイコン画像をクリックするといいねボタンが押せるので一定数以上押されたプロ棋士を対象としたランキングを確認できます。', side: "bottom", align: 'start' }
