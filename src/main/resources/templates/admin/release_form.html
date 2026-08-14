@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>リリース情報登録 - 管理画面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .navbar-custom {
+            background-color: #343a40;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">管理画面 - リリース情報</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/request">要望管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/inquiry">バグ報告管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">サイトを表示</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> <span th:text="${message}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="card shadow border-0">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h3 class="mb-0"><i class="bi bi-megaphone"></i> リリース情報登録</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/admin/release/submit}" th:object="${releaseInfo}" method="post">
+                            <div class="mb-3">
+                                <label for="subject" class="form-label fw-bold">件名 (要望/バグ) <span class="badge bg-danger">必須</span></label>
+                                <select class="form-select" id="subject" th:field="*{subject}" required>
+                                    <option value="">選択してください</option>
+                                    <option th:each="subj : ${subjects}" th:value="${subj}" th:text="${subj}"></option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="comment" class="form-label fw-bold">リリースコメント <span class="badge bg-danger">必須</span></label>
+                                <textarea class="form-control" id="comment" th:field="*{comment}" rows="6" placeholder="リリースの内容を入力してください" required></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">登録する</button>
+                                <a href="/" class="btn btn-outline-secondary">キャンセル</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-4 bg-light mt-auto border-top">
+        <div class="container text-center text-muted">
+            <small>&copy; 2026 囲碁棋士情報サイト 管理画面</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

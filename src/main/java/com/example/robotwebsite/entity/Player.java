@@ -41,7 +41,10 @@ public class Player {
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
+    @Column(columnDefinition = "TEXT")
     private String recentStats;
+
+    @Column(columnDefinition = "TEXT")
     private String recentMatches;
 
     // Getters and Setters
