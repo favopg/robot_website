@@ -463,6 +463,8 @@
                     const profileLink = document.getElementById('playerProfileLink');
                     if (data.profileUrl) {
                         profileLink.href = data.profileUrl;
+                        const linkText = isKansai ? '関西棋院プロフィール' : '日本棋院プロフィール';
+                        profileLink.innerHTML = `${linkText} <i class="bi bi-box-arrow-up-right"></i>`;
                         profileLink.style.display = 'inline-block';
                     } else {
                         profileLink.style.display = 'none';
@@ -479,7 +481,7 @@
                         statsSection.style.display = 'block';
                     } else if (isKansai) {
                         // 関西棋院の場合、枠だけ表示してデータ待ちメッセージを出す（日本棋院の未取得時と同様）
-                        statsTable.innerHTML = '<div class="alert alert-light border small">現在、関西棋院所属の成績について確認できません。実現可能か確認中のためご理解のほどお願いいたします</div>';
+                        statsTable.innerHTML = '<div class="alert alert-light border small">関西棋院所属の成績について確認できません。確認したい方は関西棋院プロフィールリンクを押下して、関西棋院のページから直接ご確認ください</div>';
                         statsSection.style.display = 'block';
                     } else {
                         statsTable.innerHTML = '<div class="alert alert-light border small">最新の棋士成績を取得中です。しばらくしてから再度ご確認ください。</div>';
