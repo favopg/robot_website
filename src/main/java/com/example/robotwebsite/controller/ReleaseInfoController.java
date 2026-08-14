@@ -49,8 +49,22 @@ public class ReleaseInfoController {
     }
 
     @PostMapping("/admin/release/submit")
-    public String submitReleaseInfo(@ModelAttribute ReleaseInfo releaseInfo, RedirectAttributes redirectAttributes) {
+    public String submitReleaseInfo(@RequestParam(required = false) String subjectSelect,
+                                   @RequestParam(required = false) String subjectInput,
+                                   @RequestParam String comment,
+                                   RedirectAttributes redirectAttributes) {
         try {
+            String subject = (subjectInput != null && !subjectInput.trim().isEmpty()) ? subjectInput : subjectSelect;
+            
+            if (subject == null || subject.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "件名を選択するか手入力してください。");
+                return "redirect:/admin/release";
+            }
+
+            ReleaseInfo releaseInfo = new ReleaseInfo();
+            releaseInfo.setSubject(subject);
+            releaseInfo.setComment(comment);
+            
             releaseInfoRepository.save(releaseInfo);
             redirectAttributes.addFlashAttribute("message", "リリース情報を登録しました。");
         } catch (Exception e) {

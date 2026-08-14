@@ -53,18 +53,24 @@
                         <h3 class="mb-0"><i class="bi bi-megaphone"></i> リリース情報登録</h3>
                     </div>
                     <div class="card-body p-4">
-                        <form th:action="@{/admin/release/submit}" th:object="${releaseInfo}" method="post">
+                        <form th:action="@{/admin/release/submit}" method="post">
                             <div class="mb-3">
-                                <label for="subject" class="form-label fw-bold">件名 (要望/バグ) <span class="badge bg-danger">必須</span></label>
-                                <select class="form-select" id="subject" th:field="*{subject}" required>
+                                <label for="subjectSelect" class="form-label fw-bold">件名 (要望/バグから選択)</label>
+                                <select class="form-select" id="subjectSelect" name="subjectSelect">
                                     <option value="">選択してください</option>
                                     <option th:each="subj : ${subjects}" th:value="${subj}" th:text="${subj}"></option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
+                                <label for="subjectInput" class="form-label fw-bold">件名 (手入力)</label>
+                                <input type="text" class="form-control" id="subjectInput" name="subjectInput" placeholder="件名を入力してください">
+                                <div class="form-text">※要望/バグから選択するか、または手入力してください（どちらかは必須です）</div>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="comment" class="form-label fw-bold">リリースコメント <span class="badge bg-danger">必須</span></label>
-                                <textarea class="form-control" id="comment" th:field="*{comment}" rows="6" placeholder="リリースの内容を入力してください" required></textarea>
+                                <textarea class="form-control" id="comment" name="comment" rows="6" placeholder="リリースの内容を入力してください" required></textarea>
                             </div>
 
                             <div class="d-grid gap-2 mt-4">
@@ -77,6 +83,18 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const subjectSelect = document.getElementById('subjectSelect').value;
+            const subjectInput = document.getElementById('subjectInput').value.trim();
+            
+            if (!subjectSelect && !subjectInput) {
+                e.preventDefault();
+                alert('件名を選択するか手入力してください。');
+            }
+        });
+    </script>
 
     <footer class="py-4 bg-light mt-auto border-top">
         <div class="container text-center text-muted">
