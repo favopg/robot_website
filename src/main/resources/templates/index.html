@@ -96,20 +96,14 @@
                             <i class="bi bi-heart-fill"></i> 人気ランキング
                         </a>
                     </li>
-                    <li class="nav-item dropdown" id="step-request">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequest" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-chat-left-text"></i> 要望投稿
+                    <li class="nav-item dropdown" id="step-request-bug">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRequestBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-chat-left-text"></i> 要望/バグ
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequest">
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequestBug">
                             <li><a class="dropdown-item" href="/request">要望を投稿する</a></li>
                             <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown" id="step-bug-report">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-bug"></i> バグ報告
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownBug">
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/inquiry">バグを報告する</a></li>
                             <li><a class="dropdown-item" href="/inquiry/list">報告一覧</a></li>
                         </ul>
@@ -451,12 +445,8 @@
                         popover: { title: '人気ランキング', description: '棋士の人気ランキングを表示します。\n対局予定、対局結果のアイコン画像をクリックするといいねボタンが押せるので一定数以上押されたプロ棋士を対象としたランキングを確認できます。', side: "bottom", align: 'start' }
                     },
                     {
-                        element: '#step-request',
-                        popover: { title: '要望投稿', description: 'サイトへの機能追加などの要望を投稿できます。', side: "bottom", align: 'start' }
-                    },
-                    {
-                        element: '#step-bug-report',
-                        popover: { title: 'バグ報告', description: 'サイトの不具合を見つけた際はこちらから報告をお願いします。', side: "bottom", align: 'start' }
+                        element: '#step-request-bug',
+                        popover: { title: '要望/バグ', description: '要望の投稿やバグの報告はこちらから行えます。', side: "bottom", align: 'start' }
                     },
                     {
                         element: '#favoriteSettingBtn',
