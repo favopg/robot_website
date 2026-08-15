@@ -9,6 +9,7 @@
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         .navbar-custom {
             background-color: #343a40;
@@ -131,6 +132,53 @@
                     </div>
                 </div>
 
+                <!-- 勝率推移折れ線グラフ表示カード -->
+                <div th:if="${resultJson}" class="card shadow border-0 mb-4" id="chartCard">
+                    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0 fs-5"><i class="bi bi-graph-up text-info me-2"></i> 勝率推移グラフ (Winrate Chart)</h4>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary" id="chartSummaryBadge">黒(B) / 白(W) 各手番の勝率</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- サマリー統計 -->
+                        <div id="chartStats" class="row g-3 mb-4 text-center" style="display: none;">
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <small class="text-muted d-block mb-1">総解析手数</small>
+                                    <span class="fs-5 fw-bold text-dark" id="statTotalMoves">-</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <small class="text-muted d-block mb-1"><span class="badge bg-dark me-1">B</span>黒 最終勝率</small>
+                                    <span class="fs-5 fw-bold text-dark" id="statFinalBlackWinrate">-</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <small class="text-muted d-block mb-1"><span class="badge bg-primary me-1">W</span>白 最終勝率</small>
+                                    <span class="fs-5 fw-bold text-primary" id="statFinalWhiteWinrate">-</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <small class="text-muted d-block mb-1">最終形勢判定</small>
+                                    <span class="fs-5 fw-bold" id="statLeadStatus">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- グラフ描画領域 -->
+                        <div class="position-relative" style="height: 380px; width: 100%;">
+                            <canvas id="winrateChart"></canvas>
+                        </div>
+                        <div id="chartNoDataAlert" class="alert alert-warning mt-3" style="display: none;">
+                            <i class="bi bi-info-circle me-2"></i> 解析レスポンスから勝率データを取得できませんでした。
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 解析結果表示カード -->
                 <div th:if="${resultJson}" class="card shadow border-0 mb-4">
                     <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
@@ -169,6 +217,282 @@
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>解析中...';
+        });
+
+        // 勝率折れ線グラフの初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultElem = document.getElementById('resultJsonArea');
+            if (!resultElem) return;
+
+            const rawJson = resultElem.innerText.trim();
+            if (!rawJson) return;
+
+            try {
+                let parsedData = null;
+                try {
+                    parsedData = JSON.parse(rawJson);
+                } catch (e) {
+                    // JSON lines (各行が1つのJSONオブジェクト) の場合に対応
+                    const lines = rawJson.split(/\r?\n/);
+                    parsedData = [];
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (trimmed) {
+                            try {
+                                parsedData.push(JSON.parse(trimmed));
+                            } catch (err) {}
+                        }
+                    }
+                }
+
+                // 配列データの取得
+                let movesArray = [];
+                if (Array.isArray(parsedData)) {
+                    movesArray = parsedData;
+                } else if (parsedData && typeof parsedData === 'object') {
+                    if (Array.isArray(parsedData.results)) {
+                        movesArray = parsedData.results;
+                    } else if (Array.isArray(parsedData.analysis)) {
+                        movesArray = parsedData.analysis;
+                    } else if (Array.isArray(parsedData.moves)) {
+                        movesArray = parsedData.moves;
+                    } else if (Array.isArray(parsedData.data)) {
+                        movesArray = parsedData.data;
+                    } else if (parsedData.turnNumber !== undefined || (parsedData.rootInfo && parsedData.rootInfo.winrate !== undefined)) {
+                        movesArray = [parsedData];
+                    }
+                }
+
+                const chartPoints = [];
+                movesArray.forEach((item, index) => {
+                    if (!item || typeof item !== 'object') return;
+
+                    let turnNumber = null;
+                    if (item.turnNumber !== undefined && item.turnNumber !== null) turnNumber = Number(item.turnNumber);
+                    else if (item.turn !== undefined && item.turn !== null) turnNumber = Number(item.turn);
+                    else if (item.moveNumber !== undefined && item.moveNumber !== null) turnNumber = Number(item.moveNumber);
+                    else if (item.move !== undefined && typeof item.move === 'number') turnNumber = Number(item.move);
+                    else turnNumber = index;
+
+                    // プレイヤーの判定（W: 白, B: 黒）
+                    let player = item.player || (item.rootInfo && item.rootInfo.currentPlayer) || item.currentPlayer || null;
+                    if (typeof player === 'string') {
+                        player = player.toUpperCase().trim();
+                        if (player === 'BLACK') player = 'B';
+                        if (player === 'WHITE') player = 'W';
+                    }
+                    if (player !== 'B' && player !== 'W') {
+                        player = (turnNumber % 2 === 1) ? 'B' : 'W';
+                    }
+
+                    // 勝率の取得
+                    let rawWinrate = null;
+                    if (item.rootInfo && item.rootInfo.winrate !== undefined) {
+                        rawWinrate = item.rootInfo.winrate;
+                    } else if (item.rootInfo && item.rootInfo.winRate !== undefined) {
+                        rawWinrate = item.rootInfo.winRate;
+                    } else if (item.winrate !== undefined) {
+                        rawWinrate = item.winrate;
+                    } else if (item.winRate !== undefined) {
+                        rawWinrate = item.winRate;
+                    } else if (item.win_rate !== undefined) {
+                        rawWinrate = item.win_rate;
+                    }
+
+                    if (rawWinrate === null || rawWinrate === undefined || isNaN(rawWinrate)) {
+                        return;
+                    }
+
+                    let winrateNum = Number(rawWinrate);
+                    // 0.0〜1.0の場合はパーセンテージに変換
+                    let winratePct = (winrateNum <= 1.0 && winrateNum >= 0.0) ? (winrateNum * 100) : winrateNum;
+                    winratePct = Math.max(0, Math.min(100, winratePct));
+
+                    // player: Wが白、player: Bが黒
+                    let blackWinrate = 0;
+                    let whiteWinrate = 0;
+
+                    if (player === 'B') {
+                        blackWinrate = winratePct;
+                        whiteWinrate = 100 - winratePct;
+                    } else if (player === 'W') {
+                        whiteWinrate = winratePct;
+                        blackWinrate = 100 - winratePct;
+                    } else {
+                        blackWinrate = winratePct;
+                        whiteWinrate = 100 - winratePct;
+                    }
+
+                    let scoreLead = null;
+                    if (item.rootInfo && item.rootInfo.scoreLead !== undefined) {
+                        scoreLead = Number(item.rootInfo.scoreLead);
+                    } else if (item.scoreLead !== undefined) {
+                        scoreLead = Number(item.scoreLead);
+                    }
+
+                    chartPoints.push({
+                        turnNumber: turnNumber,
+                        player: player,
+                        blackWinrate: parseFloat(blackWinrate.toFixed(2)),
+                        whiteWinrate: parseFloat(whiteWinrate.toFixed(2)),
+                        scoreLead: scoreLead
+                    });
+                });
+
+                if (chartPoints.length === 0) {
+                    const noData = document.getElementById('chartNoDataAlert');
+                    if (noData) noData.style.display = 'block';
+                    return;
+                }
+
+                chartPoints.sort((a, b) => a.turnNumber - b.turnNumber);
+
+                // 統計情報の更新
+                const lastPoint = chartPoints[chartPoints.length - 1];
+                document.getElementById('statTotalMoves').innerText = chartPoints.length + ' 手 (' + chartPoints[0].turnNumber + '〜' + lastPoint.turnNumber + '手目)';
+                document.getElementById('statFinalBlackWinrate').innerText = lastPoint.blackWinrate.toFixed(1) + '%';
+                document.getElementById('statFinalWhiteWinrate').innerText = lastPoint.whiteWinrate.toFixed(1) + '%';
+
+                const statLeadStatus = document.getElementById('statLeadStatus');
+                if (lastPoint.blackWinrate >= 55) {
+                    statLeadStatus.innerHTML = '<span class="text-dark">黒優勢 (' + lastPoint.blackWinrate.toFixed(1) + '%)</span>';
+                } else if (lastPoint.whiteWinrate >= 55) {
+                    statLeadStatus.innerHTML = '<span class="text-primary">白優勢 (' + lastPoint.whiteWinrate.toFixed(1) + '%)</span>';
+                } else {
+                    statLeadStatus.innerHTML = '<span class="text-secondary">互角</span>';
+                }
+                document.getElementById('chartStats').style.display = 'flex';
+
+                // Chart.jsでグラフ描画
+                const canvas = document.getElementById('winrateChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartPoints.map(p => p.turnNumber + '手目'),
+                        datasets: [
+                            {
+                                label: '黒 (B) 勝率',
+                                data: chartPoints.map(p => p.blackWinrate),
+                                borderColor: '#212529',
+                                backgroundColor: 'rgba(33, 37, 41, 0.1)',
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#212529',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 1.5,
+                                pointRadius: chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4),
+                                pointHoverRadius: 6,
+                                tension: 0.2,
+                                fill: false
+                            },
+                            {
+                                label: '白 (W) 勝率',
+                                data: chartPoints.map(p => p.whiteWinrate),
+                                borderColor: '#0d6efd',
+                                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#0d6efd',
+                                pointBorderWidth: 2,
+                                pointRadius: chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4),
+                                pointHoverRadius: 6,
+                                tension: 0.2,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    font: { size: 13, weight: 'bold' },
+                                    padding: 15
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        const idx = tooltipItems[0].dataIndex;
+                                        const p = chartPoints[idx];
+                                        return p.turnNumber + '手目 (' + (p.player === 'B' ? '黒番 / Player: B' : '白番 / Player: W') + ')';
+                                    },
+                                    label: function(context) {
+                                        return ' ' + context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                    },
+                                    afterBody: function(tooltipItems) {
+                                        const idx = tooltipItems[0].dataIndex;
+                                        const p = chartPoints[idx];
+                                        if (p.scoreLead !== null && p.scoreLead !== undefined) {
+                                            const sign = p.scoreLead > 0 ? '+' : '';
+                                            return ['目差リード (scoreLead): ' + sign + p.scoreLead.toFixed(1) + ' 目'];
+                                        }
+                                        return [];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: '勝率 (%)',
+                                    font: { weight: 'bold' }
+                                },
+                                ticks: {
+                                    stepSize: 10,
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                grid: {
+                                    color: function(context) {
+                                        if (context.tick && context.tick.value === 50) {
+                                            return 'rgba(220, 53, 69, 0.5)'; // 50%互角ラインを赤色で強調
+                                        }
+                                        return 'rgba(0, 0, 0, 0.08)';
+                                    },
+                                    lineWidth: function(context) {
+                                        if (context.tick && context.tick.value === 50) {
+                                            return 2;
+                                        }
+                                        return 1;
+                                    }
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '手数 (Turn)',
+                                    font: { weight: 'bold' }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error('グラフの生成中にエラーが発生しました:', err);
+                const noData = document.getElementById('chartNoDataAlert');
+                if (noData) {
+                    noData.innerText = 'グラフの描画に失敗しました: ' + err.message;
+                    noData.style.display = 'block';
+                }
+            }
         });
     </script>
 </body>
