@@ -152,7 +152,7 @@
                                 <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
                             </button>
                         </div>
-                        <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標を入力してあててみてください。</p>
+                        <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面です。碁盤をクリックするか座標を入力して「回答する」を押してください。</p>
                     </div>
                     <div class="card-body p-2 p-md-3">
                         <div class="row g-2 g-md-3 align-items-start">
@@ -213,17 +213,7 @@
 
                 <!-- 次の一手クイズカード -->
                 <div th:if="${resultJson}" class="card shadow border-0 mb-4" id="quizCard" style="display: none;">
-                    <div class="card-header bg-gradient bg-primary text-white py-3 d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0 fs-5"><i class="bi bi-question-diamond-fill text-warning me-2"></i> 勝率急落局面から出題！次の一手クイズ</h4>
-                        <span class="badge bg-warning text-dark fw-bold" id="quizDropBadge">最大下落: -%</span>
-                    </div>
                     <div class="card-body p-4">
-                        <div class="row align-items-center mb-3">
-                            <div class="col-md-12">
-                                <h5 class="fw-bold mb-1" id="quizTitle">出題局面: -手目 (-番)</h5>
-                            </div>
-                        </div>
-
                         <!-- 座標入力フォーム -->
                         <div class="row g-2 align-items-center mb-2" id="quizInputForm">
                             <div class="col-sm-6 col-md-4">
@@ -1120,6 +1110,38 @@
                         });
                     }
 
+                    // クイズ選択中（未回答時）の仮配置マーカーまたはホバー表示
+                    if (window.quizSelectedMove && (!window.quizMarkers || window.quizMarkers.length === 0) && currentTurn === window.quizTurnGlobal) {
+                        const sel = window.quizSelectedMove;
+                        if (sel.x >= 0 && sel.x < size && sel.y >= 0 && sel.y < size) {
+                            const px = pad + sel.x * cell;
+                            const py = pad + sel.y * cell;
+
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(px, py, radius * 0.85, 0, Math.PI * 2);
+                            // 手番の色に応じた半透明表示
+                            if (window.dropPlayerGlobal === 'W') {
+                                ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                                ctx.strokeStyle = '#0d6efd';
+                            } else {
+                                ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                                ctx.strokeStyle = '#ffc107';
+                            }
+                            ctx.lineWidth = 3;
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // 中央に選択マーク
+                            ctx.fillStyle = window.dropPlayerGlobal === 'W' ? '#000000' : '#ffffff';
+                            ctx.font = 'bold 11px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('選択', px, py);
+                            ctx.restore();
+                        }
+                    }
+
                     // UI要素の更新
                     const moveLabel = document.getElementById('gobanMoveLabel');
                     if (moveLabel) moveLabel.innerText = turnIdx + '手目 / 全' + maxTurn + '手';
@@ -1188,6 +1210,69 @@
                 if (typeof window.syncChartWithTurn === 'function') {
                     window.syncChartWithTurn(currentTurn);
                 }
+
+                // 碁盤クリック＆ホバーイベント（クイズ回答・座標選択連動）
+                function getBoardCoordsFromEvent(e) {
+                    const rect = canvas.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return null;
+                    const scaleX = 520 / rect.width;
+                    const scaleY = 520 / rect.height;
+                    const clickX = (e.clientX - rect.left) * scaleX;
+                    const clickY = (e.clientY - rect.top) * scaleY;
+
+                    const pad = 28;
+                    const cell = (520 - pad * 2) / (size - 1);
+                    const gx = Math.round((clickX - pad) / cell);
+                    const gy = Math.round((clickY - pad) / cell);
+
+                    if (gx >= 0 && gx < size && gy >= 0 && gy < size) {
+                        return { x: gx, y: gy };
+                    }
+                    return null;
+                }
+
+                function coordXYToStr(x, y) {
+                    const colLetters = 'ABCDEFGHJKLMNOPQRST';
+                    if (x < 0 || x >= colLetters.length || y < 0 || y >= size) return '';
+                    return colLetters[x] + (size - y);
+                }
+
+                canvas.addEventListener('mousemove', function(e) {
+                    const isQuizTurn = (currentTurn === window.quizTurnGlobal);
+                    const isAnswered = (window.quizMarkers && window.quizMarkers.length > 0);
+                    if (isQuizTurn && !isAnswered) {
+                        const coords = getBoardCoordsFromEvent(e);
+                        if (coords) {
+                            canvas.style.cursor = 'pointer';
+                        } else {
+                            canvas.style.cursor = 'default';
+                        }
+                    } else {
+                        canvas.style.cursor = 'default';
+                    }
+                });
+
+                canvas.addEventListener('click', function(e) {
+                    const isQuizTurn = (currentTurn === window.quizTurnGlobal);
+                    const isAnswered = (window.quizMarkers && window.quizMarkers.length > 0);
+                    
+                    // クイズ出題局面で未回答の場合、クリックで座標を選択
+                    if (isQuizTurn && !isAnswered) {
+                        const coords = getBoardCoordsFromEvent(e);
+                        if (coords) {
+                            const coordStr = coordXYToStr(coords.x, coords.y);
+                            window.quizSelectedMove = { x: coords.x, y: coords.y, coord: coordStr };
+                            
+                            const coordInput = document.getElementById('quizCoordInput');
+                            if (coordInput && !coordInput.disabled) {
+                                coordInput.value = coordStr;
+                                const validationMsg = document.getElementById('quizInputValidation');
+                                if (validationMsg) validationMsg.style.display = 'none';
+                            }
+                            renderBoard(currentTurn);
+                        }
+                    }
+                });
 
                 // クイズ機能の初期化
                 initQuizModule(parsed.moves);
@@ -1276,9 +1361,12 @@
 
             // UIの初期化
             const playerName = dropPlayer === 'B' ? '黒' : '白';
-            document.getElementById('quizTitle').innerText = '出題局面: ' + quizTurn + '手目 (' + playerName + '番)';
-            document.getElementById('quizDescription').innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標を入力してあててみてください。';
-            document.getElementById('quizDropBadge').innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
+            const quizTitleElem = document.getElementById('quizTitle');
+            if (quizTitleElem) quizTitleElem.innerText = '出題局面: ' + quizTurn + '手目 (' + playerName + '番)';
+            const quizDescElem = document.getElementById('quizDescription');
+            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標を入力してあててみてください。';
+            const quizDropBadgeElem = document.getElementById('quizDropBadge');
+            if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
 
             window.quizMarkers = []; // 初期状態では碁盤マーカーは非表示
 
@@ -1469,6 +1557,23 @@
             }
 
             if (coordInput) {
+                coordInput.oninput = function() {
+                    const val = this.value.trim().toUpperCase();
+                    if (!val) {
+                        window.quizSelectedMove = null;
+                    } else {
+                        const xy = parseCoordToXY(val);
+                        if (xy.x >= 0 && xy.y >= 0 && !xy.pass) {
+                            window.quizSelectedMove = { x: xy.x, y: xy.y, coord: val };
+                        } else {
+                            window.quizSelectedMove = null;
+                        }
+                    }
+                    if (typeof window.goToGobanTurn === 'function') {
+                        window.goToGobanTurn(quizTurn);
+                    }
+                };
+
                 coordInput.onkeydown = function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -1486,6 +1591,7 @@
                     resultArea.style.display = 'none';
                     if (validationMsg) validationMsg.style.display = 'none';
                     window.quizMarkers = [];
+                    window.quizSelectedMove = null;
                     if (typeof window.goToGobanTurn === 'function') {
                         window.goToGobanTurn(quizTurn);
                     }
