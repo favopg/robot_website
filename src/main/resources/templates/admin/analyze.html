@@ -29,6 +29,21 @@
             padding: 10px;
             display: inline-block;
         }
+        .goban-controls-btn-group {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            width: 100%;
+        }
+        .goban-controls-btn-group .btn {
+            white-space: nowrap !important;
+            padding: 0.25rem 2px !important;
+            font-size: 0.78rem;
+            flex: 1 1 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
     </style>
 </head>
 <body>
@@ -152,14 +167,14 @@
                                 <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
                             </button>
                         </div>
-                        <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面です。碁盤をクリックするか座標を入力して「回答する」を押してください。</p>
+                        <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください</p>
                     </div>
                     <div class="card-body p-2 p-md-3">
                         <div class="row g-2 g-md-3 align-items-start">
                             <!-- 左カラム：手番操作 ＆ 碁盤表示 -->
                             <div class="col-lg-5 col-xl-5 text-center">
                                 <!-- 手番ナビゲーション操作バー -->
-                                <div id="gobanControls" class="mx-auto mb-1" style="max-width: 320px;">
+                                <div id="gobanControls" class="mx-auto mb-1" style="max-width: 360px; width: 100%;">
                                     <div class="d-flex justify-content-between align-items-center mb-1 px-1 small">
                                         <span class="fw-bold text-dark" id="gobanMoveLabel">0手目 / 全0手</span>
                                         <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
@@ -168,19 +183,19 @@
                                     <div class="mb-1">
                                         <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
                                     </div>
-                                    <div class="btn-group btn-group-sm w-100" role="group">
-                                        <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初の手"><i class="bi bi-chevron-bar-left"></i> 最初</button>
-                                        <button type="button" class="btn btn-outline-dark" id="btnGobanPrev10" title="10手戻る"><i class="bi bi-chevron-double-left"></i> -10</button>
-                                        <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前の手"><i class="bi bi-chevron-left"></i> 前手</button>
-                                        <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次の手">次手 <i class="bi bi-chevron-right"></i></button>
-                                        <button type="button" class="btn btn-outline-dark" id="btnGobanNext10" title="10手進む">+10 <i class="bi bi-chevron-double-right"></i></button>
-                                        <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後の手 (最終手)">最後 <i class="bi bi-chevron-bar-right"></i></button>
+                                    <div class="btn-group btn-group-sm goban-controls-btn-group w-100" role="group">
+                                        <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初の手"><i class="bi bi-chevron-bar-left"></i>最初</button>
+                                        <button type="button" class="btn btn-outline-dark" id="btnGobanPrev10" title="10手戻る"><i class="bi bi-chevron-double-left"></i>-10</button>
+                                        <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前の手"><i class="bi bi-chevron-left"></i>前手</button>
+                                        <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次の手">次手<i class="bi bi-chevron-right"></i></button>
+                                        <button type="button" class="btn btn-outline-dark" id="btnGobanNext10" title="10手進む">+10<i class="bi bi-chevron-double-right"></i></button>
+                                        <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後の手 (最終手)">最後<i class="bi bi-chevron-bar-right"></i></button>
                                     </div>
                                 </div>
 
                                 <!-- 局面（碁盤）描画領域 -->
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <div class="goban-board-wrapper" id="gobanWrapper" style="max-width: 320px; width: 100%;">
+                                    <div class="goban-board-wrapper" id="gobanWrapper" style="max-width: 360px; width: 100%;">
                                         <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
                                     </div>
                                 </div>
@@ -1364,7 +1379,7 @@
             const quizTitleElem = document.getElementById('quizTitle');
             if (quizTitleElem) quizTitleElem.innerText = '出題局面: ' + quizTurn + '手目 (' + playerName + '番)';
             const quizDescElem = document.getElementById('quizDescription');
-            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標を入力してあててみてください。';
+            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください';
             const quizDropBadgeElem = document.getElementById('quizDropBadge');
             if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
 
