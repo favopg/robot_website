@@ -533,7 +533,7 @@
                     const whitePointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#0d6efd'));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
 
-                    new Chart(ctx, {
+                    const winrateChart = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: chartPoints.map(p => p.turnNumber + '手目' + (p.turnNumber === blunderTurn ? ' ⚠️最大下落' : '')),
@@ -670,6 +670,31 @@
                             }
                         }
                     });
+
+                    // 盤面手番とグラフの連動用グローバル関数
+                    window.syncChartWithTurn = function(turnNumber) {
+                        if (!winrateChart || !chartPoints || chartPoints.length === 0) return;
+
+                        const dataIndex = chartPoints.findIndex(p => p.turnNumber === turnNumber);
+                        if (dataIndex !== -1) {
+                            winrateChart.setActiveElements([
+                                { datasetIndex: 0, index: dataIndex },
+                                { datasetIndex: 1, index: dataIndex }
+                            ]);
+                            if (winrateChart.tooltip) {
+                                winrateChart.tooltip.setActiveElements([
+                                    { datasetIndex: 0, index: dataIndex },
+                                    { datasetIndex: 1, index: dataIndex }
+                                ]);
+                            }
+                        } else {
+                            winrateChart.setActiveElements([]);
+                            if (winrateChart.tooltip) {
+                                winrateChart.tooltip.setActiveElements([]);
+                            }
+                        }
+                        winrateChart.update('none');
+                    };
 
                     // 2. 3. クイズデータの生成とUI表示の準備
                     if (maxDrop > 0 && quizTurn >= 0) {
@@ -1110,6 +1135,11 @@
                 function goToTurn(t) {
                     currentTurn = Math.max(0, Math.min(maxTurn, t));
                     renderBoard(currentTurn);
+
+                    // 勝率グラフ側も連動してハイライト
+                    if (typeof window.syncChartWithTurn === 'function') {
+                        window.syncChartWithTurn(currentTurn);
+                    }
                 }
 
                 window.goToGobanTurn = goToTurn;
@@ -1144,8 +1174,11 @@
                 const btnLast = document.getElementById('btnGobanLast');
                 if (btnLast) btnLast.addEventListener('click', () => goToTurn(maxTurn));
 
-                // 初回描画（最終局面）
+                // 初回描画（初期局面）
                 renderBoard(currentTurn);
+                if (typeof window.syncChartWithTurn === 'function') {
+                    window.syncChartWithTurn(currentTurn);
+                }
 
                 // クイズ機能の初期化
                 initQuizModule(parsed.moves);
