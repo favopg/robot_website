@@ -16,6 +16,10 @@
         .navbar-custom .nav-link, .navbar-custom .navbar-brand {
             color: white;
         }
+        pre code {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -43,28 +47,103 @@
 
     <div class="container my-5">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow border-0">
+            <div class="col-lg-10">
+
+                <!-- アラート表示 -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- SGF解析設定カード -->
+                <div class="card shadow border-0 mb-4">
                     <div class="card-header bg-primary text-white py-3">
-                        <h3 class="mb-0"><i class="bi bi-cpu"></i> SGFファイル解析</h3>
+                        <h3 class="mb-0 fs-4"><i class="bi bi-cpu"></i> KataGo 棋譜解析</h3>
                     </div>
                     <div class="card-body p-4">
-                        <form th:action="@{/admin/analyze}" method="post" enctype="multipart/form-data">
-                            <div class="mb-4">
-                                <label for="sgfFile" class="form-label fw-bold">SGFファイル <span class="badge bg-danger">必須</span></label>
-                                <input class="form-control" type="file" id="sgfFile" name="file" accept=".sgf" required>
+                        <form th:action="@{/admin/analyze}" method="post" enctype="multipart/form-data" id="analyzeForm">
+                            <!-- SGFファイル入力方法タブまたは切り替え -->
+                            <div class="mb-3">
+                                <label for="sgfFile" class="form-label fw-bold">SGFファイル</label>
+                                <input class="form-control" type="file" id="sgfFile" name="file" accept=".sgf">
                                 <div class="form-text">解析対象のSGFファイル（.sgf）を選択してください。</div>
                             </div>
 
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="turnRange" class="form-label fw-bold">解析手番範囲 (turn_range)</label>
+                                    <input type="text" class="form-control" id="turnRange" name="turn_range"
+                                           th:value="${turnRange != null ? turnRange : '0-50'}"
+                                           placeholder="例: 0-50">
+                                    <div class="form-text">例: "0-50"（開始手番-終了手番）</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="maxVisits" class="form-label fw-bold">探索手数 (max_visits)</label>
+                                    <input type="number" class="form-control" id="maxVisits" name="max_visits"
+                                           th:value="${maxVisits != null ? maxVisits : 100}"
+                                           min="1" max="10000" placeholder="例: 100">
+                                    <div class="form-text">1局面あたりの最大探索手数（デフォルト: 100）</div>
+                                </div>
+                            </div>
+
+                            <!-- 詳細指定（オプション） -->
+                            <div class="accordion mb-4" id="advancedOptions">
+                                <div class="accordion-item border">
+                                    <h2 class="accordion-header" id="headingAdvanced">
+                                        <button class="accordion-button collapsed py-2 text-secondary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced">
+                                            <i class="bi bi-gear me-2"></i> 詳細入力オプション (SGFパス / SGFテキスト直接指定)
+                                        </button>
+                                    </h2>
+                                    <div id="collapseAdvanced" class="accordion-collapse collapse" aria-labelledby="headingAdvanced">
+                                        <div class="accordion-body">
+                                            <div class="mb-3">
+                                                <label for="sgfPath" class="form-label fw-semibold">サーバー上のSGFパス (sgf_path)</label>
+                                                <input type="text" class="form-control" id="sgfPath" name="sgf_path"
+                                                       th:value="${sgfPath}"
+                                                       placeholder="例: C:\katago\sgf\KifuTweet.sgf">
+                                                <div class="form-text">サーバー側のファイルパスを直接指定する場合に入力してください。</div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label for="sgfContent" class="form-label fw-semibold">SGFテキスト直接入力 (sgf_content)</label>
+                                                <textarea class="form-control font-monospace" id="sgfContent" name="sgf_content" rows="4"
+                                                          th:text="${sgfContent}"
+                                                          placeholder="(;GM[1]FF[4]SZ[19]...)"></textarea>
+                                                <div class="form-text">SGF文字列を直接渡す場合に入力してください。</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-play-circle"></i> 解析
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="bi bi-play-circle"></i> 解析実行
                                 </button>
                                 <a href="/" class="btn btn-outline-secondary">キャンセル</a>
                             </div>
                         </form>
                     </div>
                 </div>
+
+                <!-- 解析結果表示カード -->
+                <div th:if="${resultJson}" class="card shadow border-0 mb-4">
+                    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0 fs-5"><i class="bi bi-file-earmark-code"></i> 解析結果 (JSON)</h4>
+                        <button class="btn btn-sm btn-outline-light" onclick="copyResult()">
+                            <i class="bi bi-clipboard"></i> コピー
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="max-height: 600px; overflow-y: auto;"><code id="resultJsonArea" th:text="${resultJson}"></code></pre>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -76,5 +155,21 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyResult() {
+            const text = document.getElementById('resultJsonArea').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('解析結果をクリップボードにコピーしました。');
+            }).catch(err => {
+                console.error('コピーに失敗しました', err);
+            });
+        }
+
+        document.getElementById('analyzeForm').addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>解析中...';
+        });
+    </script>
 </body>
 </html>
