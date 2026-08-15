@@ -182,55 +182,16 @@
                             </div>
                         </div>
 
-                        <div id="gobanNoDataAlert" class="alert alert-warning mt-3 text-start" style="display: none;">
-                            <i class="bi bi-info-circle me-2"></i> SGFデータが取得できなかったため、碁盤を表示できませんでした。
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 勝率推移折れ線グラフ表示カード -->
-                <div th:if="${resultJson}" class="card shadow border-0 mb-4" id="chartCard">
-                    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0 fs-5"><i class="bi bi-graph-up text-info me-2"></i> 勝率推移グラフ (Winrate Chart)</h4>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary" id="chartSummaryBadge">黒(B) / 白(W) 各手番の勝率</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-4">
-                        <!-- サマリー統計 -->
-                        <div id="chartStats" class="row g-3 mb-4 text-center" style="display: none;">
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 border rounded bg-light">
-                                    <small class="text-muted d-block mb-1">総解析手数</small>
-                                    <span class="fs-5 fw-bold text-dark" id="statTotalMoves">-</span>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 border rounded bg-light">
-                                    <small class="text-muted d-block mb-1"><span class="badge bg-dark me-1">B</span>黒 最終勝率</small>
-                                    <span class="fs-5 fw-bold text-dark" id="statFinalBlackWinrate">-</span>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 border rounded bg-light">
-                                    <small class="text-muted d-block mb-1"><span class="badge bg-primary me-1">W</span>白 最終勝率</small>
-                                    <span class="fs-5 fw-bold text-primary" id="statFinalWhiteWinrate">-</span>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="p-3 border rounded bg-light">
-                                    <small class="text-muted d-block mb-1">最終形勢判定</small>
-                                    <span class="fs-5 fw-bold" id="statLeadStatus">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- グラフ描画領域 -->
-                        <div class="position-relative" style="height: 380px; width: 100%;">
+                        <!-- 勝率推移グラフ描画領域（碁盤下部にグラフのみ表示） -->
+                        <div class="position-relative mt-4" style="height: 350px; width: 100%;">
                             <canvas id="winrateChart"></canvas>
                         </div>
-                        <div id="chartNoDataAlert" class="alert alert-warning mt-3" style="display: none;">
+                        <div id="chartNoDataAlert" class="alert alert-warning mt-3 text-start" style="display: none;">
                             <i class="bi bi-info-circle me-2"></i> 解析レスポンスから勝率データを取得できませんでした。
+                        </div>
+
+                        <div id="gobanNoDataAlert" class="alert alert-warning mt-3 text-start" style="display: none;">
+                            <i class="bi bi-info-circle me-2"></i> SGFデータが取得できなかったため、碁盤を表示できませんでした。
                         </div>
                     </div>
                 </div>
@@ -541,21 +502,27 @@
                         }
                     }
 
-                    // 統計情報の更新
+                    // 統計情報の更新（要素が存在する場合）
                     const lastPoint = chartPoints[chartPoints.length - 1];
-                    document.getElementById('statTotalMoves').innerText = chartPoints.length + ' 手 (' + chartPoints[0].turnNumber + '〜' + lastPoint.turnNumber + '手目)';
-                    document.getElementById('statFinalBlackWinrate').innerText = lastPoint.blackWinrate.toFixed(1) + '%';
-                    document.getElementById('statFinalWhiteWinrate').innerText = lastPoint.whiteWinrate.toFixed(1) + '%';
+                    const statTotalMoves = document.getElementById('statTotalMoves');
+                    if (statTotalMoves) statTotalMoves.innerText = chartPoints.length + ' 手 (' + chartPoints[0].turnNumber + '〜' + lastPoint.turnNumber + '手目)';
+                    const statFinalBlack = document.getElementById('statFinalBlackWinrate');
+                    if (statFinalBlack) statFinalBlack.innerText = lastPoint.blackWinrate.toFixed(1) + '%';
+                    const statFinalWhite = document.getElementById('statFinalWhiteWinrate');
+                    if (statFinalWhite) statFinalWhite.innerText = lastPoint.whiteWinrate.toFixed(1) + '%';
 
                     const statLeadStatus = document.getElementById('statLeadStatus');
-                    if (lastPoint.blackWinrate >= 55) {
-                        statLeadStatus.innerHTML = '<span class="text-dark">黒優勢 (' + lastPoint.blackWinrate.toFixed(1) + '%)</span>';
-                    } else if (lastPoint.whiteWinrate >= 55) {
-                        statLeadStatus.innerHTML = '<span class="text-primary">白優勢 (' + lastPoint.whiteWinrate.toFixed(1) + '%)</span>';
-                    } else {
-                        statLeadStatus.innerHTML = '<span class="text-secondary">互角</span>';
+                    if (statLeadStatus) {
+                        if (lastPoint.blackWinrate >= 55) {
+                            statLeadStatus.innerHTML = '<span class="text-dark">黒優勢 (' + lastPoint.blackWinrate.toFixed(1) + '%)</span>';
+                        } else if (lastPoint.whiteWinrate >= 55) {
+                            statLeadStatus.innerHTML = '<span class="text-primary">白優勢 (' + lastPoint.whiteWinrate.toFixed(1) + '%)</span>';
+                        } else {
+                            statLeadStatus.innerHTML = '<span class="text-secondary">互角</span>';
+                        }
                     }
-                    document.getElementById('chartStats').style.display = 'flex';
+                    const chartStats = document.getElementById('chartStats');
+                    if (chartStats) chartStats.style.display = 'flex';
 
                     // 4. Chart.jsでグラフ描画（最大下落ポイントをハイライト）
                     const canvas = document.getElementById('winrateChart');
@@ -692,6 +659,9 @@
                                         display: true,
                                         text: '手数 (Turn)',
                                         font: { weight: 'bold' }
+                                    },
+                                    ticks: {
+                                        maxTicksLimit: 20
                                     },
                                     grid: {
                                         color: 'rgba(0, 0, 0, 0.05)'
