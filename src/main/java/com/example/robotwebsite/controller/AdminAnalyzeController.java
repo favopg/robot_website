@@ -47,7 +47,6 @@ public class AdminAnalyzeController {
             Model model) {
 
         model.addAttribute("sgfPath", sgfPath);
-        model.addAttribute("sgfContent", sgfContent);
         model.addAttribute("turnRange", turnRange);
         model.addAttribute("maxVisits", maxVisits);
 
@@ -60,6 +59,20 @@ public class AdminAnalyzeController {
                 logger.error("Failed to read uploaded SGF file", e);
                 model.addAttribute("errorMessage", "SGFファイルの読み込みに失敗しました: " + e.getMessage());
                 return "admin/analyze";
+            }
+        }
+
+        if (content != null && !content.trim().isEmpty()) {
+            model.addAttribute("sgfContent", content);
+        } else if (sgfPath != null && !sgfPath.trim().isEmpty()) {
+            try {
+                java.nio.file.Path path = java.nio.file.Paths.get(sgfPath.trim());
+                if (java.nio.file.Files.exists(path)) {
+                    content = java.nio.file.Files.readString(path, StandardCharsets.UTF_8);
+                    model.addAttribute("sgfContent", content);
+                }
+            } catch (Exception e) {
+                logger.warn("Could not read SGF file from path: {}", sgfPath, e);
             }
         }
 
