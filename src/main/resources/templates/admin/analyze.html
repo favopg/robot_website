@@ -155,14 +155,8 @@
                         </div>
                     </div>
                     <div class="card-body p-4 text-center">
-                        <div class="d-flex justify-content-center align-items-center mb-3">
-                            <div class="goban-board-wrapper" id="gobanWrapper" style="max-width: 420px;">
-                                <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
-                            </div>
-                        </div>
-
                         <!-- 手番ナビゲーション操作バー -->
-                        <div id="gobanControls" class="mx-auto" style="max-width: 440px;">
+                        <div id="gobanControls" class="mx-auto mb-3" style="max-width: 440px;">
                             <div class="d-flex justify-content-between align-items-center mb-2 px-1">
                                 <span class="fw-bold text-dark" id="gobanMoveLabel">0手目 / 全0手</span>
                                 <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
@@ -178,6 +172,13 @@
                                 <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次の手">次手 <i class="bi bi-chevron-right"></i></button>
                                 <button type="button" class="btn btn-outline-dark" id="btnGobanNext10" title="10手進む">+10 <i class="bi bi-chevron-double-right"></i></button>
                                 <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後の手 (最終手)">最後 <i class="bi bi-chevron-bar-right"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- 局面（碁盤）描画領域 -->
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <div class="goban-board-wrapper" id="gobanWrapper" style="max-width: 420px;">
+                                <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
                             </div>
                         </div>
 
