@@ -2,22 +2,24 @@ package com.example.robotwebsite.controller;
 
 import com.example.robotwebsite.dto.KatagoAnalyzeRequest;
 import com.example.robotwebsite.service.KatagoAnalyzeService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Controller
-@RequestMapping("/admin/analyze")
+@RequestMapping({"/admin/analyze", "/analyze"})
 public class AdminAnalyzeController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminAnalyzeController.class);
@@ -32,71 +34,49 @@ public class AdminAnalyzeController {
 
     @GetMapping
     public String index(Model model) {
-        model.addAttribute("turnRange", "0-50");
-        model.addAttribute("maxVisits", 100);
-        return "admin/analyze";
-    }
-
-    @PostMapping
-    public String analyze(
-            @RequestParam(value = "file", required = false) MultipartFile file,
-            @RequestParam(value = "sgf_path", required = false) String sgfPath,
-            @RequestParam(value = "sgf_content", required = false) String sgfContent,
-            @RequestParam(value = "turn_range", required = false) String turnRange,
-            @RequestParam(value = "max_visits", required = false, defaultValue = "100") Integer maxVisits,
-            Model model) {
-
-        model.addAttribute("sgfPath", sgfPath);
-        model.addAttribute("turnRange", turnRange);
-        model.addAttribute("maxVisits", maxVisits);
-
-        String content = sgfContent;
-        if (file != null && !file.isEmpty()) {
-            try {
-                content = new String(file.getBytes(), StandardCharsets.UTF_8);
-                model.addAttribute("fileName", file.getOriginalFilename());
-            } catch (IOException e) {
-                logger.error("Failed to read uploaded SGF file", e);
-                model.addAttribute("errorMessage", "SGFファイルの読み込みに失敗しました: " + e.getMessage());
-                return "admin/analyze";
-            }
-        }
-
-        if (content != null && !content.trim().isEmpty()) {
-            model.addAttribute("sgfContent", content);
-        } else if (sgfPath != null && !sgfPath.trim().isEmpty()) {
-            try {
-                java.nio.file.Path path = java.nio.file.Paths.get(sgfPath.trim());
-                if (java.nio.file.Files.exists(path)) {
-                    content = java.nio.file.Files.readString(path, StandardCharsets.UTF_8);
-                    model.addAttribute("sgfContent", content);
-                }
-            } catch (Exception e) {
-                logger.warn("Could not read SGF file from path: {}", sgfPath, e);
-            }
-        }
-
-        if ((content == null || content.trim().isEmpty()) && (sgfPath == null || sgfPath.trim().isEmpty())) {
-            model.addAttribute("errorMessage", "SGFファイル、SGFパス、またはSGF内容のいずれかを指定してください。");
-            return "admin/analyze";
-        }
-
-        KatagoAnalyzeRequest request = new KatagoAnalyzeRequest();
-        if (sgfPath != null && !sgfPath.trim().isEmpty()) {
-            request.setSgfPath(sgfPath.trim());
-        }
-        if (content != null && !content.trim().isEmpty()) {
-            request.setSgfContent(content);
-        }
-        request.setTurnRange(turnRange != null && !turnRange.trim().isEmpty() ? turnRange.trim() : null);
-        request.setMaxVisits(maxVisits);
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        model.addAttribute("date", today);
+        KatagoAnalyzeRequest request = new KatagoAnalyzeRequest(today);
 
         try {
             String jsonResult = katagoAnalyzeService.analyze(request);
             String formattedJson = jsonResult;
             try {
-                Object jsonObject = objectMapper.readValue(jsonResult, Object.class);
-                formattedJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
+                JsonNode jsonNode = objectMapper.readTree(jsonResult);
+                formattedJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+                
+                String sgfContent = null;
+                if (jsonNode.hasNonNull("sgf_content")) {
+                    sgfContent = jsonNode.get("sgf_content").asText();
+                } else if (jsonNode.hasNonNull("sgf")) {
+                    sgfContent = jsonNode.get("sgf").asText();
+                } else if (jsonNode.isArray() && jsonNode.size() > 0) {
+                    for (JsonNode elem : jsonNode) {
+                        if (elem.hasNonNull("sgf_content")) {
+                            sgfContent = elem.get("sgf_content").asText();
+                            break;
+                        } else if (elem.hasNonNull("sgf")) {
+                            sgfContent = elem.get("sgf").asText();
+                            break;
+                        }
+                    }
+                }
+
+                if (sgfContent == null && jsonNode.hasNonNull("sgf_file_name")) {
+                    String sgfFileName = jsonNode.get("sgf_file_name").asText();
+                    sgfContent = loadSgfFromFile(sgfFileName);
+                } else if (sgfContent == null && jsonNode.isArray() && jsonNode.size() > 0) {
+                    for (JsonNode elem : jsonNode) {
+                        if (elem.hasNonNull("sgf_file_name")) {
+                            sgfContent = loadSgfFromFile(elem.get("sgf_file_name").asText());
+                            if (sgfContent != null) break;
+                        }
+                    }
+                }
+
+                if (sgfContent != null) {
+                    model.addAttribute("sgfContent", sgfContent);
+                }
             } catch (Exception e) {
                 // If parsing fails, use the raw response
             }
@@ -108,5 +88,44 @@ public class AdminAnalyzeController {
         }
 
         return "admin/analyze";
+    }
+
+    private String loadSgfFromFile(String fileName) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return null;
+        }
+        String trimmed = fileName.trim();
+
+        // 探索候補パス
+        Path[] candidatePaths = new Path[]{
+                Paths.get(trimmed),
+                Paths.get("engines", "sgf", trimmed),
+                Paths.get("engines", "sgf", Paths.get(trimmed).getFileName().toString()),
+                Paths.get("engines", trimmed),
+                Paths.get("data", trimmed)
+        };
+
+        for (Path path : candidatePaths) {
+            try {
+                if (Files.exists(path) && !Files.isDirectory(path)) {
+                    return Files.readString(path, StandardCharsets.UTF_8);
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to read SGF file at path: {}", path, e);
+            }
+        }
+
+        // クラスパスからの読み込み試行
+        try {
+            org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource(trimmed);
+            if (resource.exists()) {
+                return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to read SGF file from classpath: {}", trimmed, e);
+        }
+
+        logger.warn("SGF file not found for sgf_file_name: {}", fileName);
+        return null;
     }
 }

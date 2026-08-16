@@ -31,8 +31,7 @@ public class KatagoAnalyzeService {
 
         HttpEntity<KatagoAnalyzeRequest> entity = new HttpEntity<>(request, headers);
 
-        logger.info("Calling KataGo API at {}: sgfPath={}, turnRange={}, maxVisits={}",
-                apiUrl, request.getSgfPath(), request.getTurnRange(), request.getMaxVisits());
+        logger.info("Calling KataGo API at {}: date={}", apiUrl, request.getDate());
 
         ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
         return response.getBody();

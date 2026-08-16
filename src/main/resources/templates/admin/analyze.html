@@ -85,73 +85,18 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
 
-                <!-- SGF解析設定カード -->
+                <!-- KataGo棋譜解析情報カード -->
                 <div class="card shadow border-0 mb-4">
                     <div class="card-header bg-primary text-white py-3">
                         <h3 class="mb-0 fs-4"><i class="bi bi-cpu"></i> KataGo 棋譜解析</h3>
                     </div>
                     <div class="card-body p-4">
-                        <form th:action="@{/admin/analyze}" method="post" enctype="multipart/form-data" id="analyzeForm">
-                            <!-- SGFファイル入力方法タブまたは切り替え -->
-                            <div class="mb-3">
-                                <label for="sgfFile" class="form-label fw-bold">SGFファイル</label>
-                                <input class="form-control" type="file" id="sgfFile" name="file" accept=".sgf">
-                                <div class="form-text">解析対象のSGFファイル（.sgf）を選択してください。</div>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <h5 class="card-title mb-1">解析対象日: <span class="badge bg-secondary font-monospace fs-6" th:text="${date}">20260801</span></h5>
+                                <p class="card-text text-muted mb-0">初期表示時にシステム日付（<span th:text="${date}">20260801</span>）の棋譜解析APIを実行した結果を表示しています。</p>
                             </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="turnRange" class="form-label fw-bold">解析手番範囲 (turn_range)</label>
-                                    <input type="text" class="form-control" id="turnRange" name="turn_range"
-                                           th:value="${turnRange != null ? turnRange : '0-50'}"
-                                           placeholder="例: 0-50">
-                                    <div class="form-text">例: "0-50"（開始手番-終了手番）</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="maxVisits" class="form-label fw-bold">探索手数 (max_visits)</label>
-                                    <input type="number" class="form-control" id="maxVisits" name="max_visits"
-                                           th:value="${maxVisits != null ? maxVisits : 100}"
-                                           min="1" max="10000" placeholder="例: 100">
-                                    <div class="form-text">1局面あたりの最大探索手数（デフォルト: 100）</div>
-                                </div>
-                            </div>
-
-                            <!-- 詳細指定（オプション） -->
-                            <div class="accordion mb-4" id="advancedOptions">
-                                <div class="accordion-item border">
-                                    <h2 class="accordion-header" id="headingAdvanced">
-                                        <button class="accordion-button collapsed py-2 text-secondary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced">
-                                            <i class="bi bi-gear me-2"></i> 詳細入力オプション (SGFパス / SGFテキスト直接指定)
-                                        </button>
-                                    </h2>
-                                    <div id="collapseAdvanced" class="accordion-collapse collapse" aria-labelledby="headingAdvanced">
-                                        <div class="accordion-body">
-                                            <div class="mb-3">
-                                                <label for="sgfPath" class="form-label fw-semibold">サーバー上のSGFパス (sgf_path)</label>
-                                                <input type="text" class="form-control" id="sgfPath" name="sgf_path"
-                                                       th:value="${sgfPath}"
-                                                       placeholder="例: C:\katago\sgf\KifuTweet.sgf">
-                                                <div class="form-text">サーバー側のファイルパスを直接指定する場合に入力してください。</div>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label for="sgfContent" class="form-label fw-semibold">SGFテキスト直接入力 (sgf_content)</label>
-                                                <textarea class="form-control font-monospace" id="sgfContent" name="sgf_content" rows="4"
-                                                          th:text="${sgfContent}"
-                                                          placeholder="(;GM[1]FF[4]SZ[19]...)"></textarea>
-                                                <div class="form-text">SGF文字列を直接渡す場合に入力してください。</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                                    <i class="bi bi-play-circle"></i> 解析実行
-                                </button>
-                                <a href="/" class="btn btn-outline-secondary">キャンセル</a>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -289,7 +234,7 @@
                 </div>
 
                 <!-- SGFデータ受け渡し用（非表示） -->
-                <script id="sgfData" type="text/plain" th:if="${sgfContent != null}" th:text="${sgfContent}"></script>
+                <script id="sgfData" type="text/plain" th:if="${sgfContent != null}" th:utext="${sgfContent}"></script>
 
             </div>
         </div>
@@ -341,11 +286,16 @@
         }
         window.resizeBoard = resizeBoard;
 
-        document.getElementById('analyzeForm').addEventListener('submit', function() {
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>解析中...';
-        });
+        const analyzeForm = document.getElementById('analyzeForm');
+        if (analyzeForm) {
+            analyzeForm.addEventListener('submit', function() {
+                const btn = document.getElementById('submitBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>解析中...';
+                }
+            });
+        }
 
         // 共通状態
         window.quizData = null;
@@ -399,6 +349,7 @@
                     }
 
                     movesRawArray = movesArray;
+                    window.parsedAnalysisData = parsedData;
 
                     const chartPoints = [];
                     movesArray.forEach((item, index) => {
@@ -735,7 +686,22 @@
             if (!canvas) return;
 
             const sgfElem = document.getElementById('sgfData');
-            const sgfContent = sgfElem ? sgfElem.textContent.trim() : '';
+            let sgfContent = sgfElem ? sgfElem.textContent.trim() : '';
+            if (!sgfContent && window.parsedAnalysisData) {
+                if (window.parsedAnalysisData.sgf_content) sgfContent = window.parsedAnalysisData.sgf_content;
+                else if (window.parsedAnalysisData.sgf) sgfContent = window.parsedAnalysisData.sgf;
+                else if (Array.isArray(window.parsedAnalysisData) && window.parsedAnalysisData.length > 0) {
+                    for (const item of window.parsedAnalysisData) {
+                        if (item && item.sgf_content) {
+                            sgfContent = item.sgf_content;
+                            break;
+                        } else if (item && item.sgf) {
+                            sgfContent = item.sgf;
+                            break;
+                        }
+                    }
+                }
+            }
 
             if (!sgfContent) {
                 const noDataAlert = document.getElementById('gobanNoDataAlert');
