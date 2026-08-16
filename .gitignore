@@ -30,3 +30,5 @@ Thumbs.db
 captures/
 data/
 .output*
+application-prod.properties
+**/application-prod.properties
