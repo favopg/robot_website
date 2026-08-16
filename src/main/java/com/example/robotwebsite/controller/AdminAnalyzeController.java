@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,6 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping({"/admin/analyze", "/analyze"})
@@ -34,18 +39,24 @@ public class AdminAnalyzeController {
 
     @GetMapping
     public String index(Model model) {
+        return "admin/analyze";
+    }
+
+    @GetMapping({"/api", "/data"})
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> analyzeApi() {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        model.addAttribute("date", today);
         KatagoAnalyzeRequest request = new KatagoAnalyzeRequest(today);
+        Map<String, Object> response = new HashMap<>();
 
         try {
             String jsonResult = katagoAnalyzeService.analyze(request);
             String formattedJson = jsonResult;
+            String sgfContent = null;
             try {
                 JsonNode jsonNode = objectMapper.readTree(jsonResult);
                 formattedJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
                 
-                String sgfContent = null;
                 if (jsonNode.hasNonNull("sgf_content")) {
                     sgfContent = jsonNode.get("sgf_content").asText();
                 } else if (jsonNode.hasNonNull("sgf")) {
@@ -73,21 +84,20 @@ public class AdminAnalyzeController {
                         }
                     }
                 }
-
-                if (sgfContent != null) {
-                    model.addAttribute("sgfContent", sgfContent);
-                }
             } catch (Exception e) {
                 // If parsing fails, use the raw response
             }
-            model.addAttribute("resultJson", formattedJson);
-            model.addAttribute("successMessage", "解析が完了しました。");
+
+            response.put("success", true);
+            response.put("resultJson", formattedJson);
+            response.put("sgfContent", sgfContent);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("KataGo analysis request failed", e);
-            model.addAttribute("errorMessage", "KataGo解析APIの呼び出しに失敗しました: " + e.getMessage());
+            response.put("success", false);
+            response.put("errorMessage", "KataGo解析APIの呼び出しに失敗しました: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return "admin/analyze";
     }
 
     private String loadSgfFromFile(String fileName) {
