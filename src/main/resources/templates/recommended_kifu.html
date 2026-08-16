@@ -1312,6 +1312,19 @@
                 const btnLast = document.getElementById('btnGobanLast');
                 if (btnLast) btnLast.addEventListener('click', () => goToTurn(maxTurn));
 
+                // 勝率が大きく動いた局面を表示ボタン
+                const btnGoToQuiz = document.getElementById('btnGoToQuizTurn');
+                if (btnGoToQuiz) {
+                    btnGoToQuiz.onclick = () => {
+                        const qTurn = window.quizTurnGlobal;
+                        if (qTurn !== undefined && qTurn !== null && qTurn >= 0) {
+                            goToTurn(qTurn);
+                        } else if (typeof window.goToGobanTurn === 'function') {
+                            window.goToGobanTurn(qTurn);
+                        }
+                    };
+                }
+
                 // 初回描画（初期局面）
                 renderBoard(currentTurn);
                 if (typeof window.syncChartWithTurn === 'function') {
@@ -1482,16 +1495,6 @@
             const resetBtn = document.getElementById('btnResetQuiz');
             const validationMsg = document.getElementById('quizInputValidation');
             const resultArea = document.getElementById('quizResultArea');
-
-            // 出題局面を表示ボタン
-            const btnGoToQuiz = document.getElementById('btnGoToQuizTurn');
-            if (btnGoToQuiz) {
-                btnGoToQuiz.onclick = () => {
-                    if (typeof window.goToGobanTurn === 'function') {
-                        window.goToGobanTurn(quizTurn);
-                    }
-                };
-            }
 
             quizCard.style.display = 'block';
 
