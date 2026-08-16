@@ -422,4 +422,10 @@ public class IndexController {
         model.addAttribute("title", "NHK杯 詳細情報");
         return "nhk_info";
     }
+
+    @GetMapping({"/recommended-kifu", "/recommend-kifu"})
+    public String recommendedKifu(Model model) {
+        model.addAttribute("title", "おすすめ棋譜");
+        return "recommended_kifu";
+    }
 }

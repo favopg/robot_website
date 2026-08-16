@@ -90,17 +90,10 @@
                             <i class="bi bi-heart-fill"></i> 人気ランキング
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownRequestBug" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-chat-left-text"></i> 要望/バグ
+                    <li class="nav-item">
+                        <a class="nav-link" href="/recommended-kifu">
+                            <i class="bi bi-journal-bookmark"></i> おすすめ棋譜
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownRequestBug">
-                            <li><a class="dropdown-item" href="/request">要望を投稿する</a></li>
-                            <li><a class="dropdown-item" href="/request/list">要望一覧</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/inquiry">バグを報告する</a></li>
-                            <li><a class="dropdown-item active" href="/inquiry/list">報告一覧</a></li>
-                        </ul>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -160,8 +153,17 @@
     </div>
 
     <footer class="py-4 bg-light mt-auto border-top">
-        <div class="container text-center text-muted">
-            <small>&copy; 2026 囲碁棋士情報サイト</small>
+        <div class="container text-center">
+            <div class="mb-2">
+                <a href="/request" class="text-muted text-decoration-none mx-2 small">要望を投稿する</a>
+                <span class="text-muted">|</span>
+                <a href="/request/list" class="text-muted text-decoration-none mx-2 small">要望一覧</a>
+                <span class="text-muted">|</span>
+                <a href="/inquiry" class="text-muted text-decoration-none mx-2 small">バグを報告する</a>
+                <span class="text-muted">|</span>
+                <a href="/inquiry/list" class="text-muted text-decoration-none mx-2 small">報告一覧</a>
+            </div>
+            <p class="text-muted mb-0 small">&copy; 2026 推し囲碁棋士を見つけよう</p>
         </div>
     </footer>
 

@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>碁聖戦 詳細情報</title>
+    <title>おすすめ棋譜 - 推し囲碁棋士を見つけよう</title>
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:true, theme: 'default'});</script>
     <style>
         .navbar-custom {
-            background-color: #004085;
+            background-color: #004085; /* 濃い青色 */
         }
         .navbar-custom .nav-link, .navbar-custom .navbar-brand {
             color: white;
@@ -21,13 +21,9 @@
         .navbar-custom .nav-link:hover {
             color: #d1ecf1;
         }
-        .card-header-custom {
-            background-color: #e9ecef;
-            font-weight: bold;
-        }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">推し囲碁棋士を見つけよう</a>
@@ -47,7 +43,7 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-journal-text"></i> 囲碁棋戦
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdownTitles">
@@ -78,13 +74,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/recommended-kifu">
+                        <a class="nav-link active" href="/recommended-kifu">
                             <i class="bi bi-journal-bookmark"></i> おすすめ棋譜
                         </a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
+                    <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
                     <div class="form-check form-switch text-light">
@@ -96,79 +92,11 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">トップ</a></li>
-                <li class="breadcrumb-item active" aria-current="page">碁聖戦</li>
-            </ol>
-        </nav>
+    <main class="flex-grow-1">
+        <!-- おすすめ棋譜押下時は何も表示しない -->
+    </main>
 
-        <h1 class="mb-4">碁聖戦の仕組み</h1>
-
-        <div class="row">
-            <div class="col-lg-12 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header card-header-custom">
-                        1. 碁聖戦の全体像（予選から本戦トーナメント、挑戦手合まで）
-                    </div>
-                    <div class="card-body">
-                        <div class="mermaid text-center">
-graph TD
-    A[予選] --> B[本戦トーナメント<br/>約16名]
-    S[シード棋士] --> B
-    B --> C{挑戦者決定}
-    C --> F[挑戦手合五番勝負]
-    H[現碁聖] --> F
-    F --> G[碁聖位獲得]
-
-    style F fill:#f96,stroke:#333,stroke-width:2px
-    style G fill:#f96,stroke:#333,stroke-width:4px
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-12 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header card-header-custom">
-                        2. 本戦トーナメントの仕組み
-                    </div>
-                    <div class="card-body">
-                        <p>碁聖戦の挑戦者は、全棋士参加の予選勝ち抜き者とシード棋士によるトーナメント戦で決定されます。</p>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <strong>本戦形式:</strong> 16名程度によるノックアウトトーナメント。
-                            </li>
-                            <li class="list-group-item">
-                                <strong>挑戦手合:</strong> 挑戦者と碁聖による五番勝負（1日制）。
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-4 shadow-sm border-primary">
-            <div class="card-body">
-                <h2 class="card-title h4">基本データ</h2>
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>優勝賞金:</strong> 800万円</p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>現タイトルホルダー:</strong> 井山 裕太 碁聖</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-center mt-4 mb-5">
-            <a href="/" class="btn btn-primary">トップページに戻る</a>
-        </div>
-    </div>
-
-    <footer class="bg-dark text-white py-4 mt-5">
+    <footer class="bg-dark text-white py-4 mt-auto">
         <div class="container text-center">
             <div class="mb-2">
                 <a href="/request" class="text-white-50 text-decoration-none mx-2 small">要望を投稿する</a>
@@ -183,6 +111,7 @@ graph TD
         </div>
     </footer>
 
+    <!-- 推し棋士登録モーダル -->
     <div class="modal fade" id="favoritePlayerModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog">
             <div class="modal-content text-dark">
@@ -206,8 +135,43 @@ graph TD
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalEl = document.getElementById('favoritePlayerModal');
+            if (modalEl) {
+                modalEl.addEventListener('hidden.bs.modal', function () {
+                    sessionStorage.setItem('favoriteModalDismissed', 'true');
+                });
+            }
+
+            // ダークモード切り替え機能
+            const darkModeSwitch = document.getElementById('darkModeSwitch');
+            const htmlElement = document.documentElement;
+
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-bs-theme', savedTheme);
+                if (darkModeSwitch) darkModeSwitch.checked = (savedTheme === 'dark');
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                if (darkModeSwitch) darkModeSwitch.checked = true;
+            }
+
+            if (darkModeSwitch) {
+                darkModeSwitch.addEventListener('change', () => {
+                    if (darkModeSwitch.checked) {
+                        htmlElement.setAttribute('data-bs-theme', 'dark');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        htmlElement.setAttribute('data-bs-theme', 'light');
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
+        });
+
         function getFavoritePlayers() {
             const favData = localStorage.getItem('favoritePlayers');
             if (favData) {
@@ -266,6 +230,7 @@ graph TD
             localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
             localStorage.setItem('favoriteOnly', 'false');
+            sessionStorage.setItem('favoriteModalDismissed', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
             if (modalInstance) {
@@ -273,28 +238,6 @@ graph TD
             }
             location.reload();
         }
-
-        const darkModeSwitch = document.getElementById('darkModeSwitch');
-        const htmlElement = document.documentElement;
-
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            htmlElement.setAttribute('data-bs-theme', savedTheme);
-            darkModeSwitch.checked = (savedTheme === 'dark');
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            htmlElement.setAttribute('data-bs-theme', 'dark');
-            darkModeSwitch.checked = true;
-        }
-
-        darkModeSwitch.addEventListener('change', () => {
-            if (darkModeSwitch.checked) {
-                htmlElement.setAttribute('data-bs-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                htmlElement.setAttribute('data-bs-theme', 'light');
-                localStorage.setItem('theme', 'light');
-            }
-        });
     </script>
 </body>
 </html>
