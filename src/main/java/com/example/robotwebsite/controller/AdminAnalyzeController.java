@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
-@RequestMapping({"/admin/analyze", "/analyze"})
 public class AdminAnalyzeController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminAnalyzeController.class);
@@ -37,12 +36,12 @@ public class AdminAnalyzeController {
         this.objectMapper = objectMapper;
     }
 
-    @GetMapping
+    @GetMapping({"/admin/analyze", "/analyze"})
     public String index(Model model) {
         return "admin/analyze";
     }
 
-    @GetMapping({"/api", "/data"})
+    @GetMapping({"/admin/analyze/api", "/admin/analyze/data", "/analyze/api", "/analyze/data", "/recommended-kifu/api", "/recommended-kifu/data", "/recommend-kifu/api", "/recommend-kifu/data"})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> analyzeApi() {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

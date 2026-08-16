@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>おすすめ棋譜 - 推し囲碁棋士を見つけよう</title>
+    <title th:text="${title} != null ? ${title} + ' - 推し囲碁棋士を見つけよう' : 'おすすめ棋譜 - 推し囲碁棋士を見つけよう'">おすすめ棋譜 - 推し囲碁棋士を見つけよう</title>
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
@@ -11,6 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         .navbar-custom {
             background-color: #004085; /* 濃い青色 */
@@ -20,6 +21,33 @@
         }
         .navbar-custom .nav-link:hover {
             color: #d1ecf1;
+        }
+        pre code {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .goban-board-wrapper {
+            background: #e4af63;
+            background: linear-gradient(145deg, #e6b367 0%, #d89f50 100%);
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), inset 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            display: inline-block;
+        }
+        .goban-controls-btn-group {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            width: 100%;
+        }
+        .goban-controls-btn-group .btn {
+            white-space: nowrap !important;
+            padding: 0.25rem 2px !important;
+            font-size: 0.78rem;
+            flex: 1 1 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
         }
     </style>
 </head>
@@ -93,7 +121,171 @@
     </nav>
 
     <main class="flex-grow-1">
-        <!-- おすすめ棋譜押下時は何も表示しない -->
+        <div class="container-fluid px-lg-5 my-4">
+            <div class="row justify-content-center">
+                <div class="col-12 col-xl-11">
+
+                    <!-- アラート表示 -->
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <div id="dynamicErrorAlert" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span id="dynamicErrorMessage"></span>
+                        <button type="button" class="btn-close" onclick="document.getElementById('dynamicErrorAlert').style.display='none'" aria-label="Close"></button>
+                    </div>
+
+                    <!-- 読み込み中表示 -->
+                    <div id="loadingIndicator" class="card shadow border-0 mb-4 text-center py-5">
+                        <div class="card-body">
+                            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <h5 class="card-title text-secondary mb-0">表示されるまでしばらくお待ちください</h5>
+                        </div>
+                    </div>
+
+                    <!-- 局面表示（碁盤表示）＆ 勝率グラフ 統合カード -->
+                    <div class="card shadow border-0 mb-4" id="gobanCard" style="display: none;">
+                        <div class="card-header bg-dark text-white py-2">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="d-flex align-items-center">
+                                    <h4 class="mb-0 fs-5"><i class="bi bi-question-diamond-fill text-warning me-2"></i> 勝率急落局面から出題！次の一手クイズ</h4>
+                                    <span class="badge bg-primary ms-2" id="boardStatusBadge">最終手表示</span>
+                                </div>
+                                <button type="button" class="btn btn-outline-light btn-sm" id="btnGoToQuizTurn">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
+                                </button>
+                            </div>
+                            <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください</p>
+                        </div>
+                        <div class="card-body p-2 p-md-3">
+                            <div class="row g-2 g-md-3 align-items-start">
+                                <!-- 左カラム：手番操作 ＆ 碁盤表示 -->
+                                <div class="col-lg-5 col-xl-5 text-center">
+                                    <!-- 手番ナビゲーション操作バー -->
+                                    <div id="gobanControls" class="mx-auto mb-1" style="max-width: 360px; width: 100%;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1 px-1 small">
+                                            <span class="fw-bold text-dark" id="gobanMoveLabel">0手目 / 全0手</span>
+                                            <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
+                                            <span class="badge bg-dark" id="gobanCapturesText">アゲハマ: 黒 0 / 白 0</span>
+                                        </div>
+                                        <div class="mb-1">
+                                            <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
+                                        </div>
+                                        <div class="btn-group btn-group-sm goban-controls-btn-group w-100" role="group">
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初の手"><i class="bi bi-chevron-bar-left"></i>最初</button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanPrev10" title="10手戻る"><i class="bi bi-chevron-double-left"></i>-10</button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前の手"><i class="bi bi-chevron-left"></i>前手</button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次の手">次手<i class="bi bi-chevron-right"></i></button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanNext10" title="10手進む">+10<i class="bi bi-chevron-double-right"></i></button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後の手 (最終手)">最後<i class="bi bi-chevron-bar-right"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 局面（碁盤）描画領域 -->
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <div class="goban-board-wrapper" id="gobanWrapper" style="max-width: 360px; width: 100%;">
+                                            <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 右カラム：勝率推移グラフ ＆ サマリー情報 -->
+                                <div class="col-lg-7 col-xl-7 d-flex flex-column" style="min-height: 360px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold fs-6 text-secondary"><i class="bi bi-graph-up me-1"></i> 勝率・評価値推移グラフ</span>
+                                        <div id="chartStats" class="d-flex gap-2 align-items-center" style="display: none;">
+                                            <span class="badge bg-light text-dark border" id="statLeadStatus">互角</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- グラフ描画エリア -->
+                                    <div class="position-relative flex-grow-1" style="min-height: 300px; width: 100%;">
+                                        <canvas id="winrateChart"></canvas>
+                                    </div>
+                                    
+                                    <div id="chartNoDataAlert" class="alert alert-warning mt-2 text-start" style="display: none;">
+                                        <i class="bi bi-info-circle me-2"></i> 解析レスポンスから勝率データを取得できませんでした。
+                                    </div>
+                                    <div id="gobanNoDataAlert" class="alert alert-warning mt-2 text-start" style="display: none;">
+                                        <i class="bi bi-info-circle me-2"></i> SGFデータが取得できなかったため、碁盤を表示できませんでした。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 次の一手クイズカード -->
+                    <div class="card shadow border-0 mb-4" id="quizCard" style="display: none;">
+                        <div class="card-body p-4">
+                            <!-- 座標入力フォーム -->
+                            <div class="row g-2 align-items-center mb-2" id="quizInputForm">
+                                <div class="col-sm-6 col-md-4">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light font-monospace"><i class="bi bi-geo-alt-fill text-primary"></i></span>
+                                        <input type="text" class="form-control font-monospace text-uppercase" id="quizCoordInput" placeholder="例：Q18" maxlength="5" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-primary" id="btnSubmitQuizAnswer">
+                                        <i class="bi bi-check-lg me-1"></i> 回答する
+                                    </button>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-outline-secondary" id="btnResetQuiz" style="display: none;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> もう一度解く
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="quizInputValidation" class="text-danger small mb-2" style="display: none;"></div>
+
+                            <!-- 回答結果・解説エリア -->
+                            <div id="quizResultArea" class="mt-4 p-3 rounded" style="display: none;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span id="quizResultIcon" class="fs-4 me-2"></span>
+                                    <h5 id="quizResultTitle" class="mb-0 fw-bold"></h5>
+                                </div>
+                                <p id="quizExplanation" class="mb-2"></p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered bg-white mb-0" id="quizSummaryTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>種別</th>
+                                                <th>着手座標</th>
+                                                <th>勝率</th>
+                                                <th>目差リード</th>
+                                                <th>解説</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="quizSummaryTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 解析結果表示カード -->
+                    <div class="card shadow border-0 mb-4" id="resultJsonCard" style="display: none;">
+                        <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0 fs-5"><i class="bi bi-file-earmark-code"></i> 解析結果 (JSON)</h4>
+                            <button class="btn btn-sm btn-outline-light" onclick="copyResult()">
+                                <i class="bi bi-clipboard"></i> コピー
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="max-height: 600px; overflow-y: auto;"><code id="resultJsonArea" th:text="${resultJson}"></code></pre>
+                        </div>
+                    </div>
+
+                    <!-- SGFデータ受け渡し用（非表示） -->
+                    <script id="sgfData" type="text/plain" th:utext="${sgfContent}"></script>
+
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="bg-dark text-white py-4 mt-auto">
@@ -206,38 +398,1418 @@
         }
 
         function saveFavoritePlayer() {
-            const input = document.getElementById('favoritePlayerInput').value.trim();
-            if (input) {
-                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
-                const uniqueNames = [...new Set(names)];
-                
-                if (uniqueNames.length > 5) {
-                    alert('推し棋士の登録は5人までです。');
-                    return;
-                }
-                
+            const input = document.getElementById('favoritePlayerInput');
+            const val = input.value.trim();
+            if (val) {
+                const names = val.split(/[,、\s]+/).map(s => s.trim()).filter(s => s.length > 0);
+                const uniqueNames = [...new Set(names)].slice(0, 5);
                 localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
-                localStorage.setItem('favoriteOnly', 'true');
                 localStorage.removeItem('favoritePlayer');
-                bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
-                location.reload();
             } else {
-                alert('棋士名を入力してください');
+                localStorage.removeItem('favoritePlayers');
+                localStorage.removeItem('favoritePlayer');
             }
+            const modalEl = document.getElementById('favoritePlayerModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            location.reload();
         }
-        
+
         function clearFavoritePlayer() {
             localStorage.removeItem('favoritePlayers');
             localStorage.removeItem('favoritePlayer');
-            localStorage.setItem('favoriteOnly', 'false');
-            sessionStorage.setItem('favoriteModalDismissed', 'true');
             const modalEl = document.getElementById('favoritePlayerModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
             location.reload();
         }
+
+        function copyResult() {
+            const text = document.getElementById('resultJsonArea').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('解析結果をクリップボードにコピーしました。');
+            }).catch(err => {
+                console.error('コピーに失敗しました', err);
+            });
+        }
+
+        // 局面（碁盤）のサイズ切り替え関数
+        function resizeBoard(sizePx) {
+            const wrapper = document.getElementById('gobanWrapper');
+            const controls = document.getElementById('gobanControls');
+            if (wrapper) {
+                wrapper.style.maxWidth = sizePx + 'px';
+            }
+            if (controls) {
+                controls.style.maxWidth = sizePx + 'px';
+            }
+
+            const btnSmall = document.getElementById('btnSizeSmall');
+            const btnMedium = document.getElementById('btnSizeMedium');
+            const btnLarge = document.getElementById('btnSizeLarge');
+
+            if (btnSmall) btnSmall.classList.remove('active');
+            if (btnMedium) btnMedium.classList.remove('active');
+            if (btnLarge) btnLarge.classList.remove('active');
+
+            if (sizePx <= 320 && btnSmall) {
+                btnSmall.classList.add('active');
+            } else if (sizePx >= 420 && btnLarge) {
+                btnLarge.classList.add('active');
+            } else if (btnMedium) {
+                btnMedium.classList.add('active');
+            }
+        }
+        window.resizeBoard = resizeBoard;
+
+        const analyzeForm = document.getElementById('analyzeForm');
+        if (analyzeForm) {
+            analyzeForm.addEventListener('submit', function() {
+                const btn = document.getElementById('submitBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>解析中...';
+                }
+            });
+        }
+
+        // 共通状態
+        window.quizData = null;
+        window.quizMarkers = []; // 碁盤上に描画する選択肢マーカー
+
+        // 勝率折れ線グラフおよび解析データの処理
+        function initAnalysisView() {
+            let movesRawArray = [];
+
+            (function() {
+                const resultElem = document.getElementById('resultJsonArea');
+                if (!resultElem) return;
+
+                const rawJson = resultElem.innerText.trim();
+                if (!rawJson) return;
+
+                try {
+                    let parsedData = null;
+                    try {
+                        parsedData = JSON.parse(rawJson);
+                    } catch (e) {
+                        // JSON lines (各行が1つのJSONオブジェクト) の場合に対応
+                        const lines = rawJson.split(/\r?\n/);
+                        parsedData = [];
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (trimmed) {
+                                try {
+                                    parsedData.push(JSON.parse(trimmed));
+                                } catch (err) {}
+                            }
+                        }
+                    }
+
+                    // 配列データの取得
+                    let movesArray = [];
+                    if (Array.isArray(parsedData)) {
+                        movesArray = parsedData;
+                    } else if (parsedData && typeof parsedData === 'object') {
+                        if (Array.isArray(parsedData.results)) {
+                            movesArray = parsedData.results;
+                        } else if (Array.isArray(parsedData.analysis)) {
+                            movesArray = parsedData.analysis;
+                        } else if (Array.isArray(parsedData.moves)) {
+                            movesArray = parsedData.moves;
+                        } else if (Array.isArray(parsedData.data)) {
+                            movesArray = parsedData.data;
+                        } else if (parsedData.turnNumber !== undefined || (parsedData.rootInfo && parsedData.rootInfo.winrate !== undefined)) {
+                            movesArray = [parsedData];
+                        }
+                    }
+
+                    movesRawArray = movesArray;
+                    window.parsedAnalysisData = parsedData;
+
+                    const chartPoints = [];
+                    movesArray.forEach((item, index) => {
+                        if (!item || typeof item !== 'object') return;
+
+                        let turnNumber = null;
+                        if (item.turnNumber !== undefined && item.turnNumber !== null) turnNumber = Number(item.turnNumber);
+                        else if (item.turn !== undefined && item.turn !== null) turnNumber = Number(item.turn);
+                        else if (item.moveNumber !== undefined && item.moveNumber !== null) turnNumber = Number(item.moveNumber);
+                        else if (item.move !== undefined && typeof item.move === 'number') turnNumber = Number(item.move);
+                        else turnNumber = index;
+
+                        // プレイヤーの判定（W: 白, B: 黒）
+                        let player = item.player || (item.rootInfo && item.rootInfo.currentPlayer) || item.currentPlayer || null;
+                        if (typeof player === 'string') {
+                            player = player.toUpperCase().trim();
+                            if (player === 'BLACK') player = 'B';
+                            if (player === 'WHITE') player = 'W';
+                        }
+                        if (player !== 'B' && player !== 'W') {
+                            player = (turnNumber % 2 === 1) ? 'B' : 'W';
+                        }
+
+                        // 勝率の取得
+                        let rawWinrate = null;
+                        if (item.rootInfo && item.rootInfo.winrate !== undefined) {
+                            rawWinrate = item.rootInfo.winrate;
+                        } else if (item.rootInfo && item.rootInfo.winRate !== undefined) {
+                            rawWinrate = item.rootInfo.winRate;
+                        } else if (item.winrate !== undefined) {
+                            rawWinrate = item.winrate;
+                        } else if (item.winRate !== undefined) {
+                            rawWinrate = item.winRate;
+                        } else if (item.win_rate !== undefined) {
+                            rawWinrate = item.win_rate;
+                        }
+
+                        if (rawWinrate === null || rawWinrate === undefined || isNaN(rawWinrate)) {
+                            return;
+                        }
+
+                        let winrateNum = Number(rawWinrate);
+                        // 0.0〜1.0の場合はパーセンテージに変換
+                        let winratePct = (winrateNum <= 1.0 && winrateNum >= 0.0) ? (winrateNum * 100) : winrateNum;
+                        winratePct = Math.max(0, Math.min(100, winratePct));
+
+                        // player: Wが白、player: Bが黒
+                        let blackWinrate = 0;
+                        let whiteWinrate = 0;
+
+                        if (player === 'B') {
+                            blackWinrate = winratePct;
+                            whiteWinrate = 100 - winratePct;
+                        } else if (player === 'W') {
+                            whiteWinrate = winratePct;
+                            blackWinrate = 100 - winratePct;
+                        } else {
+                            blackWinrate = winratePct;
+                            whiteWinrate = 100 - winratePct;
+                        }
+
+                        let scoreLead = null;
+                        if (item.rootInfo && item.rootInfo.scoreLead !== undefined) {
+                            scoreLead = Number(item.rootInfo.scoreLead);
+                        } else if (item.scoreLead !== undefined) {
+                            scoreLead = Number(item.scoreLead);
+                        }
+
+                        chartPoints.push({
+                            turnNumber: turnNumber,
+                            player: player,
+                            blackWinrate: parseFloat(blackWinrate.toFixed(2)),
+                            whiteWinrate: parseFloat(whiteWinrate.toFixed(2)),
+                            scoreLead: scoreLead,
+                            rawItem: item
+                        });
+                    });
+
+                    if (chartPoints.length === 0) {
+                        const noData = document.getElementById('chartNoDataAlert');
+                        if (noData) noData.style.display = 'block';
+                        return;
+                    }
+
+                    chartPoints.sort((a, b) => a.turnNumber - b.turnNumber);
+
+                    // 1. 下落箇所の特定: Drop_i = Winrate_{i-1} - Winrate_i （着手側プレイヤーの勝率下落幅）
+                    let maxDrop = -1;
+                    let maxDropIndex = -1;
+                    let blunderTurn = -1;
+                    let quizTurn = -1;
+                    let dropPlayer = 'B';
+
+                    for (let i = 1; i < chartPoints.length; i++) {
+                        const prev = chartPoints[i - 1]; // 着手前局面 (例: 74手目)
+                        const curr = chartPoints[i];     // 着手後局面 (例: 75手目)
+
+                        // 着手したプレイヤーは着手前局面の手番（prev.player）
+                        const movingPlayer = prev.player || (curr.turnNumber % 2 === 1 ? 'B' : 'W');
+                        let drop = 0;
+                        if (movingPlayer === 'B') {
+                            // 黒番の着手によって黒勝率が下がった幅
+                            drop = prev.blackWinrate - curr.blackWinrate;
+                        } else {
+                            // 白番の着手によって白勝率が下がった幅
+                            drop = prev.whiteWinrate - curr.whiteWinrate;
+                        }
+
+                        if (drop > maxDrop) {
+                            maxDrop = drop;
+                            maxDropIndex = i;
+                            blunderTurn = curr.turnNumber; // 実戦で悪手を打った手数 (例: 75手目)
+                            quizTurn = prev.turnNumber;    // 出題局面（悪手の直前局面）の手数 (例: 74手目)
+                            dropPlayer = movingPlayer;     // 悪手を打ったプレイヤー (例: 'B')
+                        }
+                    }
+
+                    // 統計情報の更新（要素が存在する場合）
+                    const lastPoint = chartPoints[chartPoints.length - 1];
+                    const statTotalMoves = document.getElementById('statTotalMoves');
+                    if (statTotalMoves) statTotalMoves.innerText = chartPoints.length + ' 手 (' + chartPoints[0].turnNumber + '〜' + lastPoint.turnNumber + '手目)';
+                    const statFinalBlack = document.getElementById('statFinalBlackWinrate');
+                    if (statFinalBlack) statFinalBlack.innerText = lastPoint.blackWinrate.toFixed(1) + '%';
+                    const statFinalWhite = document.getElementById('statFinalWhiteWinrate');
+                    if (statFinalWhite) statFinalWhite.innerText = lastPoint.whiteWinrate.toFixed(1) + '%';
+
+                    const statLeadStatus = document.getElementById('statLeadStatus');
+                    if (statLeadStatus) {
+                        if (lastPoint.blackWinrate >= 55) {
+                            statLeadStatus.innerHTML = '<span class="text-dark">黒優勢 (' + lastPoint.blackWinrate.toFixed(1) + '%)</span>';
+                        } else if (lastPoint.whiteWinrate >= 55) {
+                            statLeadStatus.innerHTML = '<span class="text-primary">白優勢 (' + lastPoint.whiteWinrate.toFixed(1) + '%)</span>';
+                        } else {
+                            statLeadStatus.innerHTML = '<span class="text-secondary">互角</span>';
+                        }
+                    }
+                    const chartStats = document.getElementById('chartStats');
+                    if (chartStats) chartStats.style.display = 'flex';
+
+                    // 4. Chart.jsでグラフ描画（最大下落ポイントをハイライト）
+                    const canvas = document.getElementById('winrateChart');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+
+                    const blackPointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
+                    const whitePointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#0d6efd'));
+                    const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
+
+                    const winrateChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: chartPoints.map(p => p.turnNumber + '手目' + (p.turnNumber === blunderTurn ? ' ⚠️最大下落' : '')),
+                            datasets: [
+                                {
+                                    label: '黒 (B) 勝率',
+                                    data: chartPoints.map(p => p.blackWinrate),
+                                    borderColor: '#212529',
+                                    backgroundColor: 'rgba(33, 37, 41, 0.1)',
+                                    borderWidth: 2.5,
+                                    pointBackgroundColor: blackPointColors,
+                                    pointBorderColor: '#ffffff',
+                                    pointBorderWidth: 1.5,
+                                    pointRadius: pointRadiusList,
+                                    pointHoverRadius: 8,
+                                    tension: 0.2,
+                                    fill: false
+                                },
+                                {
+                                    label: '白 (W) 勝率',
+                                    data: chartPoints.map(p => p.whiteWinrate),
+                                    borderColor: '#0d6efd',
+                                    backgroundColor: 'rgba(130, 110, 253, 0.1)',
+                                    borderWidth: 2.5,
+                                    pointBackgroundColor: whitePointColors,
+                                    pointBorderColor: '#0d6efd',
+                                    pointBorderWidth: 2,
+                                    pointRadius: pointRadiusList,
+                                    pointHoverRadius: 8,
+                                    tension: 0.2,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            onClick: function(evt, elements) {
+                                if (elements && elements.length > 0) {
+                                    const index = elements[0].index;
+                                    const pt = chartPoints[index];
+                                    if (pt && typeof window.goToGobanTurn === 'function') {
+                                        window.goToGobanTurn(pt.turnNumber);
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        font: { size: 13, weight: 'bold' },
+                                        padding: 15
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        title: function(tooltipItems) {
+                                            const idx = tooltipItems[0].dataIndex;
+                                            const p = chartPoints[idx];
+                                            let title = p.turnNumber + '手目 (' + (p.player === 'B' ? '黒番 / Player: B' : '白番 / Player: W') + ')';
+                                            if (p.turnNumber === blunderTurn) {
+                                                title += ' ⚠️ 最大勝率下落 (' + (dropPlayer === 'B' ? '黒' : '白') + ' -' + maxDrop.toFixed(1) + '%)';
+                                            }
+                                            return title;
+                                        },
+                                        label: function(context) {
+                                            return ' ' + context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                        },
+                                        afterBody: function(tooltipItems) {
+                                            const idx = tooltipItems[0].dataIndex;
+                                            const p = chartPoints[idx];
+                                            const res = [];
+                                            if (p.scoreLead !== null && p.scoreLead !== undefined) {
+                                                const sign = p.scoreLead > 0 ? '+' : '';
+                                                res.push('目差リード (scoreLead): ' + sign + p.scoreLead.toFixed(1) + ' 目');
+                                            }
+                                            if (p.turnNumber === blunderTurn) {
+                                                res.push('★クリックでクイズ出題局面にジャンプできます');
+                                            }
+                                            return res;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    max: 100,
+                                    title: {
+                                        display: true,
+                                        text: '勝率 (%)',
+                                        font: { weight: 'bold' }
+                                    },
+                                    ticks: {
+                                        stepSize: 10,
+                                        callback: function(value) {
+                                            return value + '%';
+                                        }
+                                    },
+                                    grid: {
+                                        color: function(context) {
+                                            if (context.tick && context.tick.value === 50) {
+                                                return 'rgba(220, 53, 69, 0.5)';
+                                            }
+                                            return 'rgba(0, 0, 0, 0.08)';
+                                        },
+                                        lineWidth: function(context) {
+                                            if (context.tick && context.tick.value === 50) {
+                                                return 2;
+                                            }
+                                            return 1;
+                                        }
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '手数 (Turn)',
+                                        font: { weight: 'bold' }
+                                    },
+                                    ticks: {
+                                        maxTicksLimit: 20
+                                    },
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // 盤面手番とグラフの連動用グローバル関数
+                    window.syncChartWithTurn = function(turnNumber) {
+                        if (!winrateChart || !chartPoints || chartPoints.length === 0) return;
+
+                        const dataIndex = chartPoints.findIndex(p => p.turnNumber === turnNumber);
+                        if (dataIndex !== -1) {
+                            winrateChart.setActiveElements([
+                                { datasetIndex: 0, index: dataIndex },
+                                { datasetIndex: 1, index: dataIndex }
+                            ]);
+                            if (winrateChart.tooltip) {
+                                winrateChart.tooltip.setActiveElements([
+                                    { datasetIndex: 0, index: dataIndex },
+                                    { datasetIndex: 1, index: dataIndex }
+                                ]);
+                            }
+                        } else {
+                            winrateChart.setActiveElements([]);
+                            if (winrateChart.tooltip) {
+                                winrateChart.tooltip.setActiveElements([]);
+                            }
+                        }
+                        winrateChart.update('none');
+                    };
+
+                    // 2. 3. クイズデータの生成とUI表示の準備
+                    if (maxDrop > 0 && quizTurn >= 0) {
+                        window.quizTurnGlobal = quizTurn;
+                        window.blunderTurnGlobal = blunderTurn;
+                        window.maxDropGlobal = maxDrop;
+                        window.dropPlayerGlobal = dropPlayer;
+                        window.chartPointsGlobal = chartPoints;
+                    }
+
+                } catch (err) {
+                    console.error('グラフの生成中にエラーが発生しました:', err);
+                    const noData = document.getElementById('chartNoDataAlert');
+                    if (noData) {
+                        noData.innerText = 'グラフの描画に失敗しました: ' + err.message;
+                        noData.style.display = 'block';
+                    }
+                }
+            })();
+
+            // 局面（碁盤）の描画処理（内蔵Go盤エンジン）
+            (function() {
+                const canvas = document.getElementById('gobanCanvas');
+                if (!canvas) return;
+
+                const sgfElem = document.getElementById('sgfData');
+                let sgfContent = sgfElem ? sgfElem.textContent.trim() : '';
+                if (!sgfContent && window.parsedAnalysisData) {
+                    if (window.parsedAnalysisData.sgf_content) sgfContent = window.parsedAnalysisData.sgf_content;
+                    else if (window.parsedAnalysisData.sgf) sgfContent = window.parsedAnalysisData.sgf;
+                    else if (Array.isArray(window.parsedAnalysisData) && window.parsedAnalysisData.length > 0) {
+                        for (const item of window.parsedAnalysisData) {
+                            if (item && item.sgf_content) {
+                                sgfContent = item.sgf_content;
+                                break;
+                            } else if (item && item.sgf) {
+                                sgfContent = item.sgf;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!sgfContent) {
+                    const noDataAlert = document.getElementById('gobanNoDataAlert');
+                    if (noDataAlert) noDataAlert.style.display = 'block';
+                    const controls = document.getElementById('gobanControls');
+                    if (controls) controls.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    // SGFパーサー
+                    function parseSGF(text) {
+                        let size = 19;
+                        const szMatch = text.match(/SZ\[(\d+)\]/i);
+                        if (szMatch) {
+                            size = parseInt(szMatch[1], 10);
+                        }
+
+                        const initialBlack = [];
+                        const initialWhite = [];
+                        const moves = [];
+
+                        // 初期配置石 (AB/AW)
+                        const abMatches = text.matchAll(/AB(\[[a-z]{2}\])+/gi);
+                        for (const match of abMatches) {
+                            const coords = match[0].match(/\[([a-z]{2})\]/gi);
+                            if (coords) {
+                                coords.forEach(c => {
+                                    const inner = c.slice(1, -1).toLowerCase();
+                                    const x = inner.charCodeAt(0) - 97;
+                                    const y = inner.charCodeAt(1) - 97;
+                                    if (x >= 0 && x < size && y >= 0 && y < size) {
+                                        initialBlack.push({ x, y });
+                                    }
+                                });
+                            }
+                        }
+
+                        const awMatches = text.matchAll(/AW(\[[a-z]{2}\])+/gi);
+                        for (const match of awMatches) {
+                            const coords = match[0].match(/\[([a-z]{2})\]/gi);
+                            if (coords) {
+                                coords.forEach(c => {
+                                    const inner = c.slice(1, -1).toLowerCase();
+                                    const x = inner.charCodeAt(0) - 97;
+                                    const y = inner.charCodeAt(1) - 97;
+                                    if (x >= 0 && x < size && y >= 0 && y < size) {
+                                        initialWhite.push({ x, y });
+                                    }
+                                });
+                            }
+                        }
+
+                        // 着手ノードの抽出 (;B[..] または ;W[..])
+                        const nodeRegex = /;([BW])\[([a-zA-Z]*)\]/g;
+                        let nodeMatch;
+                        while ((nodeMatch = nodeRegex.exec(text)) !== null) {
+                            const color = nodeMatch[1].toUpperCase() === 'B' ? 1 : 2;
+                            const coordStr = nodeMatch[2].toLowerCase();
+                            if (!coordStr || coordStr === '' || (coordStr === 'tt' && size <= 19)) {
+                                moves.push({ color, x: -1, y: -1, pass: true });
+                            } else {
+                                const x = coordStr.charCodeAt(0) - 97;
+                                const y = coordStr.charCodeAt(1) - 97;
+                                if (x >= 0 && x < size && y >= 0 && y < size) {
+                                    moves.push({ color, x, y, pass: false });
+                                } else {
+                                    moves.push({ color, x: -1, y: -1, pass: true });
+                                }
+                            }
+                        }
+
+                        return { size, initialBlack, initialWhite, moves };
+                    }
+
+                    // 局面履歴とアゲハマ・呼吸点の計算
+                    function computeStates(parsed) {
+                        const size = parsed.size;
+                        const initialBoard = Array(size).fill(null).map(() => Array(size).fill(0));
+                        parsed.initialBlack.forEach(p => { initialBoard[p.y][p.x] = 1; });
+                        parsed.initialWhite.forEach(p => { initialBoard[p.y][p.x] = 2; });
+
+                        const states = [];
+                        let currentBoard = initialBoard.map(r => [...r]);
+                        let captures = { black: 0, white: 0 };
+
+                        states.push({
+                            turn: 0,
+                            board: currentBoard.map(r => [...r]),
+                            move: null,
+                            captures: { ...captures }
+                        });
+
+                        const getGroup = (b, sx, sy) => {
+                            const color = b[sy][sx];
+                            if (color === 0) return { liberties: new Set(), group: [] };
+
+                            const visited = Array(size).fill(null).map(() => Array(size).fill(false));
+                            const group = [];
+                            const liberties = new Set();
+                            const stack = [[sx, sy]];
+                            visited[sy][sx] = true;
+
+                            const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                            while (stack.length > 0) {
+                                const [cx, cy] = stack.pop();
+                                group.push([cx, cy]);
+
+                                for (const [dx, dy] of dirs) {
+                                    const nx = cx + dx;
+                                    const ny = cy + dy;
+                                    if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                                        if (b[ny][nx] === 0) {
+                                            liberties.add(nx + ',' + ny);
+                                        } else if (b[ny][nx] === color && !visited[ny][nx]) {
+                                            visited[ny][nx] = true;
+                                            stack.push([nx, ny]);
+                                        }
+                                    }
+                                }
+                            }
+                            return { liberties, group };
+                        };
+
+                        parsed.moves.forEach((m, idx) => {
+                            const turnNum = idx + 1;
+                            const nextBoard = currentBoard.map(r => [...r]);
+                            let nextCaptures = { ...captures };
+
+                            if (!m.pass && m.x >= 0 && m.y >= 0) {
+                                nextBoard[m.y][m.x] = m.color;
+                                const opponent = m.color === 1 ? 2 : 1;
+                                const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                                let capturedCount = 0;
+
+                                for (const [dx, dy] of dirs) {
+                                    const nx = m.x + dx;
+                                    const ny = m.y + dy;
+                                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && nextBoard[ny][nx] === opponent) {
+                                        const oppGroup = getGroup(nextBoard, nx, ny);
+                                        if (oppGroup.liberties.size === 0) {
+                                            for (const [gx, gy] of oppGroup.group) {
+                                                if (nextBoard[gy][gx] !== 0) {
+                                                    nextBoard[gy][gx] = 0;
+                                                    capturedCount++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (m.color === 1) nextCaptures.black += capturedCount;
+                                else nextCaptures.white += capturedCount;
+
+                                // 自殺手防止チェック
+                                const selfGroup = getGroup(nextBoard, m.x, m.y);
+                                if (selfGroup.liberties.size === 0) {
+                                    for (const [gx, gy] of selfGroup.group) {
+                                        nextBoard[gy][gx] = 0;
+                                    }
+                                }
+                            }
+
+                            currentBoard = nextBoard;
+                            captures = nextCaptures;
+                            states.push({
+                                turn: turnNum,
+                                board: currentBoard.map(r => [...r]),
+                                move: m,
+                                captures: { ...captures }
+                            });
+                        });
+
+                        return states;
+                    }
+
+                    const parsed = parseSGF(sgfContent);
+                    if (!parsed || !parsed.size) {
+                        throw new Error('SGFの解析に失敗しました。');
+                    }
+
+                    const states = computeStates(parsed);
+                    const size = parsed.size;
+                    const maxTurn = states.length - 1;
+
+                    // 解析手番範囲 (turnRange) で指定した最後の手番を取得
+                    let initialTurn = maxTurn;
+                    const turnRangeElem = document.getElementById('turnRange');
+                    if (turnRangeElem && turnRangeElem.value) {
+                        const rangeStr = turnRangeElem.value.trim();
+                        if (rangeStr) {
+                            const numbers = rangeStr.match(/\d+/g);
+                            if (numbers && numbers.length > 0) {
+                                const lastNum = parseInt(numbers[numbers.length - 1], 10);
+                                if (!isNaN(lastNum)) {
+                                initialTurn = Math.max(0, Math.min(maxTurn, lastNum));
+                            }
+                        }
+                    }
+                }
+
+                let currentTurn = initialTurn;
+
+                // 星の位置定義
+                function getStarPoints(s) {
+                    if (s === 19) {
+                        return [
+                            [3, 3], [3, 9], [3, 15],
+                            [9, 3], [9, 9], [9, 15],
+                            [15, 3], [15, 9], [15, 15]
+                        ];
+                    } else if (s === 13) {
+                        return [[3, 3], [3, 9], [9, 3], [9, 9], [6, 6]];
+                    } else if (s === 9) {
+                        return [[2, 2], [2, 6], [6, 2], [6, 6], [4, 4]];
+                    }
+                    return [];
+                }
+
+                const colLetters = ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T'];
+                function formatMoveText(m) {
+                    if (!m) return '開始局面';
+                    const colorStr = m.color === 1 ? '黒' : '白';
+                    if (m.pass) return colorStr + ' パス';
+                    const col = colLetters[m.x] || '?';
+                    const row = size - m.y;
+                    return colorStr + ' ' + col + row;
+                }
+
+                // Canvas描画
+                function renderBoard(turnIdx) {
+                    const state = states[turnIdx];
+                    if (!state) return;
+
+                    const ctx = canvas.getContext('2d');
+                    const w = 520;
+                    const h = 520;
+
+                    const dpr = window.devicePixelRatio || 1;
+                    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+                        canvas.width = w * dpr;
+                        canvas.height = h * dpr;
+                    }
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                    const pad = 28;
+                    const boardW = w - pad * 2;
+                    const cell = boardW / (size - 1);
+
+                    // 木目グラデーション
+                    const grad = ctx.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, w * 0.7);
+                    grad.addColorStop(0, '#e8be78');
+                    grad.addColorStop(1, '#d3994a');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, w, h);
+
+                    // 座標ラベル
+                    ctx.fillStyle = '#492a0b';
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    for (let i = 0; i < size; i++) {
+                        const px = pad + i * cell;
+                        const letter = colLetters[i] || '';
+                        ctx.fillText(letter, px, 14);
+                        ctx.fillText(letter, px, h - 14);
+
+                        const py = pad + i * cell;
+                        const rowStr = String(size - i);
+                        ctx.fillText(rowStr, 14, py);
+                        ctx.fillText(rowStr, w - 14, py);
+                    }
+
+                    // 罫線
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = '#2d1b09';
+                    for (let i = 0; i < size; i++) {
+                        const pos = pad + i * cell;
+                        // 横線
+                        ctx.beginPath();
+                        ctx.moveTo(pad, pos);
+                        ctx.lineTo(w - pad, pos);
+                        ctx.stroke();
+                        // 縦線
+                        ctx.beginPath();
+                        ctx.moveTo(pos, pad);
+                        ctx.lineTo(pos, h - pad);
+                        ctx.stroke();
+                    }
+
+                    // 星
+                    const stars = getStarPoints(size);
+                    ctx.fillStyle = '#2d1b09';
+                    stars.forEach(([sx, sy]) => {
+                        const px = pad + sx * cell;
+                        const py = pad + sy * cell;
+                        ctx.beginPath();
+                        ctx.arc(px, py, size === 19 ? 3.5 : 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+
+                    // 石の描画
+                    const radius = cell * 0.46;
+                    const b = state.board;
+
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const v = b[y][x];
+                            if (v === 0) continue;
+
+                            const px = pad + x * cell;
+                            const py = pad + y * cell;
+
+                            ctx.save();
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                            ctx.shadowBlur = 4;
+                            ctx.shadowOffsetX = 1.5;
+                            ctx.shadowOffsetY = 2;
+
+                            ctx.beginPath();
+                            ctx.arc(px, py, radius, 0, Math.PI * 2);
+
+                            if (v === 1) {
+                                // 黒石
+                                const stoneGrad = ctx.createRadialGradient(px - radius * 0.3, py - radius * 0.3, radius * 0.1, px, py, radius);
+                                stoneGrad.addColorStop(0, '#555555');
+                                stoneGrad.addColorStop(0.5, '#1e1e1e');
+                                stoneGrad.addColorStop(1, '#050505');
+                                ctx.fillStyle = stoneGrad;
+                                ctx.fill();
+                            } else if (v === 2) {
+                                // 白石
+                                const stoneGrad = ctx.createRadialGradient(px - radius * 0.3, py - radius * 0.3, radius * 0.1, px, py, radius);
+                                stoneGrad.addColorStop(0, '#ffffff');
+                                stoneGrad.addColorStop(0.75, '#e8e8e8');
+                                stoneGrad.addColorStop(1, '#c8c8c8');
+                                ctx.fillStyle = stoneGrad;
+                                ctx.fill();
+                            }
+                            ctx.restore();
+
+                            if (v === 2) {
+                                ctx.beginPath();
+                                ctx.arc(px, py, radius, 0, Math.PI * 2);
+                                ctx.strokeStyle = 'rgba(120, 120, 120, 0.4)';
+                                ctx.lineWidth = 0.8;
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    // 最終着手ハイライト
+                    if (state.move && !state.move.pass && state.move.x >= 0 && state.move.y >= 0) {
+                        const px = pad + state.move.x * cell;
+                        const py = pad + state.move.y * cell;
+                        ctx.beginPath();
+                        ctx.arc(px, py, radius * 0.45, 0, Math.PI * 2);
+                        ctx.strokeStyle = state.move.color === 1 ? '#ff3333' : '#d90429';
+                        ctx.lineWidth = 2.5;
+                        ctx.stroke();
+                    }
+
+                    // クイズマーカーの描画（出題局面（quizTurn）またはクイズ回答表示時）
+                    if (window.quizMarkers && window.quizMarkers.length > 0 && currentTurn === window.quizTurnGlobal) {
+                        window.quizMarkers.forEach(m => {
+                            if (m.x < 0 || m.x >= size || m.y < 0 || m.y >= size) return;
+                            const px = pad + m.x * cell;
+                            const py = pad + m.y * cell;
+
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(px, py, radius * 0.85, 0, Math.PI * 2);
+                            ctx.fillStyle = m.bgColor || (m.isCorrect ? 'rgba(25, 135, 84, 0.85)' : 'rgba(220, 53, 69, 0.85)');
+                            ctx.fill();
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+
+                            // 文字 (例: 実戦, 最善, 回答)
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = 'bold 11px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(m.label || m.id || '', px, py);
+                            ctx.restore();
+                        });
+                    }
+
+                    // クイズ選択中（未回答時）の仮配置マーカーまたはホバー表示
+                    if (window.quizSelectedMove && (!window.quizMarkers || window.quizMarkers.length === 0) && currentTurn === window.quizTurnGlobal) {
+                        const sel = window.quizSelectedMove;
+                        if (sel.x >= 0 && sel.x < size && sel.y >= 0 && sel.y < size) {
+                            const px = pad + sel.x * cell;
+                            const py = pad + sel.y * cell;
+
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(px, py, radius * 0.85, 0, Math.PI * 2);
+                            // 手番の色に応じた半透明表示
+                            if (window.dropPlayerGlobal === 'W') {
+                                ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                                ctx.strokeStyle = '#0d6efd';
+                            } else {
+                                ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                                ctx.strokeStyle = '#ffc107';
+                            }
+                            ctx.lineWidth = 3;
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // 中央に選択マーク
+                            ctx.fillStyle = window.dropPlayerGlobal === 'W' ? '#000000' : '#ffffff';
+                            ctx.font = 'bold 11px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('選択', px, py);
+                            ctx.restore();
+                        }
+                    }
+
+                    // UI要素の更新
+                    const moveLabel = document.getElementById('gobanMoveLabel');
+                    if (moveLabel) moveLabel.innerText = turnIdx + '手目 / 全' + maxTurn + '手';
+
+                    const lastMoveText = document.getElementById('gobanLastMoveText');
+                    if (lastMoveText) lastMoveText.innerText = '着手: ' + formatMoveText(state.move);
+
+                    const capturesText = document.getElementById('gobanCapturesText');
+                    if (capturesText) capturesText.innerText = 'アゲハマ: 黒 ' + state.captures.black + ' / 白 ' + state.captures.white;
+
+                    const slider = document.getElementById('gobanSlider');
+                    if (slider) slider.value = turnIdx;
+
+                    const badge = document.getElementById('boardStatusBadge');
+                    if (badge) {
+                        if (turnIdx === maxTurn) badge.innerText = '最終局面 (' + maxTurn + '手目)';
+                        else if (turnIdx === 0) badge.innerText = '開始局面 (0手目)';
+                        else badge.innerText = turnIdx + '手目の局面';
+                    }
+                }
+
+                function goToTurn(t) {
+                    currentTurn = Math.max(0, Math.min(maxTurn, t));
+                    renderBoard(currentTurn);
+
+                    // 勝率グラフ側も連動してハイライト
+                    if (typeof window.syncChartWithTurn === 'function') {
+                        window.syncChartWithTurn(currentTurn);
+                    }
+                }
+
+                window.goToGobanTurn = goToTurn;
+
+                // スライダー初期化
+                const slider = document.getElementById('gobanSlider');
+                if (slider) {
+                    slider.min = 0;
+                    slider.max = maxTurn;
+                    slider.value = currentTurn;
+                    slider.addEventListener('input', function() {
+                        goToTurn(parseInt(this.value, 10));
+                    });
+                }
+
+                // 操作ボタン
+                const btnFirst = document.getElementById('btnGobanFirst');
+                if (btnFirst) btnFirst.addEventListener('click', () => goToTurn(0));
+
+                const btnPrev10 = document.getElementById('btnGobanPrev10');
+                if (btnPrev10) btnPrev10.addEventListener('click', () => goToTurn(currentTurn - 10));
+
+                const btnPrev = document.getElementById('btnGobanPrev');
+                if (btnPrev) btnPrev.addEventListener('click', () => goToTurn(currentTurn - 1));
+
+                const btnNext = document.getElementById('btnGobanNext');
+                if (btnNext) btnNext.addEventListener('click', () => goToTurn(currentTurn + 1));
+
+                const btnNext10 = document.getElementById('btnGobanNext10');
+                if (btnNext10) btnNext10.addEventListener('click', () => goToTurn(currentTurn + 10));
+
+                const btnLast = document.getElementById('btnGobanLast');
+                if (btnLast) btnLast.addEventListener('click', () => goToTurn(maxTurn));
+
+                // 初回描画（初期局面）
+                renderBoard(currentTurn);
+                if (typeof window.syncChartWithTurn === 'function') {
+                    window.syncChartWithTurn(currentTurn);
+                }
+
+                // 碁盤クリック＆ホバーイベント（クイズ回答・座標選択連動）
+                function getBoardCoordsFromEvent(e) {
+                    const rect = canvas.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return null;
+                    const scaleX = 520 / rect.width;
+                    const scaleY = 520 / rect.height;
+                    const clickX = (e.clientX - rect.left) * scaleX;
+                    const clickY = (e.clientY - rect.top) * scaleY;
+
+                    const pad = 28;
+                    const cell = (520 - pad * 2) / (size - 1);
+                    const gx = Math.round((clickX - pad) / cell);
+                    const gy = Math.round((clickY - pad) / cell);
+
+                    if (gx >= 0 && gx < size && gy >= 0 && gy < size) {
+                        return { x: gx, y: gy };
+                    }
+                    return null;
+                }
+
+                function coordXYToStr(x, y) {
+                    const colLetters = 'ABCDEFGHJKLMNOPQRST';
+                    if (x < 0 || x >= colLetters.length || y < 0 || y >= size) return '';
+                    return colLetters[x] + (size - y);
+                }
+
+                canvas.addEventListener('mousemove', function(e) {
+                    const isQuizTurn = (currentTurn === window.quizTurnGlobal);
+                    const isAnswered = (window.quizMarkers && window.quizMarkers.length > 0);
+                    if (isQuizTurn && !isAnswered) {
+                        const coords = getBoardCoordsFromEvent(e);
+                        if (coords) {
+                            canvas.style.cursor = 'pointer';
+                        } else {
+                            canvas.style.cursor = 'default';
+                        }
+                    } else {
+                        canvas.style.cursor = 'default';
+                    }
+                });
+
+                canvas.addEventListener('click', function(e) {
+                    const isQuizTurn = (currentTurn === window.quizTurnGlobal);
+                    const isAnswered = (window.quizMarkers && window.quizMarkers.length > 0);
+                    
+                    // クイズ出題局面で未回答の場合、クリックで座標を選択
+                    if (isQuizTurn && !isAnswered) {
+                        const coords = getBoardCoordsFromEvent(e);
+                        if (coords) {
+                            const coordStr = coordXYToStr(coords.x, coords.y);
+                            window.quizSelectedMove = { x: coords.x, y: coords.y, coord: coordStr };
+                            
+                            const coordInput = document.getElementById('quizCoordInput');
+                            if (coordInput && !coordInput.disabled) {
+                                coordInput.value = coordStr;
+                                const validationMsg = document.getElementById('quizInputValidation');
+                                if (validationMsg) validationMsg.style.display = 'none';
+                            }
+                            renderBoard(currentTurn);
+                        }
+                    }
+                });
+
+                // クイズ機能の初期化
+                initQuizModule(parsed.moves);
+
+            } catch (err) {
+                console.error('碁盤の描画に失敗しました:', err);
+                const noDataAlert = document.getElementById('gobanNoDataAlert');
+                if (noDataAlert) {
+                    noDataAlert.innerText = '碁盤の描画に失敗しました: ' + err.message;
+                    noDataAlert.style.display = 'block';
+                }
+            }
+        })();
+
+        // 3. 次の一手クイズ生成およびUI制御モジュール
+        function initQuizModule(parsedSgfMoves) {
+            const quizCard = document.getElementById('quizCard');
+            if (!quizCard) return;
+
+            const quizTurn = window.quizTurnGlobal;
+            const blunderTurn = window.blunderTurnGlobal;
+            const maxDrop = window.maxDropGlobal;
+            const dropPlayer = window.dropPlayerGlobal;
+            const chartPoints = window.chartPointsGlobal;
+
+            if (quizTurn === undefined || quizTurn === null || quizTurn < 0 || !chartPoints) {
+                return;
+            }
+
+            // 出題局面のKataGo解析データを取得
+            const quizPoint = chartPoints.find(p => p.turnNumber === quizTurn);
+            const blunderPoint = chartPoints.find(p => p.turnNumber === blunderTurn);
+            const rawItem = quizPoint ? quizPoint.rawItem : null;
+
+            // KataGoの moveInfos 取得
+            let moveInfos = [];
+            if (rawItem) {
+                if (Array.isArray(rawItem.moveInfos)) {
+                    moveInfos = rawItem.moveInfos;
+                } else if (rawItem.rootInfo && Array.isArray(rawItem.rootInfo.moveInfos)) {
+                    moveInfos = rawItem.rootInfo.moveInfos;
+                }
+            }
+
+            // 実戦の着手手番
+            let actualMoveStr = null;
+            if (parsedSgfMoves && parsedSgfMoves.length >= blunderTurn && blunderTurn > 0) {
+                const actualMoveObj = parsedSgfMoves[blunderTurn - 1];
+                if (actualMoveObj) {
+                    if (actualMoveObj.pass) {
+                        actualMoveStr = 'PASS';
+                    } else {
+                        const colLetters = 'ABCDEFGHJKLMNOPQRST';
+                        const col = colLetters[actualMoveObj.x] || '';
+                        const row = 19 - actualMoveObj.y;
+                        actualMoveStr = col + row;
+                    }
+                }
+            }
+
+            // 座標ヘルパー関数（KataGo座標形式 "Q16" -> {x, y}）
+            function parseCoordToXY(coordStr) {
+                if (!coordStr || coordStr === 'PASS' || coordStr === 'pass') return { x: -1, y: -1, pass: true };
+                const c = coordStr.toUpperCase().trim();
+                const colLetter = c.charAt(0);
+                const rowNum = parseInt(c.slice(1), 10);
+                const colLetters = 'ABCDEFGHJKLMNOPQRST';
+                const x = colLetters.indexOf(colLetter);
+                if (x < 0 || isNaN(rowNum) || rowNum < 1 || rowNum > 19) {
+                    return { x: -1, y: -1, pass: false };
+                }
+                const y = 19 - rowNum;
+                return { x, y, pass: false };
+            }
+
+            // 最善手情報
+            let bestMoveInfo = moveInfos.length > 0 ? moveInfos[0] : null;
+            let bestMoveCoord = bestMoveInfo ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() : null;
+            let bWinrate = bestMoveInfo ? (bestMoveInfo.winrate ? (bestMoveInfo.winrate <= 1 ? bestMoveInfo.winrate * 100 : bestMoveInfo.winrate) : null) : null;
+            let bScore = bestMoveInfo ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) : null;
+
+            // 実戦手の情報
+            let matchInfo = actualMoveStr ? moveInfos.find(m => (m.move || m.point || '').toUpperCase() === actualMoveStr.toUpperCase()) : null;
+            let aWinrate = matchInfo ? (matchInfo.winrate ? (matchInfo.winrate <= 1 ? matchInfo.winrate * 100 : matchInfo.winrate) : null) : null;
+            let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? matchInfo.scoreLead : null) : null;
+
+            // UIの初期化
+            const playerName = dropPlayer === 'B' ? '黒' : '白';
+            const quizTitleElem = document.getElementById('quizTitle');
+            if (quizTitleElem) quizTitleElem.innerText = '出題局面: ' + quizTurn + '手目 (' + playerName + '番)';
+            const quizDescElem = document.getElementById('quizDescription');
+            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください';
+            const quizDropBadgeElem = document.getElementById('quizDropBadge');
+            if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
+
+            window.quizMarkers = []; // 初期状態では碁盤マーカーは非表示
+
+            const coordInput = document.getElementById('quizCoordInput');
+            const submitBtn = document.getElementById('btnSubmitQuizAnswer');
+            const resetBtn = document.getElementById('btnResetQuiz');
+            const validationMsg = document.getElementById('quizInputValidation');
+            const resultArea = document.getElementById('quizResultArea');
+
+            // 出題局面を表示ボタン
+            const btnGoToQuiz = document.getElementById('btnGoToQuizTurn');
+            if (btnGoToQuiz) {
+                btnGoToQuiz.onclick = () => {
+                    if (typeof window.goToGobanTurn === 'function') {
+                        window.goToGobanTurn(quizTurn);
+                    }
+                };
+            }
+
+            quizCard.style.display = 'block';
+
+            function submitAnswer() {
+                if (!coordInput) return;
+                const inputVal = coordInput.value.trim().toUpperCase();
+                if (!inputVal) {
+                    if (validationMsg) {
+                        validationMsg.innerText = '座標を入力してください（例：Q18）。';
+                        validationMsg.style.display = 'block';
+                    }
+                    return;
+                }
+
+                const xy = parseCoordToXY(inputVal);
+                if (xy.x < 0 || xy.y < 0 || xy.x >= 19 || xy.y >= 19) {
+                    if (validationMsg) {
+                        validationMsg.innerText = '有効な座標を入力してください（列: A〜T ※I除く、行: 1〜19、例: Q18）。';
+                        validationMsg.style.display = 'block';
+                    }
+                    return;
+                }
+
+                if (validationMsg) validationMsg.style.display = 'none';
+
+                // 出題局面に盤面を合わせる
+                if (typeof window.goToGobanTurn === 'function') {
+                    window.goToGobanTurn(quizTurn);
+                }
+
+                const isCorrect = (actualMoveStr && inputVal === actualMoveStr.toUpperCase());
+
+                // 碁盤マーカーの設定
+                const markers = [];
+                const actualXY = actualMoveStr ? parseCoordToXY(actualMoveStr) : null;
+                const bestXY = bestMoveCoord ? parseCoordToXY(bestMoveCoord) : null;
+
+                if (actualXY && actualXY.x >= 0) {
+                    markers.push({
+                        x: actualXY.x,
+                        y: actualXY.y,
+                        label: '実戦',
+                        bgColor: isCorrect ? 'rgba(25, 135, 84, 0.9)' : 'rgba(220, 53, 69, 0.9)'
+                    });
+                }
+
+                if (bestXY && bestXY.x >= 0 && (!actualMoveStr || bestMoveCoord !== actualMoveStr.toUpperCase())) {
+                    markers.push({
+                        x: bestXY.x,
+                        y: bestXY.y,
+                        label: '最善',
+                        bgColor: 'rgba(13, 110, 253, 0.9)'
+                    });
+                }
+
+                if (!isCorrect && (!bestMoveCoord || inputVal !== bestMoveCoord)) {
+                    markers.push({
+                        x: xy.x,
+                        y: xy.y,
+                        label: '回答',
+                        bgColor: 'rgba(108, 117, 125, 0.9)'
+                    });
+                }
+
+                window.quizMarkers = markers;
+                if (typeof window.goToGobanTurn === 'function') {
+                    window.goToGobanTurn(quizTurn);
+                }
+
+                // 結果エリアの表示
+                const resultIcon = document.getElementById('quizResultIcon');
+                const resultTitle = document.getElementById('quizResultTitle');
+                const explanation = document.getElementById('quizExplanation');
+                const tbody = document.getElementById('quizSummaryTableBody');
+
+                resultArea.style.display = 'block';
+                if (isCorrect) {
+                    resultArea.className = 'mt-4 p-3 rounded bg-success bg-opacity-10 border border-success';
+                    resultIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+                    resultTitle.className = 'mb-0 fw-bold text-success';
+                    resultTitle.innerText = '正解です！実戦で最も勝率が落ちた手は「' + actualMoveStr + '」でした。';
+                } else {
+                    resultArea.className = 'mt-4 p-3 rounded bg-danger bg-opacity-10 border border-danger';
+                    resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
+                    resultTitle.className = 'mb-0 fw-bold text-danger';
+                    resultTitle.innerText = '不正解です（入力: ' + inputVal + ' / 正解の実戦手: ' + (actualMoveStr || '-') + '）';
+                }
+
+                let explanationHtml = '実戦の' + blunderTurn + '手目で打たれた「<strong>' + (actualMoveStr || '-') + '</strong>」により、' + playerName + 'の勝率が <strong>' + maxDrop.toFixed(1) + '%</strong> 急落しました。';
+                if (bestMoveCoord) {
+                    explanationHtml += '<br>なお、AI(KataGo)が推奨した最善手は「<strong>' + bestMoveCoord + '</strong>」でした。';
+                }
+                if (!isCorrect && bestMoveCoord && inputVal === bestMoveCoord) {
+                    explanationHtml += '<br><span class="badge bg-primary">AI最善手</span> あなたが入力した「' + inputVal + '」はAI推奨の最善手でした！実戦では悪手が打たれましたが、着眼点は素晴らしいです。';
+                }
+                explanation.innerHTML = explanationHtml;
+
+                // サマリーテーブル
+                tbody.innerHTML = '';
+                
+                // 1. 実戦手（正解）
+                const trActual = document.createElement('tr');
+                trActual.className = isCorrect ? 'table-success fw-bold' : 'table-danger';
+                trActual.innerHTML = `
+                    <td><span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'}">実戦手 (正解)</span></td>
+                    <td class="font-monospace fw-bold">${actualMoveStr || '-'}</td>
+                    <td>${aWinrate !== null ? aWinrate.toFixed(1) + '%' : (blunderPoint ? (dropPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate).toFixed(1) + '%' : '-')}</td>
+                    <td>${aScore !== null ? (aScore > 0 ? '+' : '') + aScore.toFixed(1) + '目' : '-'}</td>
+                    <td>実戦で勝率が ${maxDrop.toFixed(1)}% 急落した着手</td>
+                `;
+                tbody.appendChild(trActual);
+
+                // 2. ユーザー入力（実戦手ともAI最善手とも異なる場合）
+                if (!isCorrect && (!bestMoveCoord || inputVal !== bestMoveCoord)) {
+                    const trUser = document.createElement('tr');
+                    trUser.className = 'table-secondary';
+                    const userMatch = moveInfos.find(m => (m.move || m.point || '').toUpperCase() === inputVal);
+                    const uWinrate = userMatch ? (userMatch.winrate ? (userMatch.winrate <= 1 ? userMatch.winrate * 100 : userMatch.winrate).toFixed(1) + '%' : '-') : '-';
+                    const uScore = userMatch ? (userMatch.scoreLead !== undefined ? (userMatch.scoreLead > 0 ? '+' : '') + userMatch.scoreLead.toFixed(1) + '目' : '-') : '-';
+                    trUser.innerHTML = `
+                        <td><span class="badge bg-secondary">あなたの入力</span></td>
+                        <td class="font-monospace fw-bold">${inputVal}</td>
+                        <td>${uWinrate}</td>
+                        <td>${uScore}</td>
+                        <td>あなたが予想した着手座標</td>
+                    `;
+                    tbody.appendChild(trUser);
+                }
+
+                // 3. AI最善手
+                if (bestMoveCoord) {
+                    const trBest = document.createElement('tr');
+                    trBest.className = (inputVal === bestMoveCoord && !isCorrect) ? 'table-primary fw-bold' : '';
+                    trBest.innerHTML = `
+                        <td><span class="badge bg-primary">AI最善手</span></td>
+                        <td class="font-monospace fw-bold">${bestMoveCoord}</td>
+                        <td>${bWinrate !== null ? bWinrate.toFixed(1) + '%' : '最善'}</td>
+                        <td>${bScore !== null ? (bScore > 0 ? '+' : '') + bScore.toFixed(1) + '目' : '-'}</td>
+                        <td>KataGo推奨の最善手</td>
+                    `;
+                    tbody.appendChild(trBest);
+                }
+
+                // 4. その他のAI候補手（上位2件程度）
+                for (let i = 1; i < Math.min(moveInfos.length, 3); i++) {
+                    const info = moveInfos[i];
+                    const mCoord = (info.move || info.point || '').toUpperCase();
+                    if (mCoord && mCoord !== actualMoveStr && mCoord !== bestMoveCoord && mCoord !== inputVal) {
+                        const mWinrate = info.winrate ? (info.winrate <= 1 ? info.winrate * 100 : info.winrate).toFixed(1) + '%' : '-';
+                        const mScore = info.scoreLead !== undefined ? (info.scoreLead > 0 ? '+' : '') + info.scoreLead.toFixed(1) + '目' : '-';
+                        const trCand = document.createElement('tr');
+                        trCand.innerHTML = `
+                            <td><span class="badge bg-light text-dark border">候補手 #${i+1}</span></td>
+                            <td class="font-monospace">${mCoord}</td>
+                            <td>${mWinrate}</td>
+                            <td>${mScore}</td>
+                            <td>AI検討候補手</td>
+                        `;
+                        tbody.appendChild(trCand);
+                    }
+                }
+
+                coordInput.disabled = true;
+                submitBtn.disabled = true;
+                if (resetBtn) resetBtn.style.display = 'inline-block';
+            }
+
+            if (submitBtn) {
+                submitBtn.onclick = submitAnswer;
+            }
+
+            if (coordInput) {
+                coordInput.oninput = function() {
+                    const val = this.value.trim().toUpperCase();
+                    if (!val) {
+                        window.quizSelectedMove = null;
+                    } else {
+                        const xy = parseCoordToXY(val);
+                        if (xy.x >= 0 && xy.y >= 0 && !xy.pass) {
+                            window.quizSelectedMove = { x: xy.x, y: xy.y, coord: val };
+                        } else {
+                            window.quizSelectedMove = null;
+                        }
+                    }
+                    if (typeof window.goToGobanTurn === 'function') {
+                        window.goToGobanTurn(quizTurn);
+                    }
+                };
+
+                coordInput.onkeydown = function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submitAnswer();
+                    }
+                };
+            }
+
+            if (resetBtn) {
+                resetBtn.onclick = function() {
+                    coordInput.disabled = false;
+                    submitBtn.disabled = false;
+                    coordInput.value = '';
+                    resetBtn.style.display = 'none';
+                    resultArea.style.display = 'none';
+                    if (validationMsg) validationMsg.style.display = 'none';
+                    window.quizMarkers = [];
+                    window.quizSelectedMove = null;
+                    if (typeof window.goToGobanTurn === 'function') {
+                        window.goToGobanTurn(quizTurn);
+                    }
+                    coordInput.focus();
+                };
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+            const resultElem = document.getElementById('resultJsonArea');
+            const hasInitialData = resultElem && resultElem.innerText.trim().length > 0;
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const gobanCard = document.getElementById('gobanCard');
+            const resultJsonCard = document.getElementById('resultJsonCard');
+            const dynamicErrorAlert = document.getElementById('dynamicErrorAlert');
+            const dynamicErrorMessage = document.getElementById('dynamicErrorMessage');
+
+            if (hasInitialData) {
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (gobanCard) gobanCard.style.display = 'block';
+                if (resultJsonCard) resultJsonCard.style.display = 'block';
+                initAnalysisView();
+            } else {
+                if (loadingIndicator) loadingIndicator.style.display = 'block';
+                const pathname = window.location.pathname;
+                const apiUrl = (pathname.endsWith('/recommended-kifu') || pathname.endsWith('/recommend-kifu') || pathname.endsWith('/analyze')) 
+                    ? (pathname.replace(/\/$/, '') + '/api') 
+                    : '/admin/analyze/api';
+                fetch(apiUrl)
+                    .then(res => {
+                        return res.json().then(data => {
+                            if (!res.ok) {
+                                throw new Error((data && data.errorMessage) || ('HTTP ' + res.status));
+                            }
+                            return data;
+                        });
+                    })
+                    .then(data => {
+                        if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        if (data && data.success) {
+                            if (resultElem) resultElem.innerText = data.resultJson || '';
+                            const sgfElem = document.getElementById('sgfData');
+                            if (sgfElem) sgfElem.textContent = data.sgfContent || '';
+                            if (gobanCard) gobanCard.style.display = 'block';
+                            if (resultJsonCard) resultJsonCard.style.display = 'block';
+                            initAnalysisView();
+                        } else {
+                            const errorMsg = (data && data.errorMessage) ? data.errorMessage : 'KataGo解析APIの呼び出しに失敗しました。';
+                            if (dynamicErrorMessage) dynamicErrorMessage.textContent = errorMsg;
+                            if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        const errorMsg = err.message ? err.message : 'KataGo解析APIの呼び出しに失敗しました。';
+                        if (dynamicErrorMessage) dynamicErrorMessage.textContent = errorMsg;
+                        if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'block';
+                    });
+            }
+        });
     </script>
 </body>
 </html>
