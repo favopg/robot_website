@@ -31,8 +31,16 @@
             background: linear-gradient(145deg, #e6b367 0%, #d89f50 100%);
             border-radius: 8px;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), inset 0 0 10px rgba(0, 0, 0, 0.1);
-            padding: 10px;
+            padding: 8px;
             display: inline-block;
+            max-width: min(340px, 46vh);
+            width: 100%;
+        }
+        .goban-board-wrapper canvas {
+            max-height: 46vh;
+            width: auto;
+            max-width: 100%;
+            aspect-ratio: 1 / 1;
         }
         .goban-controls-btn-group {
             display: flex !important;
@@ -41,8 +49,8 @@
         }
         .goban-controls-btn-group .btn {
             white-space: nowrap !important;
-            padding: 0.25rem 2px !important;
-            font-size: 0.78rem;
+            padding: 0.2rem 2px !important;
+            font-size: 0.75rem;
             flex: 1 1 0;
             display: inline-flex;
             align-items: center;
@@ -121,7 +129,7 @@
     </nav>
 
     <main class="flex-grow-1">
-        <div class="container-fluid px-lg-5 my-4">
+        <div class="container-fluid px-lg-4 my-2 my-md-3">
             <div class="row justify-content-center">
                 <div class="col-12 col-xl-11">
 
@@ -138,7 +146,7 @@
                     </div>
 
                     <!-- 読み込み中表示 -->
-                    <div id="loadingIndicator" class="card shadow border-0 mb-4 text-center py-5">
+                    <div id="loadingIndicator" class="card shadow border-0 mb-3 text-center py-5">
                         <div class="card-body">
                             <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                                 <span class="visually-hidden">Loading...</span>
@@ -148,7 +156,7 @@
                     </div>
 
                     <!-- 局面表示（碁盤表示）＆ 勝率グラフ 統合カード -->
-                    <div class="card shadow border-0 mb-4" id="gobanCard" style="display: none;">
+                    <div class="card shadow border-0 mb-3" id="gobanCard" style="display: none;">
                         <div class="card-header bg-dark text-white py-2">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <div class="d-flex align-items-center">
@@ -166,7 +174,7 @@
                                 <!-- 左カラム：手番操作 ＆ 碁盤表示 -->
                                 <div class="col-lg-5 col-xl-5 text-center">
                                     <!-- 手番ナビゲーション操作バー -->
-                                    <div id="gobanControls" class="mx-auto mb-1" style="max-width: 360px; width: 100%;">
+                                    <div id="gobanControls" class="mx-auto mb-1" style="max-width: min(340px, 46vh); width: 100%;">
                                         <div class="d-flex justify-content-between align-items-center mb-1 px-1 small">
                                             <span class="fw-bold text-dark" id="gobanMoveLabel">0手目 / 全0手</span>
                                             <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
@@ -187,14 +195,14 @@
 
                                     <!-- 局面（碁盤）描画領域 -->
                                     <div class="d-flex justify-content-center align-items-center">
-                                        <div class="goban-board-wrapper" id="gobanWrapper" style="max-width: 360px; width: 100%;">
+                                        <div class="goban-board-wrapper" id="gobanWrapper">
                                             <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- 右カラム：勝率推移グラフ ＆ サマリー情報 -->
-                                <div class="col-lg-7 col-xl-7 d-flex flex-column" style="min-height: 360px;">
+                                <div class="col-lg-7 col-xl-7 d-flex flex-column" style="min-height: 300px;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="fw-bold fs-6 text-secondary"><i class="bi bi-graph-up me-1"></i> 勝率・評価値推移グラフ</span>
                                         <div id="chartStats" class="d-flex gap-2 align-items-center" style="display: none;">
@@ -203,7 +211,7 @@
                                     </div>
                                     
                                     <!-- グラフ描画エリア -->
-                                    <div class="position-relative flex-grow-1" style="min-height: 300px; width: 100%;">
+                                    <div class="position-relative flex-grow-1" style="min-height: 250px; width: 100%;">
                                         <canvas id="winrateChart"></canvas>
                                     </div>
                                     
