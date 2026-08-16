@@ -152,14 +152,14 @@
                         <div class="card-header bg-dark text-white py-2">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <div class="d-flex align-items-center">
-                                    <h4 class="mb-0 fs-5"><i class="bi bi-question-diamond-fill text-warning me-2"></i> 勝率急落局面から出題！次の一手クイズ</h4>
+                                    <h4 class="mb-0 fs-5"><i class="bi bi-journal-bookmark-fill text-warning me-2"></i> 本日のおすすめな棋譜を並べてみよう</h4>
                                     <span class="badge bg-primary ms-2" id="boardStatusBadge">最終手表示</span>
                                 </div>
                                 <button type="button" class="btn btn-outline-light btn-sm" id="btnGoToQuizTurn">
-                                    <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
+                                    <i class="bi bi-arrow-clockwise me-1"></i> 勝率が大きく動いた局面を表示
                                 </button>
                             </div>
-                            <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください</p>
+                            <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">毎日プロ棋士の棋譜を勝率変動見ながら並べられます</p>
                         </div>
                         <div class="card-body p-2 p-md-3">
                             <div class="row g-2 g-md-3 align-items-start">
@@ -218,67 +218,9 @@
                         </div>
                     </div>
 
-                    <!-- 次の一手クイズカード -->
-                    <div class="card shadow border-0 mb-4" id="quizCard" style="display: none;">
-                        <div class="card-body p-4">
-                            <!-- 座標入力フォーム -->
-                            <div class="row g-2 align-items-center mb-2" id="quizInputForm">
-                                <div class="col-sm-6 col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light font-monospace"><i class="bi bi-geo-alt-fill text-primary"></i></span>
-                                        <input type="text" class="form-control font-monospace text-uppercase" id="quizCoordInput" placeholder="例：Q18" maxlength="5" autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="button" class="btn btn-primary" id="btnSubmitQuizAnswer">
-                                        <i class="bi bi-check-lg me-1"></i> 回答する
-                                    </button>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="button" class="btn btn-outline-secondary" id="btnResetQuiz" style="display: none;">
-                                        <i class="bi bi-arrow-counterclockwise me-1"></i> もう一度解く
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="quizInputValidation" class="text-danger small mb-2" style="display: none;"></div>
 
-                            <!-- 回答結果・解説エリア -->
-                            <div id="quizResultArea" class="mt-4 p-3 rounded" style="display: none;">
-                                <div class="d-flex align-items-center mb-2">
-                                    <span id="quizResultIcon" class="fs-4 me-2"></span>
-                                    <h5 id="quizResultTitle" class="mb-0 fw-bold"></h5>
-                                </div>
-                                <p id="quizExplanation" class="mb-2"></p>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered bg-white mb-0" id="quizSummaryTable">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>種別</th>
-                                                <th>着手座標</th>
-                                                <th>勝率</th>
-                                                <th>目差リード</th>
-                                                <th>解説</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="quizSummaryTableBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 解析結果表示カード -->
-                    <div class="card shadow border-0 mb-4" id="resultJsonCard" style="display: none;">
-                        <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0 fs-5"><i class="bi bi-file-earmark-code"></i> 解析結果 (JSON)</h4>
-                            <button class="btn btn-sm btn-outline-light" onclick="copyResult()">
-                                <i class="bi bi-clipboard"></i> コピー
-                            </button>
-                        </div>
-                        <div class="card-body p-0">
-                            <pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="max-height: 600px; overflow-y: auto;"><code id="resultJsonArea" th:text="${resultJson}"></code></pre>
-                        </div>
-                    </div>
+                    <!-- 解析データ受け渡し用（非表示） -->
+                    <script id="resultJsonData" type="text/plain" th:utext="${resultJson}"></script>
 
                     <!-- SGFデータ受け渡し用（非表示） -->
                     <script id="sgfData" type="text/plain" th:utext="${sgfContent}"></script>
@@ -482,10 +424,10 @@
             let movesRawArray = [];
 
             (function() {
-                const resultElem = document.getElementById('resultJsonArea');
+                const resultElem = document.getElementById('resultJsonData') || document.getElementById('resultJsonArea');
                 if (!resultElem) return;
 
-                const rawJson = resultElem.innerText.trim();
+                const rawJson = (resultElem.textContent || resultElem.innerText || '').trim();
                 if (!rawJson) return;
 
                 try {
@@ -1521,7 +1463,7 @@
             const quizTitleElem = document.getElementById('quizTitle');
             if (quizTitleElem) quizTitleElem.innerText = '出題局面: ' + quizTurn + '手目 (' + playerName + '番)';
             const quizDescElem = document.getElementById('quizDescription');
-            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください';
+            if (quizDescElem) quizDescElem.innerText = '毎日プロ棋士の棋譜を勝率変動見ながら並べられます';
             const quizDropBadgeElem = document.getElementById('quizDropBadge');
             if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
 
@@ -1759,8 +1701,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-            const resultElem = document.getElementById('resultJsonArea');
-            const hasInitialData = resultElem && resultElem.innerText.trim().length > 0;
+            const resultElem = document.getElementById('resultJsonData') || document.getElementById('resultJsonArea');
+            const hasInitialData = resultElem && (resultElem.textContent || resultElem.innerText || '').trim().length > 0;
             const loadingIndicator = document.getElementById('loadingIndicator');
             const gobanCard = document.getElementById('gobanCard');
             const resultJsonCard = document.getElementById('resultJsonCard');
@@ -1790,7 +1732,7 @@
                     .then(data => {
                         if (loadingIndicator) loadingIndicator.style.display = 'none';
                         if (data && data.success) {
-                            if (resultElem) resultElem.innerText = data.resultJson || '';
+                            if (resultElem) resultElem.textContent = data.resultJson || '';
                             const sgfElem = document.getElementById('sgfData');
                             if (sgfElem) sgfElem.textContent = data.sgfContent || '';
                             if (gobanCard) gobanCard.style.display = 'block';
