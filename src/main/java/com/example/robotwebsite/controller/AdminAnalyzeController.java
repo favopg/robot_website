@@ -83,6 +83,35 @@ public class AdminAnalyzeController {
                         }
                     }
                 }
+
+                String[] matchNameKeys = {"match_name", "matchName", "tournament_name", "tournamentName", "tournament", "event_name", "eventName", "event", "game_name", "gameName", "title"};
+                for (String k : matchNameKeys) {
+                    if (jsonNode.hasNonNull(k)) {
+                        response.put("matchName", jsonNode.get(k).asText());
+                        break;
+                    }
+                }
+                String[] blackPlayerKeys = {"black_player", "blackPlayer", "player_black", "playerBlack", "player1_name", "player1Name", "player1", "black", "pb"};
+                for (String k : blackPlayerKeys) {
+                    if (jsonNode.hasNonNull(k)) {
+                        response.put("blackPlayer", jsonNode.get(k).asText());
+                        break;
+                    }
+                }
+                String[] whitePlayerKeys = {"white_player", "whitePlayer", "player_white", "playerWhite", "player2_name", "player2Name", "player2", "white", "pw"};
+                for (String k : whitePlayerKeys) {
+                    if (jsonNode.hasNonNull(k)) {
+                        response.put("whitePlayer", jsonNode.get(k).asText());
+                        break;
+                    }
+                }
+                String[] resultKeys = {"result", "game_result", "gameResult", "winner_name", "winnerName", "winner", "re"};
+                for (String k : resultKeys) {
+                    if (jsonNode.hasNonNull(k)) {
+                        response.put("result", jsonNode.get(k).asText());
+                        break;
+                    }
+                }
             } catch (Exception e) {
                 // If parsing fails, use the raw response
             }
