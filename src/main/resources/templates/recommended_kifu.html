@@ -170,11 +170,18 @@
                             <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">毎日プロ棋士の棋譜を勝率変動見ながら並べられます</p>
                         </div>
                         <div class="card-body p-2 p-md-3">
-                            <div class="row g-2 g-md-3 align-items-start">
-                                <!-- 左カラム：手番操作 ＆ 碁盤表示 -->
-                                <div class="col-lg-5 col-xl-5 text-center">
-                                    <!-- 手番ナビゲーション操作バー -->
-                                    <div id="gobanControls" class="mx-auto mb-1" style="max-width: min(340px, 46vh); width: 100%;">
+                            <div class="row g-2 g-md-3 align-items-center">
+                                <!-- 左カラム：碁盤表示 -->
+                                <div class="col-12 col-lg-4 col-xl-4 text-center d-flex justify-content-center align-items-center">
+                                    <!-- 局面（碁盤）描画領域 -->
+                                    <div class="goban-board-wrapper" id="gobanWrapper">
+                                        <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- 中央カラム：手番ナビゲーション操作バー -->
+                                <div class="col-12 col-lg-3 col-xl-3 d-flex flex-column justify-content-center align-items-center">
+                                    <div id="gobanControls" class="w-100" style="max-width: min(340px, 46vh);">
                                         <div class="d-flex justify-content-between align-items-center mb-1 px-1 small">
                                             <span class="fw-bold text-dark" id="gobanMoveLabel">0手目 / 全0手</span>
                                             <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
@@ -192,17 +199,10 @@
                                             <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後の手 (最終手)">最後<i class="bi bi-chevron-bar-right"></i></button>
                                         </div>
                                     </div>
-
-                                    <!-- 局面（碁盤）描画領域 -->
-                                    <div class="d-flex justify-content-center align-items-center">
-                                        <div class="goban-board-wrapper" id="gobanWrapper">
-                                            <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- 右カラム：勝率推移グラフ ＆ サマリー情報 -->
-                                <div class="col-lg-7 col-xl-7 d-flex flex-column" style="min-height: 300px;">
+                                <div class="col-12 col-lg-5 col-xl-5 d-flex flex-column" style="min-height: 300px;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="fw-bold fs-6 text-secondary"><i class="bi bi-graph-up me-1"></i> 勝率・評価値推移グラフ</span>
                                         <div id="chartStats" class="d-flex gap-2 align-items-center" style="display: none;">
