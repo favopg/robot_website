@@ -48,13 +48,12 @@
         }
         .goban-controls-btn-group .btn {
             white-space: nowrap !important;
-            padding: 0.25rem 2px !important;
-            font-size: 0.78rem;
+            padding: 0.375rem 0.5rem !important;
+            font-size: 1.1rem;
             flex: 1 1 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 2px;
         }
     </style>
 </head>
@@ -208,17 +207,11 @@
                                         <div class="mb-2">
                                             <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
                                         </div>
-                                        <div class="d-flex flex-column gap-1 w-100">
-                                            <div class="btn-group btn-group-sm goban-controls-btn-group w-100" role="group">
-                                                <button type="button" class="btn btn-outline-dark fw-bold" id="btnGobanPrev" title="前の手"><i class="bi bi-chevron-left"></i>前手</button>
-                                                <button type="button" class="btn btn-outline-dark fw-bold" id="btnGobanNext" title="次の手">次手<i class="bi bi-chevron-right"></i></button>
-                                            </div>
-                                            <div class="btn-group btn-group-sm goban-controls-btn-group w-100" role="group">
-                                                <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初の手"><i class="bi bi-chevron-bar-left"></i>最初</button>
-                                                <button type="button" class="btn btn-outline-dark" id="btnGobanPrev10" title="10手戻る"><i class="bi bi-chevron-double-left"></i>-10</button>
-                                                <button type="button" class="btn btn-outline-dark" id="btnGobanNext10" title="10手進む">+10<i class="bi bi-chevron-double-right"></i></button>
-                                                <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後の手 (最終手)">最後<i class="bi bi-chevron-bar-right"></i></button>
-                                            </div>
+                                        <div class="btn-group goban-controls-btn-group w-100" role="group" aria-label="碁盤操作">
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初へ" aria-label="最初へ"><i class="bi bi-chevron-bar-left"></i></button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前へ戻る" aria-label="前へ戻る"><i class="bi bi-chevron-left"></i></button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次へ進む" aria-label="次へ進む"><i class="bi bi-chevron-right"></i></button>
+                                            <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後へ" aria-label="最後へ"><i class="bi bi-chevron-bar-right"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -876,13 +869,12 @@
                     const chartStats = document.getElementById('chartStats');
                     if (chartStats) chartStats.style.display = 'flex';
 
-                    // 4. Chart.jsでグラフ描画（最大下落ポイントをハイライト）
+                    // 4. Chart.jsでグラフ描画（1本線・上下色分け・最大下落ハイライト）
                     const canvas = document.getElementById('winrateChart');
                     if (!canvas) return;
                     const ctx = canvas.getContext('2d');
 
-                    const blackPointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
-                    const whitePointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#0d6efd'));
+                    const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
 
                     const winrateChart = new Chart(ctx, {
@@ -894,29 +886,27 @@
                                     label: '黒 (B) 勝率',
                                     data: chartPoints.map(p => p.blackWinrate),
                                     borderColor: '#212529',
-                                    backgroundColor: 'rgba(33, 37, 41, 0.1)',
+                                    backgroundColor: function(context) {
+                                        const chart = context.chart;
+                                        const { ctx, chartArea } = chart;
+                                        if (!chartArea) {
+                                            return 'rgba(33, 37, 41, 0.15)';
+                                        }
+                                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                        gradient.addColorStop(0, 'rgba(33, 37, 41, 0.15)');
+                                        gradient.addColorStop(0.5, 'rgba(33, 37, 41, 0.05)');
+                                        gradient.addColorStop(0.5, 'rgba(13, 110, 253, 0.05)');
+                                        gradient.addColorStop(1, 'rgba(13, 110, 253, 0.15)');
+                                        return gradient;
+                                    },
                                     borderWidth: 2.5,
-                                    pointBackgroundColor: blackPointColors,
+                                    pointBackgroundColor: pointColors,
                                     pointBorderColor: '#ffffff',
                                     pointBorderWidth: 1.5,
                                     pointRadius: pointRadiusList,
                                     pointHoverRadius: 8,
                                     tension: 0.2,
-                                    fill: false
-                                },
-                                {
-                                    label: '白 (W) 勝率',
-                                    data: chartPoints.map(p => p.whiteWinrate),
-                                    borderColor: '#0d6efd',
-                                    backgroundColor: 'rgba(130, 110, 253, 0.1)',
-                                    borderWidth: 2.5,
-                                    pointBackgroundColor: whitePointColors,
-                                    pointBorderColor: '#0d6efd',
-                                    pointBorderWidth: 2,
-                                    pointRadius: pointRadiusList,
-                                    pointHoverRadius: 8,
-                                    tension: 0.2,
-                                    fill: false
+                                    fill: true
                                 }
                             ]
                         },
@@ -958,7 +948,15 @@
                                             return title;
                                         },
                                         label: function(context) {
-                                            return ' ' + context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                            const idx = context.dataIndex;
+                                            const p = chartPoints[idx];
+                                            const bWin = p.blackWinrate;
+                                            const wWin = p.whiteWinrate;
+                                            if (bWin >= 50) {
+                                                return ' 黒優勢 ' + bWin.toFixed(1) + '% (白 ' + wWin.toFixed(1) + '%)';
+                                            } else {
+                                                return ' 白優勢 ' + wWin.toFixed(1) + '% (黒 ' + bWin.toFixed(1) + '%)';
+                                            }
                                         },
                                         afterBody: function(tooltipItems) {
                                             const idx = tooltipItems[0].dataIndex;
@@ -982,19 +980,20 @@
                                     max: 100,
                                     title: {
                                         display: true,
-                                        text: '勝率 (%)',
+                                        text: '黒勝率 (%)',
                                         font: { weight: 'bold' }
                                     },
                                     ticks: {
                                         stepSize: 10,
                                         callback: function(value) {
+                                            if (value === 50) return '50% (互角)';
                                             return value + '%';
                                         }
                                     },
                                     grid: {
                                         color: function(context) {
                                             if (context.tick && context.tick.value === 50) {
-                                                return 'rgba(220, 53, 69, 0.5)';
+                                                return '#dc3545';
                                             }
                                             return 'rgba(0, 0, 0, 0.08)';
                                         },
@@ -1003,6 +1002,12 @@
                                                 return 2;
                                             }
                                             return 1;
+                                        },
+                                        borderDash: function(context) {
+                                            if (context.tick && context.tick.value === 50) {
+                                                return [6, 4];
+                                            }
+                                            return [];
                                         }
                                     }
                                 },
@@ -1030,13 +1035,11 @@
                         const dataIndex = chartPoints.findIndex(p => p.turnNumber === turnNumber);
                         if (dataIndex !== -1) {
                             winrateChart.setActiveElements([
-                                { datasetIndex: 0, index: dataIndex },
-                                { datasetIndex: 1, index: dataIndex }
+                                { datasetIndex: 0, index: dataIndex }
                             ]);
                             if (winrateChart.tooltip) {
                                 winrateChart.tooltip.setActiveElements([
-                                    { datasetIndex: 0, index: dataIndex },
-                                    { datasetIndex: 1, index: dataIndex }
+                                    { datasetIndex: 0, index: dataIndex }
                                 ]);
                             }
                         } else {
@@ -1558,17 +1561,11 @@
                 const btnFirst = document.getElementById('btnGobanFirst');
                 if (btnFirst) btnFirst.addEventListener('click', () => goToTurn(0));
 
-                const btnPrev10 = document.getElementById('btnGobanPrev10');
-                if (btnPrev10) btnPrev10.addEventListener('click', () => goToTurn(currentTurn - 10));
-
                 const btnPrev = document.getElementById('btnGobanPrev');
                 if (btnPrev) btnPrev.addEventListener('click', () => goToTurn(currentTurn - 1));
 
                 const btnNext = document.getElementById('btnGobanNext');
                 if (btnNext) btnNext.addEventListener('click', () => goToTurn(currentTurn + 1));
-
-                const btnNext10 = document.getElementById('btnGobanNext10');
-                if (btnNext10) btnNext10.addEventListener('click', () => goToTurn(currentTurn + 10));
 
                 const btnLast = document.getElementById('btnGobanLast');
                 if (btnLast) btnLast.addEventListener('click', () => goToTurn(maxTurn));
