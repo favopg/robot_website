@@ -204,6 +204,20 @@
                                                 <span class="badge bg-dark" id="gobanCapturesText">アゲハマ: 黒 0 / 白 0</span>
                                             </div>
                                         </div>
+
+                                        <!-- 勝率バー表示エリア -->
+                                        <div id="gobanWinrateBarContainer" class="w-100 mb-2" style="display: none;">
+                                            <div class="d-flex justify-content-between small fw-bold mb-1" style="font-size: 0.75rem;">
+                                                <span id="winrateBarBlackLabel" class="text-dark">黒: 50.0%</span>
+                                                <span id="winrateBarWhiteLabel" class="text-secondary">白: 50.0%</span>
+                                            </div>
+                                            <div class="progress" style="height: 18px; font-size: 0.7rem; font-weight: bold; background-color: #e9ecef; border: 1px solid #ced4da;">
+                                                <div id="winrateBarBlack" class="progress-bar bg-dark text-white" role="progressbar" style="width: 50%;">50%</div>
+                                                <div id="winrateBarWhite" class="progress-bar bg-white text-dark border-start" role="progressbar" style="width: 50%;">50%</div>
+                                            </div>
+                                            <div id="winrateBarLeadText" class="text-muted text-center mt-1" style="font-size: 0.7rem;"></div>
+                                        </div>
+
                                         <div class="mb-2">
                                             <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
                                         </div>
@@ -815,6 +829,56 @@
                     }
 
                     chartPoints.sort((a, b) => a.turnNumber - b.turnNumber);
+                    window.chartPointsGlobal = chartPoints;
+
+                    // 勝率バー更新関数
+                    window.updateWinrateBar = function(turnNumber) {
+                        const barContainer = document.getElementById('gobanWinrateBarContainer');
+                        if (!barContainer) return;
+                        const points = window.chartPointsGlobal;
+                        if (!points || points.length === 0) {
+                            barContainer.style.display = 'none';
+                            return;
+                        }
+                        barContainer.style.display = 'block';
+
+                        const currentPoint = points.find(p => p.turnNumber === turnNumber);
+                        const barBlack = document.getElementById('winrateBarBlack');
+                        const barWhite = document.getElementById('winrateBarWhite');
+                        const labelBlack = document.getElementById('winrateBarBlackLabel');
+                        const labelWhite = document.getElementById('winrateBarWhiteLabel');
+                        const leadText = document.getElementById('winrateBarLeadText');
+
+                        if (currentPoint) {
+                            const bWin = currentPoint.blackWinrate;
+                            const wWin = currentPoint.whiteWinrate;
+
+                            if (barBlack) {
+                                barBlack.style.width = bWin + '%';
+                                barBlack.innerText = bWin >= 18 ? bWin.toFixed(1) + '%' : '';
+                            }
+                            if (barWhite) {
+                                barWhite.style.width = wWin + '%';
+                                barWhite.innerText = wWin >= 18 ? wWin.toFixed(1) + '%' : '';
+                            }
+                            if (labelBlack) labelBlack.innerText = '黒: ' + bWin.toFixed(1) + '%';
+                            if (labelWhite) labelWhite.innerText = '白: ' + wWin.toFixed(1) + '%';
+                            if (leadText) {
+                                if (currentPoint.scoreLead !== null && currentPoint.scoreLead !== undefined) {
+                                    const sign = currentPoint.scoreLead > 0 ? '+' : '';
+                                    leadText.innerText = '目差リード: ' + sign + currentPoint.scoreLead.toFixed(1) + ' 目';
+                                } else {
+                                    leadText.innerText = '';
+                                }
+                            }
+                        } else {
+                            if (labelBlack) labelBlack.innerText = '黒: -';
+                            if (labelWhite) labelWhite.innerText = '白: -';
+                            if (barBlack) { barBlack.style.width = '50%'; barBlack.innerText = ''; }
+                            if (barWhite) { barWhite.style.width = '50%'; barWhite.innerText = ''; }
+                            if (leadText) leadText.innerText = '';
+                        }
+                    };
 
                     // 1. 下落箇所の特定: Drop_i = Winrate_{i-1} - Winrate_i （着手側プレイヤーの勝率下落幅）
                     let maxDrop = -1;
@@ -1531,6 +1595,11 @@
                         if (turnIdx === maxTurn) badge.innerText = '最終局面 (' + maxTurn + '手目)';
                         else if (turnIdx === 0) badge.innerText = '開始局面 (0手目)';
                         else badge.innerText = turnIdx + '手目の局面';
+                    }
+
+                    // 勝率バーの更新
+                    if (typeof window.updateWinrateBar === 'function') {
+                        window.updateWinrateBar(turnIdx);
                     }
                 }
 
