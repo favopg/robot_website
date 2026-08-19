@@ -4,6 +4,8 @@ import com.example.robotwebsite.dto.KatagoAnalyzeRequest;
 import com.example.robotwebsite.service.KatagoAnalyzeService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,7 +22,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -54,6 +59,74 @@ public class AdminAnalyzeController {
             String sgfContent = null;
             try {
                 JsonNode jsonNode = objectMapper.readTree(jsonResult);
+
+                // results 配列が存在する場合、turn 昇順にソートし、blackWinrate/whiteWinrate を付与
+                if (jsonNode.hasNonNull("results") && jsonNode.get("results").isArray()) {
+                    List<JsonNode> resultsList = new ArrayList<>();
+                    for (JsonNode item : jsonNode.get("results")) {
+                        resultsList.add(item);
+                    }
+
+                    // 1. turn 昇順にソート
+                    resultsList.sort(Comparator.comparingInt(a -> {
+                        if (a.hasNonNull("turn")) return a.get("turn").asInt();
+                        if (a.hasNonNull("turnNumber")) return a.get("turnNumber").asInt();
+                        if (a.hasNonNull("moveNumber")) return a.get("moveNumber").asInt();
+                        if (a.hasNonNull("move") && a.get("move").isInt()) return a.get("move").asInt();
+                        return 0;
+                    }));
+
+                    // 2. blackWinrate / whiteWinrate の明示的な定義
+                    ArrayNode sortedResults = objectMapper.createArrayNode();
+                    for (JsonNode item : resultsList) {
+                        if (item instanceof ObjectNode) {
+                            ObjectNode node = (ObjectNode) item.deepCopy();
+                            int turn = 0;
+                            if (node.hasNonNull("turn")) turn = node.get("turn").asInt();
+                            else if (node.hasNonNull("turnNumber")) turn = node.get("turnNumber").asInt();
+                            else if (node.hasNonNull("moveNumber")) turn = node.get("moveNumber").asInt();
+
+                            String player = "B";
+                            if (node.hasNonNull("player")) {
+                                player = node.get("player").asText().trim().toUpperCase();
+                            } else if (node.has("rootInfo") && node.get("rootInfo").hasNonNull("currentPlayer")) {
+                                player = node.get("rootInfo").get("currentPlayer").asText().trim().toUpperCase();
+                            } else if (node.hasNonNull("currentPlayer")) {
+                                player = node.get("currentPlayer").asText().trim().toUpperCase();
+                            } else {
+                                player = (turn % 2 == 1) ? "B" : "W";
+                            }
+                            if ("BLACK".equals(player)) player = "B";
+                            if ("WHITE".equals(player)) player = "W";
+
+                            double rawWinrate = 0.0;
+                            if (node.hasNonNull("winrate")) {
+                                rawWinrate = node.get("winrate").asDouble();
+                            } else if (node.hasNonNull("winRate")) {
+                                rawWinrate = node.get("winRate").asDouble();
+                            } else if (node.has("rootInfo") && node.get("rootInfo").hasNonNull("winrate")) {
+                                rawWinrate = node.get("rootInfo").get("winrate").asDouble();
+                            }
+
+                            double winratePct = Math.max(0.0, Math.min(100.0, rawWinrate));
+
+                            double blackWinrate = "B".equals(player) ? winratePct : (100.0 - winratePct);
+                            double whiteWinrate = "W".equals(player) ? winratePct : (100.0 - winratePct);
+
+                            node.put("blackWinrate", Math.round(blackWinrate * 100.0) / 100.0);
+                            node.put("whiteWinrate", Math.round(whiteWinrate * 100.0) / 100.0);
+
+                            sortedResults.add(node);
+                        } else {
+                            sortedResults.add(item);
+                        }
+                    }
+
+                    if (jsonNode instanceof ObjectNode) {
+                        ((ObjectNode) jsonNode).set("results", sortedResults);
+                    }
+                }
+
                 formattedJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
                 
                 if (jsonNode.hasNonNull("sgf_content")) {

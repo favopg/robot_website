@@ -767,42 +767,49 @@
                             player = (turnNumber % 2 === 1) ? 'B' : 'W';
                         }
 
-                        // 勝率の取得
-                        let rawWinrate = null;
-                        if (item.rootInfo && item.rootInfo.winrate !== undefined) {
-                            rawWinrate = item.rootInfo.winrate;
-                        } else if (item.rootInfo && item.rootInfo.winRate !== undefined) {
-                            rawWinrate = item.rootInfo.winRate;
-                        } else if (item.winrate !== undefined) {
-                            rawWinrate = item.winrate;
-                        } else if (item.winRate !== undefined) {
-                            rawWinrate = item.winRate;
-                        } else if (item.win_rate !== undefined) {
-                            rawWinrate = item.win_rate;
+                        // blackWinrate / whiteWinrate がレスポンスに直接存在する場合はそれを優先使用
+                        let blackWinrate = null;
+                        let whiteWinrate = null;
+                        if (item.blackWinrate !== undefined && item.blackWinrate !== null && !isNaN(item.blackWinrate)) {
+                            blackWinrate = Number(item.blackWinrate);
+                        }
+                        if (item.whiteWinrate !== undefined && item.whiteWinrate !== null && !isNaN(item.whiteWinrate)) {
+                            whiteWinrate = Number(item.whiteWinrate);
                         }
 
-                        if (rawWinrate === null || rawWinrate === undefined || isNaN(rawWinrate)) {
-                            return;
-                        }
+                        if (blackWinrate === null || whiteWinrate === null) {
+                            // 勝率の取得
+                            let rawWinrate = null;
+                            if (item.rootInfo && item.rootInfo.winrate !== undefined) {
+                                rawWinrate = item.rootInfo.winrate;
+                            } else if (item.rootInfo && item.rootInfo.winRate !== undefined) {
+                                rawWinrate = item.rootInfo.winRate;
+                            } else if (item.winrate !== undefined) {
+                                rawWinrate = item.winrate;
+                            } else if (item.winRate !== undefined) {
+                                rawWinrate = item.winRate;
+                            } else if (item.win_rate !== undefined) {
+                                rawWinrate = item.win_rate;
+                            }
 
-                        let winrateNum = Number(rawWinrate);
-                        // 0.0〜1.0の場合はパーセンテージに変換
-                        let winratePct = (winrateNum <= 1.0 && winrateNum >= 0.0) ? (winrateNum * 100) : winrateNum;
-                        winratePct = Math.max(0, Math.min(100, winratePct));
+                            if (rawWinrate === null || rawWinrate === undefined || isNaN(rawWinrate)) {
+                                return;
+                            }
 
-                        // player: Wが白、player: Bが黒
-                        let blackWinrate = 0;
-                        let whiteWinrate = 0;
+                            let winrateNum = Number(rawWinrate);
+                            let winratePct = Math.max(0, Math.min(100, winrateNum));
 
-                        if (player === 'B') {
-                            blackWinrate = winratePct;
-                            whiteWinrate = 100 - winratePct;
-                        } else if (player === 'W') {
-                            whiteWinrate = winratePct;
-                            blackWinrate = 100 - winratePct;
-                        } else {
-                            blackWinrate = winratePct;
-                            whiteWinrate = 100 - winratePct;
+                            // player: Wが白、player: Bが黒
+                            if (player === 'B') {
+                                blackWinrate = winratePct;
+                                whiteWinrate = 100 - winratePct;
+                            } else if (player === 'W') {
+                                whiteWinrate = winratePct;
+                                blackWinrate = 100 - winratePct;
+                            } else {
+                                blackWinrate = winratePct;
+                                whiteWinrate = 100 - winratePct;
+                            }
                         }
 
                         let scoreLead = null;
@@ -852,6 +859,9 @@
                         if (currentPoint) {
                             const bWin = currentPoint.blackWinrate;
                             const wWin = currentPoint.whiteWinrate;
+                            const isBlackTurn = currentPoint.player === 'B';
+                            const turnWinrate = isBlackTurn ? bWin : wWin;
+                            const playerText = isBlackTurn ? '● 黒手番' : '○ 白手番';
 
                             if (barBlack) {
                                 barBlack.style.width = bWin + '%';
@@ -861,19 +871,19 @@
                                 barWhite.style.width = wWin + '%';
                                 barWhite.innerText = wWin >= 18 ? wWin.toFixed(1) + '%' : '';
                             }
-                            if (labelBlack) labelBlack.innerText = '黒: ' + bWin.toFixed(1) + '%';
-                            if (labelWhite) labelWhite.innerText = '白: ' + wWin.toFixed(1) + '%';
+                            if (labelBlack) labelBlack.innerText = '● 黒番勝率: ' + bWin.toFixed(1) + '%';
+                            if (labelWhite) labelWhite.innerText = '○ 白番勝率: ' + wWin.toFixed(1) + '%';
                             if (leadText) {
+                                let leadInfo = '';
                                 if (currentPoint.scoreLead !== null && currentPoint.scoreLead !== undefined) {
                                     const sign = currentPoint.scoreLead > 0 ? '+' : '';
-                                    leadText.innerText = '目差リード: ' + sign + currentPoint.scoreLead.toFixed(1) + ' 目';
-                                } else {
-                                    leadText.innerText = '';
+                                    leadInfo = ' | 目差リード: ' + sign + currentPoint.scoreLead.toFixed(1) + ' 目';
                                 }
+                                leadText.innerText = playerText + ' (手番側勝率: ' + turnWinrate.toFixed(1) + '%)' + leadInfo;
                             }
                         } else {
-                            if (labelBlack) labelBlack.innerText = '黒: -';
-                            if (labelWhite) labelWhite.innerText = '白: -';
+                            if (labelBlack) labelBlack.innerText = '● 黒番勝率: -';
+                            if (labelWhite) labelWhite.innerText = '○ 白番勝率: -';
                             if (barBlack) { barBlack.style.width = '50%'; barBlack.innerText = ''; }
                             if (barWhite) { barWhite.style.width = '50%'; barWhite.innerText = ''; }
                             if (leadText) leadText.innerText = '';
@@ -1005,7 +1015,7 @@
                                         title: function(tooltipItems) {
                                             const idx = tooltipItems[0].dataIndex;
                                             const p = chartPoints[idx];
-                                            let title = p.turnNumber + '手目 (' + (p.player === 'B' ? '黒番 / Player: B' : '白番 / Player: W') + ')';
+                                            let title = p.turnNumber + '手目 (' + (p.player === 'B' ? '● 黒手番' : '○ 白手番') + ')';
                                             if (p.turnNumber === blunderTurn) {
                                                 title += ' ⚠️ 最大勝率下落 (' + (dropPlayer === 'B' ? '黒' : '白') + ' -' + maxDrop.toFixed(1) + '%)';
                                             }
@@ -1016,11 +1026,9 @@
                                             const p = chartPoints[idx];
                                             const bWin = p.blackWinrate;
                                             const wWin = p.whiteWinrate;
-                                            if (bWin >= 50) {
-                                                return ' 黒優勢 ' + bWin.toFixed(1) + '% (白 ' + wWin.toFixed(1) + '%)';
-                                            } else {
-                                                return ' 白優勢 ' + wWin.toFixed(1) + '% (黒 ' + bWin.toFixed(1) + '%)';
-                                            }
+                                            const turnWin = p.player === 'B' ? bWin : wWin;
+                                            const turnLabel = p.player === 'B' ? '黒' : '白';
+                                            return ' 黒番勝率: ' + bWin.toFixed(1) + '% / 白番勝率: ' + wWin.toFixed(1) + '% (手番(' + turnLabel + ')側勝率: ' + turnWin.toFixed(1) + '%)';
                                         },
                                         afterBody: function(tooltipItems) {
                                             const idx = tooltipItems[0].dataIndex;
@@ -1798,12 +1806,12 @@
             // 最善手情報
             let bestMoveInfo = moveInfos.length > 0 ? moveInfos[0] : null;
             let bestMoveCoord = bestMoveInfo ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() : null;
-            let bWinrate = bestMoveInfo ? (bestMoveInfo.winrate ? (bestMoveInfo.winrate <= 1 ? bestMoveInfo.winrate * 100 : bestMoveInfo.winrate) : null) : null;
+            let bWinrate = bestMoveInfo ? (bestMoveInfo.winrate !== undefined ? bestMoveInfo.winrate : null) : null;
             let bScore = bestMoveInfo ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) : null;
 
             // 実戦手の情報
             let matchInfo = actualMoveStr ? moveInfos.find(m => (m.move || m.point || '').toUpperCase() === actualMoveStr.toUpperCase()) : null;
-            let aWinrate = matchInfo ? (matchInfo.winrate ? (matchInfo.winrate <= 1 ? matchInfo.winrate * 100 : matchInfo.winrate) : null) : null;
+            let aWinrate = matchInfo ? (matchInfo.winrate !== undefined ? matchInfo.winrate : null) : null;
             let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? matchInfo.scoreLead : null) : null;
 
             // UIの初期化
@@ -1813,7 +1821,7 @@
             const quizDescElem = document.getElementById('quizDescription');
             if (quizDescElem) quizDescElem.innerText = '毎日プロ棋士の棋譜を勝率変動見ながら並べられます';
             const quizDropBadgeElem = document.getElementById('quizDropBadge');
-            if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
+            if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + '番勝率 -' + maxDrop.toFixed(1) + '%';
 
             window.quizMarkers = []; // 初期状態では碁盤マーカーは非表示
 
@@ -1939,8 +1947,8 @@
                     const trUser = document.createElement('tr');
                     trUser.className = 'table-secondary';
                     const userMatch = moveInfos.find(m => (m.move || m.point || '').toUpperCase() === inputVal);
-                    const uWinrate = userMatch ? (userMatch.winrate ? (userMatch.winrate <= 1 ? userMatch.winrate * 100 : userMatch.winrate).toFixed(1) + '%' : '-') : '-';
-                    const uScore = userMatch ? (userMatch.scoreLead !== undefined ? (userMatch.scoreLead > 0 ? '+' : '') + userMatch.scoreLead.toFixed(1) + '目' : '-') : '-';
+                    const uWinrate = (userMatch && userMatch.winrate !== undefined && userMatch.winrate !== null) ? Number(userMatch.winrate).toFixed(1) + '%' : '-';
+                    const uScore = (userMatch && userMatch.scoreLead !== undefined && userMatch.scoreLead !== null) ? (Number(userMatch.scoreLead) > 0 ? '+' : '') + Number(userMatch.scoreLead).toFixed(1) + '目' : '-';
                     trUser.innerHTML = `
                         <td><span class="badge bg-secondary">あなたの入力</span></td>
                         <td class="font-monospace fw-bold">${inputVal}</td>
@@ -1970,8 +1978,8 @@
                     const info = moveInfos[i];
                     const mCoord = (info.move || info.point || '').toUpperCase();
                     if (mCoord && mCoord !== actualMoveStr && mCoord !== bestMoveCoord && mCoord !== inputVal) {
-                        const mWinrate = info.winrate ? (info.winrate <= 1 ? info.winrate * 100 : info.winrate).toFixed(1) + '%' : '-';
-                        const mScore = info.scoreLead !== undefined ? (info.scoreLead > 0 ? '+' : '') + info.scoreLead.toFixed(1) + '目' : '-';
+                        const mWinrate = (info.winrate !== undefined && info.winrate !== null) ? Number(info.winrate).toFixed(1) + '%' : '-';
+                        const mScore = (info.scoreLead !== undefined && info.scoreLead !== null) ? (Number(info.scoreLead) > 0 ? '+' : '') + Number(info.scoreLead).toFixed(1) + '目' : '-';
                         const trCand = document.createElement('tr');
                         trCand.innerHTML = `
                             <td><span class="badge bg-light text-dark border">候補手 #${i+1}</span></td>
