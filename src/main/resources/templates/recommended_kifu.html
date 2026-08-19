@@ -179,9 +179,14 @@
                                         <span class="badge bg-success" id="kifuResult" style="display: none;"></span>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-light btn-sm" id="btnGoToQuizTurn">
-                                    <i class="bi bi-arrow-clockwise me-1"></i> 勝率が大きく動いた局面を表示
-                                </button>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-outline-light btn-sm" id="btnGoToQuizTurn">
+                                        <i class="bi bi-arrow-clockwise me-1"></i> 勝率が大きく動いた局面を表示
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm fw-bold text-dark" id="btnShowBestMove" style="display: none;">
+                                        <i class="bi bi-lightbulb-fill me-1"></i> 最善手を表示
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="card-body p-2 p-md-3">
@@ -249,6 +254,59 @@
                                     </div>
                                     <div id="gobanNoDataAlert" class="alert alert-warning mt-2 text-start" style="display: none;">
                                         <i class="bi bi-info-circle me-2"></i> SGFデータが取得できなかったため、碁盤を表示できませんでした。
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI最善手・局面解析パネル -->
+                            <div id="bestMoveInfoPanel" class="card bg-body-tertiary border-primary border-2 mt-3 shadow-sm" style="display: none;">
+                                <div class="card-header bg-primary bg-opacity-10 py-2 d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary fs-6"><i class="bi bi-robot me-1"></i> AI(KataGo) 最善手・局面解析</span>
+                                        <span class="fw-bold text-dark" id="bestMovePanelTurnInfo">出題局面: -手目</span>
+                                    </div>
+                                    <button type="button" class="btn-close btn-sm" id="btnCloseBestMovePanel" aria-label="閉じる"></button>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-12 col-md-4 text-center border-end-md">
+                                            <div class="small text-muted mb-1">AI推奨の最善手</div>
+                                            <div class="display-6 fw-bold text-primary font-monospace" id="bestMoveCoordText">-</div>
+                                            <div class="badge bg-primary-subtle text-primary border border-primary mt-1" id="bestMoveBadge">最善手</div>
+                                        </div>
+                                        <div class="col-12 col-md-4 text-center border-end-md">
+                                            <div class="small text-muted mb-1">AI予想勝率 / 目差リード</div>
+                                            <div class="h3 fw-bold text-success mb-1" id="bestMoveWinrateText">- %</div>
+                                            <div class="small text-secondary" id="bestMoveScoreLeadText">目差: - 目</div>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <div class="small text-muted mb-1">実戦手との比較</div>
+                                            <div class="p-2 rounded bg-light border small">
+                                                <div id="actualVsBestComparison">実戦手: - (着手後勝率: -%)</div>
+                                                <div class="text-danger fw-bold mt-1" id="actualMoveDropText">最大下落: -%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 候補手詳細テーブル -->
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="small fw-bold text-secondary"><i class="bi bi-list-ol me-1"></i> KataGo 候補手リスト</span>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover table-bordered bg-white mb-0 text-center align-middle" id="bestMoveCandidatesTable" style="font-size: 0.85rem;">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width: 15%;">順位</th>
+                                                        <th style="width: 20%;">着手座標</th>
+                                                        <th style="width: 20%;">予想勝率</th>
+                                                        <th style="width: 20%;">目差リード</th>
+                                                        <th>評価・特徴</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="bestMoveCandidatesTableBody"></tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1657,6 +1715,10 @@
                         } else if (typeof window.goToGobanTurn === 'function') {
                             window.goToGobanTurn(qTurn);
                         }
+                        const btnShowBestMove = document.getElementById('btnShowBestMove');
+                        if (btnShowBestMove) {
+                            btnShowBestMove.style.display = 'inline-block';
+                        }
                     };
                 }
 
@@ -1729,8 +1791,11 @@
                     }
                 });
 
-                // クイズ機能の初期化
-                initQuizModule(parsed.moves);
+                // クイズ機能・最善手表示モジュールの初期化
+                initBestMoveModule(parsed.moves);
+                if (document.getElementById('quizCard')) {
+                    initQuizModule(parsed.moves);
+                }
 
             } catch (err) {
                 console.error('碁盤の描画に失敗しました:', err);
@@ -1742,7 +1807,234 @@
             }
         })();
 
-        // 3. 次の一手クイズ生成およびUI制御モジュール
+        // 3. AI最善手・ヒント表示モジュール
+        function initBestMoveModule(parsedSgfMoves) {
+            window.parsedSgfMovesGlobal = parsedSgfMoves;
+
+            // 座標ヘルパー関数（KataGo座標形式 "Q16" -> {x, y}）
+            function parseCoordToXY(coordStr) {
+                if (!coordStr || coordStr === 'PASS' || coordStr === 'pass') return { x: -1, y: -1, pass: true };
+                const c = coordStr.toUpperCase().trim();
+                const colLetter = c.charAt(0);
+                const rowNum = parseInt(c.slice(1), 10);
+                const colLetters = 'ABCDEFGHJKLMNOPQRST';
+                const x = colLetters.indexOf(colLetter);
+                if (x < 0 || isNaN(rowNum) || rowNum < 1 || rowNum > 19) {
+                    return { x: -1, y: -1, pass: false };
+                }
+                const y = 19 - rowNum;
+                return { x, y, pass: false };
+            }
+
+            function showBestMove() {
+                const qTurn = window.quizTurnGlobal;
+                const bTurn = window.blunderTurnGlobal;
+                const mDrop = window.maxDropGlobal;
+                const dPlayer = window.dropPlayerGlobal;
+                const cPoints = window.chartPointsGlobal;
+
+                if (qTurn === undefined || qTurn === null || qTurn < 0) {
+                    alert('最大下落局面の解析データがありません。');
+                    return;
+                }
+
+                // 1. 出題局面に盤面を合わせる
+                if (typeof window.goToGobanTurn === 'function') {
+                    window.goToGobanTurn(qTurn);
+                }
+
+                // 2. 出題局面のKataGo解析データを取得
+                const quizPoint = cPoints ? cPoints.find(p => p.turnNumber === qTurn) : null;
+                const blunderPoint = cPoints ? cPoints.find(p => p.turnNumber === bTurn) : null;
+                const rawItem = quizPoint ? quizPoint.rawItem : null;
+
+                let moveInfos = [];
+                if (rawItem) {
+                    if (Array.isArray(rawItem.candidates)) {
+                        moveInfos = rawItem.candidates;
+                    } else if (Array.isArray(rawItem.moveInfos)) {
+                        moveInfos = rawItem.moveInfos;
+                    } else if (rawItem.rootInfo && Array.isArray(rawItem.rootInfo.moveInfos)) {
+                        moveInfos = rawItem.rootInfo.moveInfos;
+                    }
+                }
+
+                // 実戦の着手
+                let actualMoveStr = null;
+                if (parsedSgfMoves && parsedSgfMoves.length >= bTurn && bTurn > 0) {
+                    const actualMoveObj = parsedSgfMoves[bTurn - 1];
+                    if (actualMoveObj) {
+                        if (actualMoveObj.pass) {
+                            actualMoveStr = 'PASS';
+                        } else {
+                            const colLetters = 'ABCDEFGHJKLMNOPQRST';
+                            const col = colLetters[actualMoveObj.x] || '';
+                            const row = 19 - actualMoveObj.y;
+                            actualMoveStr = col + row;
+                        }
+                    }
+                }
+
+                // 最善手情報
+                let bestMoveInfo = moveInfos.length > 0 ? moveInfos[0] : null;
+                let bestMoveCoord = bestMoveInfo 
+                    ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() 
+                    : (rawItem && rawItem.bestMove ? rawItem.bestMove.toUpperCase() : null);
+                let rawBWinrate = bestMoveInfo 
+                    ? (bestMoveInfo.winrate !== undefined ? bestMoveInfo.winrate : null) 
+                    : (rawItem && rawItem.winrate !== undefined ? rawItem.winrate : null);
+                let bWinrate = rawBWinrate !== null ? (rawBWinrate <= 1 && rawBWinrate >= 0 ? rawBWinrate * 100 : Number(rawBWinrate)) : null;
+                let bScore = bestMoveInfo 
+                    ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) 
+                    : (rawItem && rawItem.scoreLead !== undefined ? rawItem.scoreLead : null);
+                if (bScore !== null) bScore = Number(bScore);
+
+                // 実戦手の情報
+                let matchInfo = actualMoveStr ? moveInfos.find(m => (m.move || m.point || '').toUpperCase() === actualMoveStr.toUpperCase()) : null;
+                let rawAWinrate = matchInfo ? (matchInfo.winrate !== undefined ? matchInfo.winrate : null) : null;
+                let aWinrate = rawAWinrate !== null ? (rawAWinrate <= 1 && rawAWinrate >= 0 ? rawAWinrate * 100 : Number(rawAWinrate)) : (blunderPoint ? (dPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate) : null);
+                let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? Number(matchInfo.scoreLead) : null) : (blunderPoint && blunderPoint.scoreLead !== undefined ? Number(blunderPoint.scoreLead) : null);
+
+                // 3. 碁盤マーカーの設定
+                const markers = [];
+                const bestXY = bestMoveCoord ? parseCoordToXY(bestMoveCoord) : null;
+                const actualXY = actualMoveStr ? parseCoordToXY(actualMoveStr) : null;
+
+                if (actualXY && actualXY.x >= 0) {
+                    markers.push({
+                        x: actualXY.x,
+                        y: actualXY.y,
+                        label: '実戦',
+                        bgColor: 'rgba(220, 53, 69, 0.9)'
+                    });
+                }
+
+                if (bestXY && bestXY.x >= 0) {
+                    markers.push({
+                        x: bestXY.x,
+                        y: bestXY.y,
+                        label: '最善',
+                        bgColor: 'rgba(13, 110, 253, 0.95)'
+                    });
+                }
+
+                window.quizMarkers = markers;
+                if (typeof window.goToGobanTurn === 'function') {
+                    window.goToGobanTurn(qTurn);
+                }
+
+                // 4. パネル表示の更新
+                const panel = document.getElementById('bestMoveInfoPanel');
+                if (panel) {
+                    panel.style.display = 'block';
+
+                    const playerName = dPlayer === 'B' ? '黒' : '白';
+                    const panelTurnInfo = document.getElementById('bestMovePanelTurnInfo');
+                    if (panelTurnInfo) panelTurnInfo.innerText = `出題局面: 第${qTurn}手目 (${playerName}番 着手直前)`;
+
+                    const bestCoordElem = document.getElementById('bestMoveCoordText');
+                    if (bestCoordElem) bestCoordElem.innerText = bestMoveCoord || '-';
+
+                    const bestWinrateElem = document.getElementById('bestMoveWinrateText');
+                    if (bestWinrateElem) bestWinrateElem.innerText = bWinrate !== null ? bWinrate.toFixed(1) + '%' : '-';
+
+                    const bestScoreLeadElem = document.getElementById('bestMoveScoreLeadText');
+                    if (bestScoreLeadElem) {
+                        bestScoreLeadElem.innerText = bScore !== null ? `目差リード: ${bScore > 0 ? '+' : ''}${bScore.toFixed(1)}目` : '';
+                    }
+
+                    const compElem = document.getElementById('actualVsBestComparison');
+                    if (compElem) {
+                        const actWinStr = aWinrate !== null ? `${aWinrate.toFixed(1)}%` : '-';
+                        compElem.innerHTML = `実戦手: <strong>${actualMoveStr || '-'}</strong> (着手後勝率: ${actWinStr})`;
+                    }
+
+                    const dropElem = document.getElementById('actualMoveDropText');
+                    if (dropElem) {
+                        let diffText = '';
+                        if (bWinrate !== null && aWinrate !== null) {
+                            const diff = bWinrate - aWinrate;
+                            diffText = ` (最善手で実戦手より +${diff.toFixed(1)}%)`;
+                        }
+                        dropElem.innerText = `実戦で勝率が -${mDrop ? mDrop.toFixed(1) : '0'}% 急落${diffText}`;
+                    }
+
+                    // 候補手テーブル
+                    const tbody = document.getElementById('bestMoveCandidatesTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = '';
+                        // 1. 最善手
+                        if (bestMoveCoord) {
+                            const trBest = document.createElement('tr');
+                            trBest.className = 'table-primary fw-bold';
+                            trBest.innerHTML = `
+                                <td><span class="badge bg-primary">最善手 (1位)</span></td>
+                                <td class="font-monospace fw-bold fs-6">${bestMoveCoord}</td>
+                                <td class="text-success fw-bold">${bWinrate !== null ? bWinrate.toFixed(1) + '%' : '-'}</td>
+                                <td>${bScore !== null ? (bScore > 0 ? '+' : '') + bScore.toFixed(1) + '目' : '-'}</td>
+                                <td>KataGo推奨の最善着手</td>
+                            `;
+                            tbody.appendChild(trBest);
+                        }
+
+                        // 2. 実戦手
+                        if (actualMoveStr && (!bestMoveCoord || actualMoveStr.toUpperCase() !== bestMoveCoord.toUpperCase())) {
+                            const trAct = document.createElement('tr');
+                            trAct.className = 'table-danger';
+                            trAct.innerHTML = `
+                                <td><span class="badge bg-danger">実戦手 (失着)</span></td>
+                                <td class="font-monospace fw-bold fs-6">${actualMoveStr}</td>
+                                <td class="text-danger">${aWinrate !== null ? aWinrate.toFixed(1) + '%' : '-'}</td>
+                                <td>${aScore !== null ? (aScore > 0 ? '+' : '') + aScore.toFixed(1) + '目' : '-'}</td>
+                                <td>実戦で選択された手 (勝率が急落)</td>
+                            `;
+                            tbody.appendChild(trAct);
+                        }
+
+                        // 3. 他の候補手
+                        for (let i = 1; i < Math.min(moveInfos.length, 4); i++) {
+                            const info = moveInfos[i];
+                            const mCoord = (info.move || info.point || '').toUpperCase();
+                            if (mCoord && mCoord !== bestMoveCoord && mCoord !== actualMoveStr) {
+                                const rawW = info.winrate !== undefined ? info.winrate : null;
+                                const mW = rawW !== null ? (rawW <= 1 ? rawW * 100 : rawW) : null;
+                                const mS = info.scoreLead !== undefined ? info.scoreLead : null;
+                                const trCand = document.createElement('tr');
+                                trCand.innerHTML = `
+                                    <td><span class="badge bg-light text-dark border">候補手 #${i+1}</span></td>
+                                    <td class="font-monospace">${mCoord}</td>
+                                    <td>${mW !== null ? mW.toFixed(1) + '%' : '-'}</td>
+                                    <td>${mS !== null ? (mS > 0 ? '+' : '') + mS.toFixed(1) + '目' : '-'}</td>
+                                    <td>AI検討候補手</td>
+                                `;
+                                tbody.appendChild(trCand);
+                            }
+                        }
+                    }
+
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            const btnShow = document.getElementById('btnShowBestMove');
+            if (btnShow) {
+                btnShow.onclick = showBestMove;
+            }
+
+            const btnClose = document.getElementById('btnCloseBestMovePanel');
+            if (btnClose) {
+                btnClose.onclick = function() {
+                    const panel = document.getElementById('bestMoveInfoPanel');
+                    if (panel) panel.style.display = 'none';
+                    window.quizMarkers = [];
+                    if (typeof window.goToGobanTurn === 'function') {
+                        window.goToGobanTurn(window.quizTurnGlobal || 0);
+                    }
+                };
+            }
+        }
+
+        // 4. 次の一手クイズ生成およびUI制御モジュール
         function initQuizModule(parsedSgfMoves) {
             const quizCard = document.getElementById('quizCard');
             if (!quizCard) return;
@@ -1765,7 +2057,9 @@
             // KataGoの moveInfos 取得
             let moveInfos = [];
             if (rawItem) {
-                if (Array.isArray(rawItem.moveInfos)) {
+                if (Array.isArray(rawItem.candidates)) {
+                    moveInfos = rawItem.candidates;
+                } else if (Array.isArray(rawItem.moveInfos)) {
                     moveInfos = rawItem.moveInfos;
                 } else if (rawItem.rootInfo && Array.isArray(rawItem.rootInfo.moveInfos)) {
                     moveInfos = rawItem.rootInfo.moveInfos;
@@ -1805,14 +2099,23 @@
 
             // 最善手情報
             let bestMoveInfo = moveInfos.length > 0 ? moveInfos[0] : null;
-            let bestMoveCoord = bestMoveInfo ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() : null;
-            let bWinrate = bestMoveInfo ? (bestMoveInfo.winrate !== undefined ? bestMoveInfo.winrate : null) : null;
-            let bScore = bestMoveInfo ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) : null;
+            let bestMoveCoord = bestMoveInfo 
+                ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() 
+                : (rawItem && rawItem.bestMove ? rawItem.bestMove.toUpperCase() : null);
+            let rawBWinrate = bestMoveInfo 
+                ? (bestMoveInfo.winrate !== undefined ? bestMoveInfo.winrate : null) 
+                : (rawItem && rawItem.winrate !== undefined ? rawItem.winrate : null);
+            let bWinrate = rawBWinrate !== null ? (rawBWinrate <= 1 && rawBWinrate >= 0 ? rawBWinrate * 100 : Number(rawBWinrate)) : null;
+            let bScore = bestMoveInfo 
+                ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) 
+                : (rawItem && rawItem.scoreLead !== undefined ? rawItem.scoreLead : null);
+            if (bScore !== null) bScore = Number(bScore);
 
             // 実戦手の情報
             let matchInfo = actualMoveStr ? moveInfos.find(m => (m.move || m.point || '').toUpperCase() === actualMoveStr.toUpperCase()) : null;
-            let aWinrate = matchInfo ? (matchInfo.winrate !== undefined ? matchInfo.winrate : null) : null;
-            let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? matchInfo.scoreLead : null) : null;
+            let rawAWinrate = matchInfo ? (matchInfo.winrate !== undefined ? matchInfo.winrate : null) : null;
+            let aWinrate = rawAWinrate !== null ? (rawAWinrate <= 1 && rawAWinrate >= 0 ? rawAWinrate * 100 : Number(rawAWinrate)) : (blunderPoint ? (dropPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate) : null);
+            let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? Number(matchInfo.scoreLead) : null) : (blunderPoint && blunderPoint.scoreLead !== undefined ? Number(blunderPoint.scoreLead) : null);
 
             // UIの初期化
             const playerName = dropPlayer === 'B' ? '黒' : '白';
@@ -1947,8 +2250,9 @@
                     const trUser = document.createElement('tr');
                     trUser.className = 'table-secondary';
                     const userMatch = moveInfos.find(m => (m.move || m.point || '').toUpperCase() === inputVal);
-                    const uWinrate = (userMatch && userMatch.winrate !== undefined && userMatch.winrate !== null) ? Number(userMatch.winrate).toFixed(1) + '%' : '-';
-                    const uScore = (userMatch && userMatch.scoreLead !== undefined && userMatch.scoreLead !== null) ? (Number(userMatch.scoreLead) > 0 ? '+' : '') + Number(userMatch.scoreLead).toFixed(1) + '目' : '-';
+                    let rawUW = (userMatch && userMatch.winrate !== undefined && userMatch.winrate !== null) ? userMatch.winrate : null;
+                    let uWinrate = rawUW !== null ? ((rawUW <= 1 && rawUW >= 0 ? rawUW * 100 : Number(rawUW)).toFixed(1) + '%') : '-';
+                    let uScore = (userMatch && userMatch.scoreLead !== undefined && userMatch.scoreLead !== null) ? (Number(userMatch.scoreLead) > 0 ? '+' : '') + Number(userMatch.scoreLead).toFixed(1) + '目' : '-';
                     trUser.innerHTML = `
                         <td><span class="badge bg-secondary">あなたの入力</span></td>
                         <td class="font-monospace fw-bold">${inputVal}</td>
@@ -1978,7 +2282,8 @@
                     const info = moveInfos[i];
                     const mCoord = (info.move || info.point || '').toUpperCase();
                     if (mCoord && mCoord !== actualMoveStr && mCoord !== bestMoveCoord && mCoord !== inputVal) {
-                        const mWinrate = (info.winrate !== undefined && info.winrate !== null) ? Number(info.winrate).toFixed(1) + '%' : '-';
+                        let rawMW = (info.winrate !== undefined && info.winrate !== null) ? info.winrate : null;
+                        const mWinrate = rawMW !== null ? ((rawMW <= 1 && rawMW >= 0 ? rawMW * 100 : Number(rawMW)).toFixed(1) + '%') : '-';
                         const mScore = (info.scoreLead !== undefined && info.scoreLead !== null) ? (Number(info.scoreLead) > 0 ? '+' : '') + Number(info.scoreLead).toFixed(1) + '目' : '-';
                         const trCand = document.createElement('tr');
                         trCand.innerHTML = `

@@ -203,6 +203,11 @@
                                 </button>
                             </div>
                             <div class="col-auto">
+                                <button type="button" class="btn btn-warning" id="btnShowBestMoveQuiz">
+                                    <i class="bi bi-lightbulb-fill me-1"></i> 最善手・ヒントを見る
+                                </button>
+                            </div>
+                            <div class="col-auto">
                                 <button type="button" class="btn btn-outline-secondary" id="btnResetQuiz" style="display: none;">
                                     <i class="bi bi-arrow-counterclockwise me-1"></i> もう一度解く
                                 </button>
@@ -1371,7 +1376,9 @@
             // KataGoの moveInfos 取得
             let moveInfos = [];
             if (rawItem) {
-                if (Array.isArray(rawItem.moveInfos)) {
+                if (Array.isArray(rawItem.candidates)) {
+                    moveInfos = rawItem.candidates;
+                } else if (Array.isArray(rawItem.moveInfos)) {
                     moveInfos = rawItem.moveInfos;
                 } else if (rawItem.rootInfo && Array.isArray(rawItem.rootInfo.moveInfos)) {
                     moveInfos = rawItem.rootInfo.moveInfos;
@@ -1411,14 +1418,23 @@
 
             // 最善手情報
             let bestMoveInfo = moveInfos.length > 0 ? moveInfos[0] : null;
-            let bestMoveCoord = bestMoveInfo ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() : null;
-            let bWinrate = bestMoveInfo ? (bestMoveInfo.winrate !== undefined ? bestMoveInfo.winrate : null) : null;
-            let bScore = bestMoveInfo ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) : null;
+            let bestMoveCoord = bestMoveInfo 
+                ? (bestMoveInfo.move || bestMoveInfo.point || '').toUpperCase() 
+                : (rawItem && rawItem.bestMove ? rawItem.bestMove.toUpperCase() : null);
+            let rawBWinrate = bestMoveInfo 
+                ? (bestMoveInfo.winrate !== undefined ? bestMoveInfo.winrate : null) 
+                : (rawItem && rawItem.winrate !== undefined ? rawItem.winrate : null);
+            let bWinrate = rawBWinrate !== null ? (rawBWinrate <= 1 && rawBWinrate >= 0 ? rawBWinrate * 100 : Number(rawBWinrate)) : null;
+            let bScore = bestMoveInfo 
+                ? (bestMoveInfo.scoreLead !== undefined ? bestMoveInfo.scoreLead : null) 
+                : (rawItem && rawItem.scoreLead !== undefined ? rawItem.scoreLead : null);
+            if (bScore !== null) bScore = Number(bScore);
 
             // 実戦手の情報
             let matchInfo = actualMoveStr ? moveInfos.find(m => (m.move || m.point || '').toUpperCase() === actualMoveStr.toUpperCase()) : null;
-            let aWinrate = matchInfo ? (matchInfo.winrate !== undefined ? matchInfo.winrate : null) : null;
-            let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? matchInfo.scoreLead : null) : null;
+            let rawAWinrate = matchInfo ? (matchInfo.winrate !== undefined ? matchInfo.winrate : null) : null;
+            let aWinrate = rawAWinrate !== null ? (rawAWinrate <= 1 && rawAWinrate >= 0 ? rawAWinrate * 100 : Number(rawAWinrate)) : (blunderPoint ? (dropPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate) : null);
+            let aScore = matchInfo ? (matchInfo.scoreLead !== undefined ? Number(matchInfo.scoreLead) : null) : (blunderPoint && blunderPoint.scoreLead !== undefined ? Number(blunderPoint.scoreLead) : null);
 
             // UIの初期化
             const playerName = dropPlayer === 'B' ? '黒' : '白';
@@ -1563,8 +1579,9 @@
                     const trUser = document.createElement('tr');
                     trUser.className = 'table-secondary';
                     const userMatch = moveInfos.find(m => (m.move || m.point || '').toUpperCase() === inputVal);
-                    const uWinrate = (userMatch && userMatch.winrate !== undefined && userMatch.winrate !== null) ? Number(userMatch.winrate).toFixed(1) + '%' : '-';
-                    const uScore = (userMatch && userMatch.scoreLead !== undefined && userMatch.scoreLead !== null) ? (Number(userMatch.scoreLead) > 0 ? '+' : '') + Number(userMatch.scoreLead).toFixed(1) + '目' : '-';
+                    let rawUW = (userMatch && userMatch.winrate !== undefined && userMatch.winrate !== null) ? userMatch.winrate : null;
+                    let uWinrate = rawUW !== null ? ((rawUW <= 1 && rawUW >= 0 ? rawUW * 100 : Number(rawUW)).toFixed(1) + '%') : '-';
+                    let uScore = (userMatch && userMatch.scoreLead !== undefined && userMatch.scoreLead !== null) ? (Number(userMatch.scoreLead) > 0 ? '+' : '') + Number(userMatch.scoreLead).toFixed(1) + '目' : '-';
                     trUser.innerHTML = `
                         <td><span class="badge bg-secondary">あなたの入力</span></td>
                         <td class="font-monospace fw-bold">${inputVal}</td>
@@ -1594,7 +1611,8 @@
                     const info = moveInfos[i];
                     const mCoord = (info.move || info.point || '').toUpperCase();
                     if (mCoord && mCoord !== actualMoveStr && mCoord !== bestMoveCoord && mCoord !== inputVal) {
-                        const mWinrate = (info.winrate !== undefined && info.winrate !== null) ? Number(info.winrate).toFixed(1) + '%' : '-';
+                        let rawMW = (info.winrate !== undefined && info.winrate !== null) ? info.winrate : null;
+                        const mWinrate = rawMW !== null ? ((rawMW <= 1 && rawMW >= 0 ? rawMW * 100 : Number(rawMW)).toFixed(1) + '%') : '-';
                         const mScore = (info.scoreLead !== undefined && info.scoreLead !== null) ? (Number(info.scoreLead) > 0 ? '+' : '') + Number(info.scoreLead).toFixed(1) + '目' : '-';
                         const trCand = document.createElement('tr');
                         trCand.innerHTML = `
@@ -1615,6 +1633,16 @@
 
             if (submitBtn) {
                 submitBtn.onclick = submitAnswer;
+            }
+
+            const hintBtn = document.getElementById('btnShowBestMoveQuiz');
+            if (hintBtn) {
+                hintBtn.onclick = function() {
+                    if (coordInput && bestMoveCoord) {
+                        coordInput.value = bestMoveCoord;
+                    }
+                    submitAnswer();
+                };
             }
 
             if (coordInput) {
