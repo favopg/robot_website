@@ -43,7 +43,8 @@ public class AdminAnalyzeController {
 
     @GetMapping({"/admin/analyze", "/analyze"})
     public String index(Model model) {
-        return "admin/analyze";
+        model.addAttribute("title", "悪手当て問題");
+        return "analyze";
     }
 
     @GetMapping({"/admin/analyze/api", "/admin/analyze/data", "/analyze/api", "/analyze/data", "/recommended-kifu/api", "/recommended-kifu/data", "/recommend-kifu/api", "/recommend-kifu/data"})
