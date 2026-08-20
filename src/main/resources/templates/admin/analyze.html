@@ -184,7 +184,7 @@
                                 </div>
                                 
                                 <!-- グラフ描画エリア -->
-                                <div class="position-relative flex-grow-1" style="min-height: min(280px, 52vh); width: 100%;">
+                                <div class="position-relative flex-grow-1" style="height: 60vh; min-height: 300px; max-height: 68vh; width: 100%;">
                                     <canvas id="winrateChart"></canvas>
                                 </div>
                                 
@@ -562,13 +562,12 @@
                     const chartStats = document.getElementById('chartStats');
                     if (chartStats) chartStats.style.display = 'flex';
 
-                    // 4. Chart.jsでグラフ描画（最大下落ポイントをハイライト）
+                    // 4. Chart.jsでグラフ描画（1本線・上下色分け・最大下落ハイライト）
                     const canvas = document.getElementById('winrateChart');
                     if (!canvas) return;
                     const ctx = canvas.getContext('2d');
 
-                    const blackPointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
-                    const whitePointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#0d6efd'));
+                    const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
 
                     const winrateChart = new Chart(ctx, {
@@ -580,29 +579,27 @@
                                     label: '黒 (B) 勝率',
                                     data: chartPoints.map(p => p.blackWinrate),
                                     borderColor: '#212529',
-                                    backgroundColor: 'rgba(33, 37, 41, 0.1)',
+                                    backgroundColor: function(context) {
+                                        const chart = context.chart;
+                                        const { ctx, chartArea } = chart;
+                                        if (!chartArea) {
+                                            return 'rgba(33, 37, 41, 0.15)';
+                                        }
+                                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                        gradient.addColorStop(0, 'rgba(33, 37, 41, 0.15)');
+                                        gradient.addColorStop(0.5, 'rgba(33, 37, 41, 0.05)');
+                                        gradient.addColorStop(0.5, 'rgba(13, 110, 253, 0.05)');
+                                        gradient.addColorStop(1, 'rgba(13, 110, 253, 0.15)');
+                                        return gradient;
+                                    },
                                     borderWidth: 2.5,
-                                    pointBackgroundColor: blackPointColors,
+                                    pointBackgroundColor: pointColors,
                                     pointBorderColor: '#ffffff',
                                     pointBorderWidth: 1.5,
                                     pointRadius: pointRadiusList,
                                     pointHoverRadius: 8,
                                     tension: 0.2,
-                                    fill: false
-                                },
-                                {
-                                    label: '白 (W) 勝率',
-                                    data: chartPoints.map(p => p.whiteWinrate),
-                                    borderColor: '#0d6efd',
-                                    backgroundColor: 'rgba(130, 110, 253, 0.1)',
-                                    borderWidth: 2.5,
-                                    pointBackgroundColor: whitePointColors,
-                                    pointBorderColor: '#0d6efd',
-                                    pointBorderWidth: 2,
-                                    pointRadius: pointRadiusList,
-                                    pointHoverRadius: 8,
-                                    tension: 0.2,
-                                    fill: false
+                                    fill: true
                                 }
                             ]
                         },
@@ -639,7 +636,7 @@
                                             const p = chartPoints[idx];
                                             let title = p.turnNumber + '手目 (' + (p.player === 'B' ? '● 黒手番' : '○ 白手番') + ')';
                                             if (p.turnNumber === blunderTurn) {
-                                                title += ' ⚠️ 最大勝率下落 (' + (dropPlayer === 'B' ? '黒' : '白') + '番 -' + maxDrop.toFixed(1) + '%)';
+                                                title += ' ⚠️ 最大勝率下落 (' + (dropPlayer === 'B' ? '黒' : '白') + ' -' + maxDrop.toFixed(1) + '%)';
                                             }
                                             return title;
                                         },
@@ -674,19 +671,20 @@
                                     max: 100,
                                     title: {
                                         display: true,
-                                        text: '勝率 (%)',
+                                        text: '黒勝率 (%)',
                                         font: { weight: 'bold' }
                                     },
                                     ticks: {
                                         stepSize: 10,
                                         callback: function(value) {
+                                            if (value === 50) return '50% (互角)';
                                             return value + '%';
                                         }
                                     },
                                     grid: {
                                         color: function(context) {
                                             if (context.tick && context.tick.value === 50) {
-                                                return 'rgba(220, 53, 69, 0.5)';
+                                                return '#dc3545';
                                             }
                                             return 'rgba(0, 0, 0, 0.08)';
                                         },
@@ -695,6 +693,12 @@
                                                 return 2;
                                             }
                                             return 1;
+                                        },
+                                        borderDash: function(context) {
+                                            if (context.tick && context.tick.value === 50) {
+                                                return [6, 4];
+                                            }
+                                            return [];
                                         }
                                     }
                                 },
@@ -722,13 +726,11 @@
                         const dataIndex = chartPoints.findIndex(p => p.turnNumber === turnNumber);
                         if (dataIndex !== -1) {
                             winrateChart.setActiveElements([
-                                { datasetIndex: 0, index: dataIndex },
-                                { datasetIndex: 1, index: dataIndex }
+                                { datasetIndex: 0, index: dataIndex }
                             ]);
                             if (winrateChart.tooltip) {
                                 winrateChart.tooltip.setActiveElements([
-                                    { datasetIndex: 0, index: dataIndex },
-                                    { datasetIndex: 1, index: dataIndex }
+                                    { datasetIndex: 0, index: dataIndex }
                                 ]);
                             }
                         } else {
