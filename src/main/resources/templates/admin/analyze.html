@@ -113,7 +113,7 @@
                                 <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
                             </button>
                         </div>
-                        <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください</p>
+                        <p class="text-white-50 mb-0 mt-1 small" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面です。その手はどこか、碁盤上の座標をクリックして答え合わせをしてみてください</p>
                     </div>
                     <div class="card-body p-2 p-md-3">
                         <div class="row g-2 g-md-3 align-items-center">
@@ -189,19 +189,8 @@
                 <!-- 次の一手クイズカード -->
                 <div class="card shadow border-0 mb-4" id="quizCard" style="display: none;">
                     <div class="card-body p-4">
-                        <!-- 座標入力フォーム -->
+                        <!-- 操作ボタングループ -->
                         <div class="row g-2 align-items-center mb-2" id="quizInputForm">
-                            <div class="col-sm-6 col-md-4">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light font-monospace"><i class="bi bi-geo-alt-fill text-primary"></i></span>
-                                    <input type="text" class="form-control font-monospace text-uppercase" id="quizCoordInput" placeholder="例：Q18" maxlength="5" autocomplete="off">
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-primary" id="btnSubmitQuizAnswer">
-                                    <i class="bi bi-check-lg me-1"></i> 回答する
-                                </button>
-                            </div>
                             <div class="col-auto">
                                 <button type="button" class="btn btn-warning" id="btnShowBestMoveQuiz">
                                     <i class="bi bi-lightbulb-fill me-1"></i> 💡 ヒントを見る
@@ -1361,20 +1350,21 @@
                     const isQuizTurn = (currentTurn === window.quizTurnGlobal);
                     const isAnswered = (window.quizMarkers && window.quizMarkers.length > 0);
                     
-                    // クイズ出題局面で未回答の場合、クリックで座標を選択
+                    // クイズ出題局面で未回答の場合、クリックで座標を選択して即座に回答実行
                     if (isQuizTurn && !isAnswered) {
                         const coords = getBoardCoordsFromEvent(e);
                         if (coords) {
                             const coordStr = coordXYToStr(coords.x, coords.y);
                             window.quizSelectedMove = { x: coords.x, y: coords.y, coord: coordStr };
                             
-                            const coordInput = document.getElementById('quizCoordInput');
-                            if (coordInput && !coordInput.disabled) {
-                                coordInput.value = coordStr;
-                                const validationMsg = document.getElementById('quizInputValidation');
-                                if (validationMsg) validationMsg.style.display = 'none';
+                            const validationMsg = document.getElementById('quizInputValidation');
+                            if (validationMsg) validationMsg.style.display = 'none';
+                            
+                            if (typeof window.submitQuizAnswer === 'function') {
+                                window.submitQuizAnswer(coordStr);
+                            } else {
+                                renderBoard(currentTurn);
                             }
-                            renderBoard(currentTurn);
                         }
                     }
                 });
@@ -1588,15 +1578,17 @@
             const quizTitleElem = document.getElementById('quizTitle');
             if (quizTitleElem) quizTitleElem.innerText = '出題局面: ' + quizTurn + '手目 (' + playerName + '番)';
             const quizDescElem = document.getElementById('quizDescription');
-            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面で、その手はどこかを座標をクリックして回答するボタンを押下して答え合わせをしてみてください';
+            if (quizDescElem) quizDescElem.innerText = '実戦で最も勝率が落ちた手の直前の局面です。その手はどこか、碁盤上の座標をクリックして答え合わせをしてみてください';
             const quizDropBadgeElem = document.getElementById('quizDropBadge');
             if (quizDropBadgeElem) quizDropBadgeElem.innerText = '実戦' + blunderTurn + '手目で最大下落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
 
             window.quizMarkers = []; // 初期状態では碁盤マーカーは非表示
 
-            const coordInput = document.getElementById('quizCoordInput');
-            const submitBtn = document.getElementById('btnSubmitQuizAnswer');
             const resetBtn = document.getElementById('btnResetQuiz');
+            const hintBtn = document.getElementById('btnShowBestMoveQuiz');
+            const giveUpBtn = document.getElementById('btnGiveUpQuiz');
+            const hintArea = document.getElementById('quizHintArea');
+            const hintText = document.getElementById('quizHintText');
             const validationMsg = document.getElementById('quizInputValidation');
             const resultArea = document.getElementById('quizResultArea');
 
@@ -1612,12 +1604,11 @@
 
             quizCard.style.display = 'block';
 
-            function submitAnswer() {
-                if (!coordInput) return;
-                const inputVal = coordInput.value.trim().toUpperCase();
+            function submitAnswer(chosenCoord) {
+                const inputVal = (chosenCoord || (window.quizSelectedMove ? window.quizSelectedMove.coord : '')).trim().toUpperCase();
                 if (!inputVal) {
                     if (validationMsg) {
-                        validationMsg.innerText = '座標を入力してください（例：Q18）。';
+                        validationMsg.innerText = '碁盤上の座標をクリックして回答してください。';
                         validationMsg.style.display = 'block';
                     }
                     return;
@@ -1626,7 +1617,7 @@
                 const xy = parseCoordToXY(inputVal);
                 if (xy.x < 0 || xy.y < 0 || xy.x >= 19 || xy.y >= 19) {
                     if (validationMsg) {
-                        validationMsg.innerText = '有効な座標を入力してください（列: A〜T ※I除く、行: 1〜19、例: Q18）。';
+                        validationMsg.innerText = '有効な座標をクリックしてください。';
                         validationMsg.style.display = 'block';
                     }
                     return;
@@ -1773,21 +1764,12 @@
                     }
                 }
 
-                coordInput.disabled = true;
-                submitBtn.disabled = true;
                 if (hintBtn) hintBtn.disabled = true;
                 if (giveUpBtn) giveUpBtn.style.display = 'none';
                 if (resetBtn) resetBtn.style.display = 'inline-block';
             }
 
-            if (submitBtn) {
-                submitBtn.onclick = submitAnswer;
-            }
-
-            const hintBtn = document.getElementById('btnShowBestMoveQuiz');
-            const giveUpBtn = document.getElementById('btnGiveUpQuiz');
-            const hintArea = document.getElementById('quizHintArea');
-            const hintText = document.getElementById('quizHintText');
+            window.submitQuizAnswer = submitAnswer;
 
             if (hintBtn) {
                 hintBtn.onclick = function() {
@@ -1813,49 +1795,20 @@
             if (giveUpBtn) {
                 giveUpBtn.onclick = function() {
                     const targetCoord = actualMoveStr || bestMoveCoord;
-                    if (coordInput && targetCoord) {
-                        coordInput.value = targetCoord;
-                        window.quizSelectedMove = null;
+                    if (targetCoord) {
+                        const xy = parseCoordToXY(targetCoord);
+                        window.quizSelectedMove = { x: xy.x, y: xy.y, coord: targetCoord };
                     }
-                    submitAnswer();
-                };
-            }
-
-            if (coordInput) {
-                coordInput.oninput = function() {
-                    const val = this.value.trim().toUpperCase();
-                    if (!val) {
-                        window.quizSelectedMove = null;
-                    } else {
-                        const xy = parseCoordToXY(val);
-                        if (xy.x >= 0 && xy.y >= 0 && !xy.pass) {
-                            window.quizSelectedMove = { x: xy.x, y: xy.y, coord: val };
-                        } else {
-                            window.quizSelectedMove = null;
-                        }
-                    }
-                    if (typeof window.goToGobanTurn === 'function') {
-                        window.goToGobanTurn(quizTurn);
-                    }
-                };
-
-                coordInput.onkeydown = function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        submitAnswer();
-                    }
+                    submitAnswer(targetCoord);
                 };
             }
 
             if (resetBtn) {
                 resetBtn.onclick = function() {
-                    coordInput.disabled = false;
-                    submitBtn.disabled = false;
                     if (hintBtn) hintBtn.disabled = false;
                     if (giveUpBtn) giveUpBtn.style.display = 'none';
                     if (hintArea) hintArea.style.display = 'none';
                     window.quizHintArea = null;
-                    coordInput.value = '';
                     resetBtn.style.display = 'none';
                     resultArea.style.display = 'none';
                     if (validationMsg) validationMsg.style.display = 'none';
@@ -1864,7 +1817,6 @@
                     if (typeof window.goToGobanTurn === 'function') {
                         window.goToGobanTurn(quizTurn);
                     }
-                    coordInput.focus();
                 };
             }
         }
