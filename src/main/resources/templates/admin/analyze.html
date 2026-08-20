@@ -152,11 +152,24 @@
                                     <div class="mb-2">
                                         <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
                                     </div>
-                                    <div class="btn-group goban-controls-btn-group w-100" role="group" aria-label="碁盤操作">
+                                    <div class="btn-group goban-controls-btn-group w-100 mb-2" role="group" aria-label="碁盤操作">
                                         <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初へ" aria-label="最初へ"><i class="bi bi-chevron-bar-left"></i></button>
                                         <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前へ戻る" aria-label="前へ戻る"><i class="bi bi-chevron-left"></i></button>
                                         <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次へ進む" aria-label="次へ進む"><i class="bi bi-chevron-right"></i></button>
                                         <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後へ" aria-label="最後へ"><i class="bi bi-chevron-bar-right"></i></button>
+                                    </div>
+
+                                    <!-- ヒント・クイズ補助ボタングループ -->
+                                    <div class="d-flex flex-column gap-1 w-100" id="quizControlsContainer">
+                                        <button type="button" class="btn btn-warning btn-sm w-100 shadow-sm" id="btnShowBestMoveQuiz" style="display: none;">
+                                            <i class="bi bi-lightbulb-fill me-1"></i> 💡 ヒントを見る
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100" id="btnGiveUpQuiz" style="display: none;">
+                                            <i class="bi bi-flag me-1"></i> 答えを見る（ギブアップ）
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="btnResetQuiz" style="display: none;">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i> もう一度解く
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -189,25 +202,6 @@
                 <!-- 次の一手クイズカード -->
                 <div class="card shadow border-0 mb-4" id="quizCard" style="display: none;">
                     <div class="card-body p-4">
-                        <!-- 操作ボタングループ -->
-                        <div class="row g-2 align-items-center mb-2" id="quizInputForm">
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-warning" id="btnShowBestMoveQuiz">
-                                    <i class="bi bi-lightbulb-fill me-1"></i> 💡 ヒントを見る
-                                </button>
-                            </div>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-outline-danger" id="btnGiveUpQuiz" style="display: none;">
-                                    <i class="bi bi-flag me-1"></i> 答えを見る（ギブアップ）
-                                </button>
-                            </div>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-outline-secondary" id="btnResetQuiz" style="display: none;">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i> もう一度解く
-                                </button>
-                            </div>
-                        </div>
-
                         <!-- ヒント表示領域 -->
                         <div id="quizHintArea" class="alert alert-warning py-2 px-3 mb-2 small" style="display: none;">
                             <i class="bi bi-lightbulb-fill me-1"></i> <span id="quizHintText"></span>
@@ -215,7 +209,7 @@
                         <div id="quizInputValidation" class="text-danger small mb-2" style="display: none;"></div>
 
                         <!-- 回答結果・解説エリア -->
-                        <div id="quizResultArea" class="mt-4 p-3 rounded" style="display: none;">
+                        <div id="quizResultArea" class="mt-2 p-3 rounded" style="display: none;">
                             <div class="d-flex align-items-center mb-2">
                                 <span id="quizResultIcon" class="fs-4 me-2"></span>
                                 <h5 id="quizResultTitle" class="mb-0 fw-bold"></h5>
@@ -1596,6 +1590,9 @@
             const btnGoToQuiz = document.getElementById('btnGoToQuizTurn');
             if (btnGoToQuiz) {
                 btnGoToQuiz.onclick = () => {
+                    if (hintBtn) {
+                        hintBtn.style.display = 'block';
+                    }
                     if (typeof window.goToGobanTurn === 'function') {
                         window.goToGobanTurn(quizTurn);
                     }
@@ -1805,7 +1802,10 @@
 
             if (resetBtn) {
                 resetBtn.onclick = function() {
-                    if (hintBtn) hintBtn.disabled = false;
+                    if (hintBtn) {
+                        hintBtn.disabled = false;
+                        hintBtn.style.display = 'block';
+                    }
                     if (giveUpBtn) giveUpBtn.style.display = 'none';
                     if (hintArea) hintArea.style.display = 'none';
                     window.quizHintArea = null;
