@@ -233,20 +233,8 @@
                     </div>
                 </div>
 
-                <!-- 解析結果表示カード -->
-                <div class="card shadow border-0 mb-4" id="resultJsonCard" style="display: none;">
-                    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0 fs-5"><i class="bi bi-file-earmark-code"></i> 解析結果 (JSON)</h4>
-                        <button class="btn btn-sm btn-outline-light" onclick="copyResult()">
-                            <i class="bi bi-clipboard"></i> コピー
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
-                        <pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="max-height: 600px; overflow-y: auto;"><code id="resultJsonArea" th:text="${resultJson}"></code></pre>
-                    </div>
-                </div>
-
                 <!-- SGFデータ受け渡し用（非表示） -->
+                <script id="resultJsonArea" type="application/json" th:text="${resultJson}"></script>
                 <script id="sgfData" type="text/plain" th:utext="${sgfContent}"></script>
 
             </div>
@@ -261,15 +249,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function copyResult() {
-            const text = document.getElementById('resultJsonArea').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('解析結果をクリップボードにコピーしました。');
-            }).catch(err => {
-                console.error('コピーに失敗しました', err);
-            });
-        }
-
         // 局面（碁盤）のサイズ切り替え関数
         function resizeBoard(sizePx) {
             const wrapper = document.getElementById('gobanWrapper');
@@ -1826,17 +1805,15 @@
 
     document.addEventListener('DOMContentLoaded', function() {
             const resultElem = document.getElementById('resultJsonArea');
-            const hasInitialData = resultElem && resultElem.innerText.trim().length > 0;
+            const hasInitialData = resultElem && resultElem.textContent.trim().length > 0;
             const loadingIndicator = document.getElementById('loadingIndicator');
             const gobanCard = document.getElementById('gobanCard');
-            const resultJsonCard = document.getElementById('resultJsonCard');
             const dynamicErrorAlert = document.getElementById('dynamicErrorAlert');
             const dynamicErrorMessage = document.getElementById('dynamicErrorMessage');
 
             if (hasInitialData) {
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (gobanCard) gobanCard.style.display = 'block';
-                if (resultJsonCard) resultJsonCard.style.display = 'block';
                 initAnalysisView();
             } else {
                 if (loadingIndicator) loadingIndicator.style.display = 'block';
@@ -1853,11 +1830,10 @@
                     .then(data => {
                         if (loadingIndicator) loadingIndicator.style.display = 'none';
                         if (data && data.success) {
-                            if (resultElem) resultElem.innerText = data.resultJson || '';
+                            if (resultElem) resultElem.textContent = data.resultJson || '';
                             const sgfElem = document.getElementById('sgfData');
                             if (sgfElem) sgfElem.textContent = data.sgfContent || '';
                             if (gobanCard) gobanCard.style.display = 'block';
-                            if (resultJsonCard) resultJsonCard.style.display = 'block';
                             initAnalysisView();
                         } else {
                             const errorMsg = (data && data.errorMessage) ? data.errorMessage : 'KataGo解析APIの呼び出しに失敗しました。';
