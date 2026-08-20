@@ -204,7 +204,12 @@
                             </div>
                             <div class="col-auto">
                                 <button type="button" class="btn btn-warning" id="btnShowBestMoveQuiz">
-                                    <i class="bi bi-lightbulb-fill me-1"></i> 最善手・ヒントを見る
+                                    <i class="bi bi-lightbulb-fill me-1"></i> 💡 ヒントを見る
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-danger" id="btnGiveUpQuiz" style="display: none;">
+                                    <i class="bi bi-flag me-1"></i> 答えを見る（ギブアップ）
                                 </button>
                             </div>
                             <div class="col-auto">
@@ -212,6 +217,11 @@
                                     <i class="bi bi-arrow-counterclockwise me-1"></i> もう一度解く
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- ヒント表示領域 -->
+                        <div id="quizHintArea" class="alert alert-warning py-2 px-3 mb-2 small" style="display: none;">
+                            <i class="bi bi-lightbulb-fill me-1"></i> <span id="quizHintText"></span>
                         </div>
                         <div id="quizInputValidation" class="text-danger small mb-2" style="display: none;"></div>
 
@@ -1151,6 +1161,35 @@
                         ctx.stroke();
                     }
 
+                    // クイズヒントエリアのハイライト描画
+                    if (window.quizHintArea && currentTurn === window.quizTurnGlobal && (!window.quizMarkers || window.quizMarkers.length === 0)) {
+                        const hint = window.quizHintArea;
+                        const pxMin = pad + hint.xMin * cell - cell * 0.45;
+                        const pyMin = pad + hint.yMin * cell - cell * 0.45;
+                        const areaW = (hint.xMax - hint.xMin + 0.9) * cell;
+                        const areaH = (hint.yMax - hint.yMin + 0.9) * cell;
+
+                        ctx.save();
+                        // 半透明の黄色ハイライト背景
+                        ctx.fillStyle = 'rgba(255, 193, 7, 0.22)';
+                        ctx.fillRect(pxMin, pyMin, areaW, areaH);
+
+                        // 点線の枠線
+                        ctx.strokeStyle = '#d39e00';
+                        ctx.lineWidth = 2.5;
+                        ctx.setLineDash([6, 4]);
+                        ctx.strokeRect(pxMin, pyMin, areaW, areaH);
+
+                        // エリア名ラベル
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = '#856404';
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText('💡 ヒントエリア: ' + (hint.shortName || ''), pxMin + 8, pyMin + 8);
+                        ctx.restore();
+                    }
+
                     // クイズマーカーの描画（出題局面（quizTurn）またはクイズ回答表示時）
                     if (window.quizMarkers && window.quizMarkers.length > 0 && currentTurn === window.quizTurnGlobal) {
                         window.quizMarkers.forEach(m => {
@@ -1416,6 +1455,114 @@
                 return { x, y, pass: false };
             }
 
+            // 座標からエリアヒント（テキスト・ハイライト範囲）を算出するヘルパー関数
+            function getAreaHint(coordStr, boardSize) {
+                if (!coordStr) return null;
+                const xy = parseCoordToXY(coordStr);
+                if (xy.x < 0 || xy.y < 0 || xy.pass) return null;
+
+                const bSize = (boardSize && boardSize > 0) ? boardSize : 19;
+                const colLetters = 'ABCDEFGHJKLMNOPQRST';
+
+                let colName = '';
+                let colRangeText = '';
+                let xMin = 0, xMax = bSize - 1;
+
+                if (bSize === 19) {
+                    if (xy.x <= 5) {
+                        colName = '左';
+                        colRangeText = 'A〜F列';
+                        xMin = 0; xMax = 5;
+                    } else if (xy.x >= 13) {
+                        colName = '右';
+                        colRangeText = 'N〜T列';
+                        xMin = 13; xMax = 18;
+                    } else {
+                        colName = '中央';
+                        colRangeText = 'G〜M列';
+                        xMin = 6; xMax = 12;
+                    }
+                } else {
+                    const split1 = Math.floor(bSize / 3);
+                    const split2 = Math.floor((bSize * 2) / 3);
+                    if (xy.x < split1) {
+                        colName = '左';
+                        colRangeText = `${colLetters[0]}〜${colLetters[split1 - 1]}列`;
+                        xMin = 0; xMax = split1 - 1;
+                    } else if (xy.x >= split2) {
+                        colName = '右';
+                        colRangeText = `${colLetters[split2]}〜${colLetters[bSize - 1]}列`;
+                        xMin = split2; xMax = bSize - 1;
+                    } else {
+                        colName = '中央';
+                        colRangeText = `${colLetters[split1]}〜${colLetters[split2 - 1]}列`;
+                        xMin = split1; xMax = split2 - 1;
+                    }
+                }
+
+                let rowName = '';
+                let rowRangeText = '';
+                let yMin = 0, yMax = bSize - 1;
+
+                if (bSize === 19) {
+                    if (xy.y <= 5) {
+                        rowName = '上';
+                        rowRangeText = '14〜19行';
+                        yMin = 0; yMax = 5;
+                    } else if (xy.y >= 13) {
+                        rowName = '下';
+                        rowRangeText = '1〜6行';
+                        yMin = 13; yMax = 18;
+                    } else {
+                        rowName = '中央';
+                        rowRangeText = '7〜13行';
+                        yMin = 6; yMax = 12;
+                    }
+                } else {
+                    const split1 = Math.floor(bSize / 3);
+                    const split2 = Math.floor((bSize * 2) / 3);
+                    if (xy.y < split1) {
+                        rowName = '上';
+                        rowRangeText = `${bSize - split1 + 1}〜${bSize}行`;
+                        yMin = 0; yMax = split1 - 1;
+                    } else if (xy.y >= split2) {
+                        rowName = '下';
+                        rowRangeText = `1〜${bSize - split2}行`;
+                        yMin = split2; yMax = bSize - 1;
+                    } else {
+                        rowName = '中央';
+                        rowRangeText = `${bSize - split2 + 1}〜${bSize - split1}行`;
+                        yMin = split1; yMax = split2 - 1;
+                    }
+                }
+
+                // エリア名称の組み立て
+                let areaDescription = '';
+                let shortName = '';
+                if (colName === '中央' && rowName === '中央') {
+                    shortName = '中央（天元付近）';
+                    areaDescription = `中央（${colRangeText}、${rowRangeText}）付近（天元周辺）`;
+                } else if (colName === '中央') {
+                    shortName = rowName === '上' ? '上辺' : '下辺';
+                    areaDescription = `${shortName}（${colRangeText}、${rowRangeText}）付近`;
+                } else if (rowName === '中央') {
+                    shortName = colName === '左' ? '左辺' : '右辺';
+                    areaDescription = `${shortName}（${colRangeText}、${rowRangeText}）付近`;
+                } else {
+                    shortName = `${colName}${rowName}隅`;
+                    areaDescription = `${shortName}（${colRangeText}、${rowRangeText}）付近`;
+                }
+
+                return {
+                    description: areaDescription,
+                    shortName: shortName,
+                    xMin: xMin,
+                    xMax: xMax,
+                    yMin: yMin,
+                    yMax: yMax
+                };
+            }
+
             // 最善手情報
             let bestMoveInfo = moveInfos.length > 0 ? moveInfos[0] : null;
             let bestMoveCoord = bestMoveInfo 
@@ -1628,6 +1775,8 @@
 
                 coordInput.disabled = true;
                 submitBtn.disabled = true;
+                if (hintBtn) hintBtn.disabled = true;
+                if (giveUpBtn) giveUpBtn.style.display = 'none';
                 if (resetBtn) resetBtn.style.display = 'inline-block';
             }
 
@@ -1636,10 +1785,37 @@
             }
 
             const hintBtn = document.getElementById('btnShowBestMoveQuiz');
+            const giveUpBtn = document.getElementById('btnGiveUpQuiz');
+            const hintArea = document.getElementById('quizHintArea');
+            const hintText = document.getElementById('quizHintText');
+
             if (hintBtn) {
                 hintBtn.onclick = function() {
-                    if (coordInput && bestMoveCoord) {
-                        coordInput.value = bestMoveCoord;
+                    const targetCoord = actualMoveStr || bestMoveCoord;
+                    if (!targetCoord) return;
+                    const hint = getAreaHint(targetCoord, 19);
+                    if (hint) {
+                        window.quizHintArea = hint;
+                        if (hintArea && hintText) {
+                            hintText.innerHTML = `正解（実戦で最も勝率が落ちた手）は<strong>【${hint.description}】</strong>にあります。盤面の黄色い点線枠を目安に座標を考えてみましょう！`;
+                            hintArea.style.display = 'block';
+                        }
+                        if (giveUpBtn) {
+                            giveUpBtn.style.display = 'inline-block';
+                        }
+                        if (typeof window.goToGobanTurn === 'function') {
+                            window.goToGobanTurn(quizTurn);
+                        }
+                    }
+                };
+            }
+
+            if (giveUpBtn) {
+                giveUpBtn.onclick = function() {
+                    const targetCoord = actualMoveStr || bestMoveCoord;
+                    if (coordInput && targetCoord) {
+                        coordInput.value = targetCoord;
+                        window.quizSelectedMove = null;
                     }
                     submitAnswer();
                 };
@@ -1675,6 +1851,10 @@
                 resetBtn.onclick = function() {
                     coordInput.disabled = false;
                     submitBtn.disabled = false;
+                    if (hintBtn) hintBtn.disabled = false;
+                    if (giveUpBtn) giveUpBtn.style.display = 'none';
+                    if (hintArea) hintArea.style.display = 'none';
+                    window.quizHintArea = null;
                     coordInput.value = '';
                     resetBtn.style.display = 'none';
                     resultArea.style.display = 'none';
