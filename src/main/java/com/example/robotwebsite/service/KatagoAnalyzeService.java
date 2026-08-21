@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 
 @Service
 public class KatagoAnalyzeService {
@@ -26,6 +27,53 @@ public class KatagoAnalyzeService {
 
     @Value("${analyze.cache.dir:C:/analyze_cache}")
     private String cacheBaseDir;
+
+    /**
+     * キャッシュディレクトリ内に存在する棋譜ファイルの日付一覧(YYYYMMDD)を降順で取得
+     */
+    public List<String> getAvailableDates() {
+        TreeSet<String> dateSet = new TreeSet<>(Comparator.reverseOrder());
+        Path base = Paths.get(cacheBaseDir);
+
+        if (!Files.exists(base) || !Files.isDirectory(base)) {
+            return new ArrayList<>(dateSet);
+        }
+
+        try {
+            // 1. すべてのサブディレクトリ (YYYYMM等) 内を走査
+            try (DirectoryStream<Path> subDirs = Files.newDirectoryStream(base, Files::isDirectory)) {
+                for (Path subDir : subDirs) {
+                    try (DirectoryStream<Path> files = Files.newDirectoryStream(subDir, "*.json")) {
+                        for (Path file : files) {
+                            extractDateFromFileName(file.getFileName().toString(), dateSet);
+                        }
+                    } catch (IOException ignored) {}
+                }
+            }
+            // 2. キャッシュディレクトリ直下も走査
+            try (DirectoryStream<Path> directFiles = Files.newDirectoryStream(base, "*.json")) {
+                for (Path file : directFiles) {
+                    extractDateFromFileName(file.getFileName().toString(), dateSet);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to scan available dates in cache dir: {}", base, e);
+        }
+
+        return new ArrayList<>(dateSet);
+    }
+
+    private void extractDateFromFileName(String fileName, TreeSet<String> dateSet) {
+        if (fileName != null && fileName.length() >= 8) {
+            String prefix = fileName.substring(0, 8);
+            if (prefix.matches("\\d{8}")) {
+                String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                if (prefix.compareTo(todayStr) <= 0) {
+                    dateSet.add(prefix);
+                }
+            }
+        }
+    }
 
     public String analyze(KatagoAnalyzeRequest request) {
         // 日付の取得（リクエストの日付、またはシステム日付）
@@ -40,8 +88,8 @@ public class KatagoAnalyzeService {
         logger.info("Searching analyze cache file for date {} in {}", dateStr, targetDir);
 
         if (!Files.exists(targetDir) || !Files.isDirectory(targetDir)) {
-            logger.warn("Cache directory does not exist: {}", targetDir);
-            throw new RuntimeException(new FileNotFoundException("ディレクトリが見つかりません: " + targetDir));
+            // サブディレクトリが存在しない場合、直下もフォールバック確認
+            targetDir = Paths.get(cacheBaseDir);
         }
 
         // YYYYMMDD_*.json にマッチするファイルを検索

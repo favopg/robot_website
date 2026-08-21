@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.nio.charset.StandardCharsets;
@@ -49,10 +50,23 @@ public class AdminAnalyzeController {
 
     @GetMapping({"/admin/analyze/api", "/admin/analyze/data", "/analyze/api", "/analyze/data", "/recommended-kifu/api", "/recommended-kifu/data", "/recommend-kifu/api", "/recommend-kifu/data"})
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> analyzeApi() {
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        KatagoAnalyzeRequest request = new KatagoAnalyzeRequest(today);
+    public ResponseEntity<Map<String, Object>> analyzeApi(@RequestParam(value = "date", required = false) String date) {
+        List<String> availableDates = katagoAnalyzeService.getAvailableDates();
+
+        String targetDate = (date != null && !date.trim().isEmpty()) ? date.trim() : null;
+        if (targetDate == null) {
+            // リクエスト指定がない場合、存在する最新日、なければ本日日付を使用
+            if (!availableDates.isEmpty()) {
+                targetDate = availableDates.get(0);
+            } else {
+                targetDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            }
+        }
+
+        KatagoAnalyzeRequest request = new KatagoAnalyzeRequest(targetDate);
         Map<String, Object> response = new HashMap<>();
+        response.put("availableDates", availableDates);
+        response.put("currentDate", targetDate);
 
         try {
             String jsonResult = katagoAnalyzeService.analyze(request);
