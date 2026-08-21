@@ -185,6 +185,13 @@
                             <!-- 中央カラム：手番ナビゲーション操作バー -->
                             <div class="col-12 col-lg-2 col-xl-2 d-flex flex-column justify-content-center align-items-center px-1">
                                 <div id="gobanControls" class="w-100 text-center" style="max-width: 220px;">
+                                    <!-- 次の１手クイズ 日付選択プルダウン (手数の真上) -->
+                                    <div class="mb-2 w-100" id="kifuSelectContainer">
+                                        <select class="form-select form-select-sm fw-bold border-secondary shadow-sm text-center" id="kifuDateSelect" aria-label="クイズの日付選択">
+                                            <option value="" disabled selected>棋譜を読み込み中...</option>
+                                        </select>
+                                    </div>
+
                                     <div class="mb-2">
                                         <div class="fw-bold text-dark small" id="gobanMoveLabel">0手目 / 全0手</div>
                                         <div class="d-flex justify-content-center flex-wrap gap-1 mt-1">
@@ -746,6 +753,14 @@
                     const canvas = document.getElementById('winrateChart');
                     if (!canvas) return;
                     const ctx = canvas.getContext('2d');
+
+                    // 既存のChartインスタンスが存在する場合は破棄して重複描画を防止
+                    if (typeof Chart !== 'undefined') {
+                        const existingChart = Chart.getChart(canvas);
+                        if (existingChart) {
+                            existingChart.destroy();
+                        }
+                    }
 
                     const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
@@ -2138,50 +2153,110 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+        function updateDateSelectDropdown(availableDates, currentDate) {
+            const select = document.getElementById('kifuDateSelect');
+            if (!select || !availableDates) return;
+
+            select.innerHTML = '';
+            if (availableDates.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '利用可能な棋譜がありません';
+                select.appendChild(opt);
+                select.disabled = true;
+                return;
+            }
+
+            select.disabled = false;
+            availableDates.forEach(dateStr => {
+                const option = document.createElement('option');
+                option.value = dateStr;
+                // 表示フォーマット: 「YYYYMMDD棋譜」
+                option.textContent = `${dateStr}棋譜`;
+                if (dateStr === currentDate) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        function fetchKifuByDate(targetDate) {
             const resultElem = document.getElementById('resultJsonArea');
-            const hasInitialData = resultElem && resultElem.textContent.trim().length > 0;
             const loadingIndicator = document.getElementById('loadingIndicator');
             const gobanCard = document.getElementById('gobanCard');
             const dynamicErrorAlert = document.getElementById('dynamicErrorAlert');
             const dynamicErrorMessage = document.getElementById('dynamicErrorMessage');
+
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'none';
+
+            const pathname = window.location.pathname;
+            const baseUrl = (pathname.endsWith('/analyze') || pathname.endsWith('/recommended-kifu') || pathname.endsWith('/recommend-kifu'))
+                ? (pathname.replace(/\/$/, '') + '/api') 
+                : '/admin/analyze/api';
+
+            const apiUrl = targetDate ? `${baseUrl}?date=${encodeURIComponent(targetDate)}` : baseUrl;
+
+            fetch(apiUrl)
+                .then(res => {
+                    return res.json().then(data => {
+                        if (!res.ok) {
+                            throw new Error((data && data.errorMessage) || ('HTTP ' + res.status));
+                        }
+                        return data;
+                    });
+                })
+                .then(data => {
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (data && data.success) {
+                        if (resultElem) resultElem.textContent = data.resultJson || '';
+                        const sgfElem = document.getElementById('sgfData');
+                        if (sgfElem) sgfElem.textContent = data.sgfContent || '';
+                        if (gobanCard) gobanCard.style.display = 'block';
+
+                        // プルダウンの選択肢一覧および現在選択日を更新
+                        if (data.availableDates) {
+                            updateDateSelectDropdown(data.availableDates, data.currentDate || targetDate);
+                        }
+
+                        initAnalysisView();
+                    } else {
+                        const errorMsg = (data && data.errorMessage) ? data.errorMessage : 'KataGo解析APIの呼び出しに失敗しました。';
+                        if (dynamicErrorMessage) dynamicErrorMessage.textContent = errorMsg;
+                        if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    const errorMsg = err.message ? err.message : 'KataGo解析APIの呼び出しに失敗しました。';
+                    if (dynamicErrorMessage) dynamicErrorMessage.textContent = errorMsg;
+                    if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'block';
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // プルダウン変更イベントの登録
+            const kifuDateSelect = document.getElementById('kifuDateSelect');
+            if (kifuDateSelect) {
+                kifuDateSelect.addEventListener('change', function() {
+                    const selectedDate = this.value;
+                    if (selectedDate) {
+                        fetchKifuByDate(selectedDate);
+                    }
+                });
+            }
+
+            const resultElem = document.getElementById('resultJsonArea');
+            const hasInitialData = resultElem && resultElem.textContent.trim().length > 0;
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const gobanCard = document.getElementById('gobanCard');
 
             if (hasInitialData) {
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (gobanCard) gobanCard.style.display = 'block';
                 initAnalysisView();
             } else {
-                if (loadingIndicator) loadingIndicator.style.display = 'block';
-                const apiUrl = window.location.pathname.endsWith('/analyze') ? (window.location.pathname.replace(/\/$/, '') + '/api') : '/admin/analyze/api';
-                fetch(apiUrl)
-                    .then(res => {
-                        return res.json().then(data => {
-                            if (!res.ok) {
-                                throw new Error((data && data.errorMessage) || ('HTTP ' + res.status));
-                            }
-                            return data;
-                        });
-                    })
-                    .then(data => {
-                        if (loadingIndicator) loadingIndicator.style.display = 'none';
-                        if (data && data.success) {
-                            if (resultElem) resultElem.textContent = data.resultJson || '';
-                            const sgfElem = document.getElementById('sgfData');
-                            if (sgfElem) sgfElem.textContent = data.sgfContent || '';
-                            if (gobanCard) gobanCard.style.display = 'block';
-                            initAnalysisView();
-                        } else {
-                            const errorMsg = (data && data.errorMessage) ? data.errorMessage : 'KataGo解析APIの呼び出しに失敗しました。';
-                            if (dynamicErrorMessage) dynamicErrorMessage.textContent = errorMsg;
-                            if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'block';
-                        }
-                    })
-                    .catch(err => {
-                        if (loadingIndicator) loadingIndicator.style.display = 'none';
-                        const errorMsg = err.message ? err.message : 'KataGo解析APIの呼び出しに失敗しました。';
-                        if (dynamicErrorMessage) dynamicErrorMessage.textContent = errorMsg;
-                        if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'block';
-                    });
+                fetchKifuByDate();
             }
         });
     </script>

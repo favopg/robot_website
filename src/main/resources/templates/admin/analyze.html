@@ -747,6 +747,14 @@
                     if (!canvas) return;
                     const ctx = canvas.getContext('2d');
 
+                    // 既存のChartインスタンスが存在する場合は破棄して重複描画を防止
+                    if (typeof Chart !== 'undefined') {
+                        const existingChart = Chart.getChart(canvas);
+                        if (existingChart) {
+                            existingChart.destroy();
+                        }
+                    }
+
                     const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
 
