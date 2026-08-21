@@ -43,7 +43,7 @@ public class AdminAnalyzeController {
 
     @GetMapping({"/admin/analyze", "/analyze"})
     public String index(Model model) {
-        model.addAttribute("title", "悪手当て問題");
+        model.addAttribute("title", "次の1手クイズ");
         return "analyze";
     }
 

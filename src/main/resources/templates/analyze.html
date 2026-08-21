@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${title} != null ? ${title} + ' - 推し囲碁棋士を見つけよう' : '悪手当て問題 - 推し囲碁棋士を見つけよう'">悪手当て問題 - 推し囲碁棋士を見つけよう</title>
+    <title th:text="${title} != null ? ${title} + ' - 推し囲碁棋士を見つけよう' : '次の1手クイズ - 推し囲碁棋士を見つけよう'">次の1手クイズ - 推し囲碁棋士を見つけよう</title>
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
@@ -113,7 +113,7 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdownKifu">
                             <li><a class="dropdown-item" href="/recommended-kifu">おすすめ棋譜</a></li>
-                            <li><a class="dropdown-item active" href="/analyze">悪手当て問題</a></li>
+                            <li><a class="dropdown-item active" href="/analyze">次の1手クイズ</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -2187,3 +2187,4 @@
     </script>
 </body>
 </html>
+
