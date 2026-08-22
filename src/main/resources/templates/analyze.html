@@ -55,6 +55,27 @@
             align-items: center;
             justify-content: center;
         }
+        #gobanControls {
+            background-color: var(--bs-tertiary-bg, rgba(0, 0, 0, 0.03));
+            border: 1px solid var(--bs-border-color, rgba(0, 0, 0, 0.125));
+            border-radius: 8px;
+            padding: 10px 8px;
+        }
+        [data-bs-theme="dark"] .goban-controls-btn-group .btn-outline-dark,
+        [data-bs-theme="dark"] .btn-outline-dark {
+            color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        [data-bs-theme="dark"] .goban-controls-btn-group .btn-outline-dark:hover,
+        [data-bs-theme="dark"] .btn-outline-dark:hover,
+        [data-bs-theme="dark"] .goban-controls-btn-group .btn-outline-dark:active,
+        [data-bs-theme="dark"] .btn-outline-dark:active,
+        [data-bs-theme="dark"] .goban-controls-btn-group .btn-outline-dark.active,
+        [data-bs-theme="dark"] .btn-outline-dark.active {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: #f8f9fa;
+        }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -212,7 +233,7 @@
                                     </div>
 
                                     <div class="mb-2">
-                                        <div class="fw-bold text-dark small" id="gobanMoveLabel">0手目 / 全0手</div>
+                                        <div class="fw-bold text-body small" id="gobanMoveLabel">0手目 / 全0手</div>
                                         <div class="d-flex justify-content-center flex-wrap gap-1 mt-1">
                                             <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
                                             <span class="badge bg-dark" id="gobanCapturesText">アゲハマ: 黒 0 / 白 0</span>
@@ -222,7 +243,7 @@
                                     <!-- 勝率バー表示エリア -->
                                     <div id="gobanWinrateBarContainer" class="w-100 mb-2" style="display: none;">
                                         <div class="d-flex justify-content-between small fw-bold mb-1" style="font-size: 0.75rem;">
-                                            <span id="winrateBarBlackLabel" class="text-dark">黒: 50.0%</span>
+                                            <span id="winrateBarBlackLabel" class="text-body">黒: 50.0%</span>
                                             <span id="winrateBarWhiteLabel" class="text-secondary">白: 50.0%</span>
                                         </div>
                                         <div class="progress" style="height: 18px; font-size: 0.7rem; font-weight: bold; background-color: #e9ecef; border: 1px solid #ced4da;">
@@ -262,7 +283,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold fs-6 text-secondary"><i class="bi bi-graph-up me-1"></i> 勝率・評価値推移グラフ</span>
                                     <div id="chartStats" class="d-flex gap-2 align-items-center" style="display: none;">
-                                        <span class="badge bg-light text-dark border" id="statLeadStatus">互角</span>
+                                        <span class="badge bg-body-secondary text-body border" id="statLeadStatus">互角</span>
                                     </div>
                                 </div>
                                 
@@ -412,6 +433,9 @@
                     } else {
                         htmlElement.setAttribute('data-bs-theme', 'light');
                         localStorage.setItem('theme', 'light');
+                    }
+                    if (typeof window.updateAllWinrateCharts === 'function') {
+                        window.updateAllWinrateCharts();
                     }
                 });
             }
@@ -732,6 +756,113 @@
             }
         }
 
+        function isDarkModeActive() {
+            return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        }
+
+        function getChartThemeColors(isDark) {
+            if (isDark) {
+                return {
+                    lineColor: '#e9ecef',
+                    pointBgColor: '#e9ecef',
+                    pointBorderColor: '#212529',
+                    blunderPointBgColor: '#ff6b6b',
+                    textColor: '#e9ecef',
+                    tickColor: '#adb5bd',
+                    gridColor: 'rgba(255, 255, 255, 0.08)',
+                    centerGridColor: '#ff6b6b',
+                    gradientTop: 'rgba(233, 236, 239, 0.22)',
+                    gradientMidDark: 'rgba(233, 236, 239, 0.06)',
+                    gradientMidBlue: 'rgba(13, 110, 253, 0.08)',
+                    gradientBottom: 'rgba(13, 110, 253, 0.25)'
+                };
+            } else {
+                return {
+                    lineColor: '#212529',
+                    pointBgColor: '#212529',
+                    pointBorderColor: '#ffffff',
+                    blunderPointBgColor: '#dc3545',
+                    textColor: '#212529',
+                    tickColor: '#6c757d',
+                    gridColor: 'rgba(0, 0, 0, 0.08)',
+                    centerGridColor: '#dc3545',
+                    gradientTop: 'rgba(33, 37, 41, 0.15)',
+                    gradientMidDark: 'rgba(33, 37, 41, 0.05)',
+                    gradientMidBlue: 'rgba(13, 110, 253, 0.05)',
+                    gradientBottom: 'rgba(13, 110, 253, 0.15)'
+                };
+            }
+        }
+
+        function updateWinrateChartTheme(chart) {
+            if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) return;
+            const isDark = isDarkModeActive();
+            const colors = getChartThemeColors(isDark);
+            const blunderTurn = window.blunderTurnGlobal !== undefined ? window.blunderTurnGlobal : -1;
+            const chartPoints = window.chartPointsGlobal || [];
+
+            const ds = chart.data.datasets[0];
+            ds.borderColor = colors.lineColor;
+            if (chartPoints && chartPoints.length > 0) {
+                ds.pointBackgroundColor = chartPoints.map(p => (p.turnNumber === blunderTurn ? colors.blunderPointBgColor : colors.pointBgColor));
+            }
+            ds.pointBorderColor = colors.pointBorderColor;
+
+            ds.backgroundColor = function(context) {
+                const c = context.chart;
+                const { ctx, chartArea } = c;
+                if (!chartArea) {
+                    return isDarkModeActive() ? 'rgba(233, 236, 239, 0.15)' : 'rgba(33, 37, 41, 0.15)';
+                }
+                const currentColors = getChartThemeColors(isDarkModeActive());
+                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                gradient.addColorStop(0, currentColors.gradientTop);
+                gradient.addColorStop(0.5, currentColors.gradientMidDark);
+                gradient.addColorStop(0.5, currentColors.gradientMidBlue);
+                gradient.addColorStop(1, currentColors.gradientBottom);
+                return gradient;
+            };
+
+            if (chart.options && chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = colors.textColor;
+            }
+
+            if (chart.options && chart.options.scales) {
+                if (chart.options.scales.y) {
+                    if (chart.options.scales.y.title) chart.options.scales.y.title.color = colors.textColor;
+                    if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = colors.tickColor;
+                    if (chart.options.scales.y.grid) {
+                        chart.options.scales.y.grid.color = function(context) {
+                            const currentColors = getChartThemeColors(isDarkModeActive());
+                            if (context.tick && context.tick.value === 50) {
+                                return currentColors.centerGridColor;
+                            }
+                            return currentColors.gridColor;
+                        };
+                    }
+                }
+                if (chart.options.scales.x) {
+                    if (chart.options.scales.x.title) chart.options.scales.x.title.color = colors.textColor;
+                    if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = colors.tickColor;
+                    if (chart.options.scales.x.grid) {
+                        chart.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+                    }
+                }
+            }
+
+            chart.update();
+        }
+
+        window.updateAllWinrateCharts = function() {
+            const canvas = document.getElementById('winrateChart');
+            if (canvas && typeof Chart !== 'undefined') {
+                const chart = Chart.getChart(canvas) || window.currentWinrateChart;
+                if (chart) {
+                    updateWinrateChartTheme(chart);
+                }
+            }
+        };
+
         // 勝率折れ線グラフおよび解析データの処理
         function initAnalysisView() {
             const sgfElem = document.getElementById('sgfData');
@@ -999,9 +1130,9 @@
                     const statLeadStatus = document.getElementById('statLeadStatus');
                     if (statLeadStatus) {
                         if (lastPoint.blackWinrate >= 55) {
-                            statLeadStatus.innerHTML = '<span class="text-dark">黒優勢 (' + lastPoint.blackWinrate.toFixed(1) + '%)</span>';
+                            statLeadStatus.innerHTML = '<span class="text-body fw-bold">黒優勢 (' + lastPoint.blackWinrate.toFixed(1) + '%)</span>';
                         } else if (lastPoint.whiteWinrate >= 55) {
-                            statLeadStatus.innerHTML = '<span class="text-primary">白優勢 (' + lastPoint.whiteWinrate.toFixed(1) + '%)</span>';
+                            statLeadStatus.innerHTML = '<span class="text-primary fw-bold">白優勢 (' + lastPoint.whiteWinrate.toFixed(1) + '%)</span>';
                         } else {
                             statLeadStatus.innerHTML = '<span class="text-secondary">互角</span>';
                         }
@@ -1022,7 +1153,12 @@
                         }
                     }
 
-                    const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? '#dc3545' : '#212529'));
+                    window.chartPointsGlobal = chartPoints;
+                    window.blunderTurnGlobal = blunderTurn;
+
+                    const isDark = isDarkModeActive();
+                    const colors = getChartThemeColors(isDark);
+                    const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? colors.blunderPointBgColor : colors.pointBgColor));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
 
                     const winrateChart = new Chart(ctx, {
@@ -1033,23 +1169,24 @@
                                 {
                                     label: '黒 (B) 勝率',
                                     data: chartPoints.map(p => p.blackWinrate),
-                                    borderColor: '#212529',
+                                    borderColor: colors.lineColor,
                                     backgroundColor: function(context) {
                                         const chart = context.chart;
                                         const { ctx, chartArea } = chart;
                                         if (!chartArea) {
-                                            return 'rgba(33, 37, 41, 0.15)';
+                                            return isDarkModeActive() ? 'rgba(233, 236, 239, 0.15)' : 'rgba(33, 37, 41, 0.15)';
                                         }
+                                        const currentColors = getChartThemeColors(isDarkModeActive());
                                         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                                        gradient.addColorStop(0, 'rgba(33, 37, 41, 0.15)');
-                                        gradient.addColorStop(0.5, 'rgba(33, 37, 41, 0.05)');
-                                        gradient.addColorStop(0.5, 'rgba(13, 110, 253, 0.05)');
-                                        gradient.addColorStop(1, 'rgba(13, 110, 253, 0.15)');
+                                        gradient.addColorStop(0, currentColors.gradientTop);
+                                        gradient.addColorStop(0.5, currentColors.gradientMidDark);
+                                        gradient.addColorStop(0.5, currentColors.gradientMidBlue);
+                                        gradient.addColorStop(1, currentColors.gradientBottom);
                                         return gradient;
                                     },
                                     borderWidth: 2.5,
                                     pointBackgroundColor: pointColors,
-                                    pointBorderColor: '#ffffff',
+                                    pointBorderColor: colors.pointBorderColor,
                                     pointBorderWidth: 1.5,
                                     pointRadius: pointRadiusList,
                                     pointHoverRadius: 8,
@@ -1081,7 +1218,8 @@
                                     labels: {
                                         usePointStyle: true,
                                         font: { size: 13, weight: 'bold' },
-                                        padding: 15
+                                        padding: 15,
+                                        color: colors.textColor
                                     }
                                 },
                                 tooltip: {
@@ -1127,10 +1265,12 @@
                                     title: {
                                         display: true,
                                         text: '黒勝率 (%)',
-                                        font: { weight: 'bold' }
+                                        font: { weight: 'bold' },
+                                        color: colors.textColor
                                     },
                                     ticks: {
                                         stepSize: 10,
+                                        color: colors.tickColor,
                                         callback: function(value) {
                                             if (value === 50) return '50% (互角)';
                                             return value + '%';
@@ -1138,10 +1278,11 @@
                                     },
                                     grid: {
                                         color: function(context) {
+                                            const currentColors = getChartThemeColors(isDarkModeActive());
                                             if (context.tick && context.tick.value === 50) {
-                                                return '#dc3545';
+                                                return currentColors.centerGridColor;
                                             }
-                                            return 'rgba(0, 0, 0, 0.08)';
+                                            return currentColors.gridColor;
                                         },
                                         lineWidth: function(context) {
                                             if (context.tick && context.tick.value === 50) {
@@ -1161,18 +1302,21 @@
                                     title: {
                                         display: true,
                                         text: '手数 (Turn)',
-                                        font: { weight: 'bold' }
+                                        font: { weight: 'bold' },
+                                        color: colors.textColor
                                     },
                                     ticks: {
-                                        maxTicksLimit: 20
+                                        maxTicksLimit: 20,
+                                        color: colors.tickColor
                                     },
                                     grid: {
-                                        color: 'rgba(0, 0, 0, 0.05)'
+                                        color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
                                     }
                                 }
                             }
                         }
                     });
+                    window.currentWinrateChart = winrateChart;
 
                     // 盤面手番とグラフの連動用グローバル関数
                     window.syncChartWithTurn = function(turnNumber) {
