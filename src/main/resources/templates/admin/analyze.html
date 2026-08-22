@@ -114,6 +114,7 @@
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdownKifu">
                             <li><a class="dropdown-item" href="/recommended-kifu">おすすめ棋譜</a></li>
                             <li><a class="dropdown-item active" href="/analyze">次の1手クイズ</a></li>
+                            <li><a class="dropdown-item" href="/analyze-easy">次の１手クイズ(難易度易)</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -162,9 +163,27 @@
                 <div class="card shadow border-0 mb-4" id="gobanCard" style="display: none;">
                     <div class="card-header bg-dark text-white py-2">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
                                 <h4 class="mb-0 fs-5"><i class="bi bi-question-diamond-fill text-warning me-2"></i> 勝率急落局面から出題！次の一手クイズ</h4>
-                                <span class="badge bg-primary ms-2" id="boardStatusBadge">最終手表示</span>
+                                <span class="badge bg-primary" id="boardStatusBadge">最終手表示</span>
+                                
+                                <!-- 対局情報（棋戦名・対局者・結果） -->
+                                <div id="kifuMatchInfo" class="d-inline-flex flex-wrap align-items-center gap-1 ms-md-2" style="display: none;">
+                                    <span class="badge bg-info text-dark fw-bold" id="kifuMatchName" style="display: none;"></span>
+                                    <div class="d-inline-flex align-items-center gap-1" id="kifuPlayersContainer" style="display: none;">
+                                        <span class="badge bg-secondary text-white d-inline-flex align-items-center gap-1" id="kifuBlackPlayer" style="display: none;">
+                                            <span>●</span>
+                                            <span id="kifuBlackPlayerName" class="fw-bold"></span>
+                                        </span>
+                                        <span class="text-white-50 fw-bold small" id="kifuVsSeparator" style="display: none;">vs</span>
+                                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-1" id="kifuWhitePlayer" style="display: none;">
+                                            <span>○</span>
+                                            <span id="kifuWhitePlayerName" class="fw-bold"></span>
+                                        </span>
+                                    </div>
+                                    <span class="fw-bold text-white small" id="kifuGeneralPlayers" style="display: none;"></span>
+                                    <span class="badge bg-success" id="kifuResult" style="display: none;"></span>
+                                </div>
                             </div>
                             <button type="button" class="btn btn-outline-light btn-sm" id="btnGoToQuizTurn">
                                 <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
@@ -494,19 +513,236 @@
         window.quizData = null;
         window.quizMarkers = []; // 碁盤上に描画する選択肢マーカー
 
+        // SGFプロパティ抽出用
+        function extractPropertyFromSgf(sgf, propertyName) {
+            if (!sgf) return null;
+            const regex = new RegExp('(?:^|[^A-Z])' + propertyName + '\\[([^\\]]*(?:\\\\][^\\]]*)*)\\]', 'i');
+            const match = sgf.match(regex);
+            if (match && match[1]) {
+                return match[1].replace(/\\([\\\]])/g, '$1').trim();
+            }
+            return null;
+        }
+
+        // 対局結果文字列の日本語整形
+        function formatResultString(rawResult) {
+            if (!rawResult || typeof rawResult !== 'string') return '';
+            const trimmed = rawResult.trim();
+            if (!trimmed) return '';
+
+            // 既に日本語が含まれている場合はそのまま
+            if (/[\u3040-\u30ff\u4e00-\u9faf]/.test(trimmed)) {
+                return trimmed;
+            }
+
+            const upper = trimmed.toUpperCase();
+            if (upper === 'B+R' || upper === 'B+RESIGN' || upper === 'BLACK+R' || upper === 'BLACK+RESIGN') {
+                return '黒中押し勝ち';
+            }
+            if (upper === 'W+R' || upper === 'W+RESIGN' || upper === 'WHITE+R' || upper === 'WHITE+RESIGN') {
+                return '白中押し勝ち';
+            }
+            if (upper === 'B+T' || upper === 'B+TIME') {
+                return '黒時間切れ勝ち';
+            }
+            if (upper === 'W+T' || upper === 'W+TIME') {
+                return '白時間切れ勝ち';
+            }
+            if (upper === 'B+F' || upper === 'B+FORFEIT') {
+                return '黒反則勝ち';
+            }
+            if (upper === 'W+F' || upper === 'W+FORFEIT') {
+                return '白反則勝ち';
+            }
+            if (upper === '0' || upper === 'VOID' || upper === 'DRAW' || upper === 'JIGO') {
+                return '持碁';
+            }
+
+            const bScoreMatch = upper.match(/^B\+([0-9.]+)/);
+            if (bScoreMatch) {
+                return '黒' + bScoreMatch[1] + '目勝ち';
+            }
+
+            const wScoreMatch = upper.match(/^W\+([0-9.]+)/);
+            if (wScoreMatch) {
+                return '白' + wScoreMatch[1] + '目勝ち';
+            }
+
+            return trimmed;
+        }
+
+        // 碁盤の上の対局者・棋戦名・結果表示更新
+        function updateKifuMatchInfo(apiData, parsedJson, sgfText) {
+            const infoContainer = document.getElementById('kifuMatchInfo');
+            if (!infoContainer) return;
+
+            let matchName = '';
+            let blackPlayer = '';
+            let whitePlayer = '';
+            let generalPlayers = '';
+            let result = '';
+
+            // 1. SGFからの抽出
+            if (sgfText) {
+                const ev = extractPropertyFromSgf(sgfText, 'EV');
+                const gn = extractPropertyFromSgf(sgfText, 'GN');
+                const pb = extractPropertyFromSgf(sgfText, 'PB');
+                const pw = extractPropertyFromSgf(sgfText, 'PW');
+                const br = extractPropertyFromSgf(sgfText, 'BR');
+                const wr = extractPropertyFromSgf(sgfText, 'WR');
+                const re = extractPropertyFromSgf(sgfText, 'RE');
+
+                if (ev) matchName = ev;
+                else if (gn) matchName = gn;
+
+                if (pb) blackPlayer = pb + (br ? (' ' + br) : '');
+                if (pw) whitePlayer = pw + (wr ? (' ' + wr) : '');
+                if (re) result = formatResultString(re);
+            }
+
+            // 2. parsedJson / apiData からの抽出
+            const objectsToCheck = [];
+            if (apiData && typeof apiData === 'object') objectsToCheck.push(apiData);
+            if (parsedJson && typeof parsedJson === 'object') {
+                objectsToCheck.push(parsedJson);
+                if (parsedJson.meta) objectsToCheck.push(parsedJson.meta);
+                if (parsedJson.metadata) objectsToCheck.push(parsedJson.metadata);
+                if (parsedJson.info) objectsToCheck.push(parsedJson.info);
+                if (parsedJson.game_info) objectsToCheck.push(parsedJson.game_info);
+                if (parsedJson.gameInfo) objectsToCheck.push(parsedJson.gameInfo);
+                if (parsedJson.match) objectsToCheck.push(parsedJson.match);
+                if (Array.isArray(parsedJson) && parsedJson.length > 0) {
+                    objectsToCheck.push(parsedJson[0]);
+                }
+            }
+
+            for (const obj of objectsToCheck) {
+                if (!obj || typeof obj !== 'object') continue;
+
+                if (!matchName) {
+                    matchName = obj.matchName || obj.match_name || obj.tournamentName || obj.tournament_name || obj.tournament || obj.eventName || obj.event_name || obj.event || obj.gameName || obj.game_name || obj.kisen || obj.kisenName || obj.kisen_name || obj.title || '';
+                }
+                if (!blackPlayer) {
+                    blackPlayer = obj.blackPlayer || obj.black_player || obj.playerBlack || obj.player_black || obj.player1Name || obj.player1_name || (obj.player1Sente === true ? obj.player1 : null) || (obj.player2Sente === false ? obj.player1 : null) || obj.black || obj.pb || '';
+                }
+                if (!whitePlayer) {
+                    whitePlayer = obj.whitePlayer || obj.white_player || obj.playerWhite || obj.player_white || obj.player2Name || obj.player2_name || (obj.player2Sente === true ? obj.player2 : null) || (obj.player1Sente === false ? obj.player2 : null) || obj.white || obj.pw || '';
+                }
+                if (!generalPlayers) {
+                    generalPlayers = obj.players || obj.playerNames || obj.player_names || obj.playersName || obj.players_name || obj.versus || '';
+                }
+                if (!result) {
+                    const r = obj.result || obj.gameResult || obj.game_result || obj.winnerName || obj.winner_name || obj.winner || obj.re || obj.outcome || '';
+                    if (r) result = formatResultString(r);
+                }
+            }
+
+            // 対局者文字列の調整
+            if (!blackPlayer && !whitePlayer && generalPlayers) {
+                const vsParts = generalPlayers.split(/\s+vs\.?\s+/i);
+                if (vsParts.length === 2) {
+                    blackPlayer = vsParts[0].trim();
+                    whitePlayer = vsParts[1].trim();
+                    generalPlayers = '';
+                }
+            }
+
+            let hasAnyInfo = false;
+
+            // 棋戦名表示
+            const matchNameEl = document.getElementById('kifuMatchName');
+            if (matchNameEl) {
+                if (matchName) {
+                    matchNameEl.textContent = matchName;
+                    matchNameEl.style.display = 'inline-block';
+                    hasAnyInfo = true;
+                } else {
+                    matchNameEl.style.display = 'none';
+                }
+            }
+
+            // 結果表示
+            const resultEl = document.getElementById('kifuResult');
+            if (resultEl) {
+                if (result) {
+                    resultEl.textContent = result;
+                    resultEl.style.display = 'inline-block';
+                    hasAnyInfo = true;
+                } else {
+                    resultEl.style.display = 'none';
+                }
+            }
+
+            // 対局者表示
+            const playersContainer = document.getElementById('kifuPlayersContainer');
+            const blackPlayerEl = document.getElementById('kifuBlackPlayer');
+            const blackPlayerNameEl = document.getElementById('kifuBlackPlayerName');
+            const whitePlayerEl = document.getElementById('kifuWhitePlayer');
+            const whitePlayerNameEl = document.getElementById('kifuWhitePlayerName');
+            const vsSeparatorEl = document.getElementById('kifuVsSeparator');
+            const generalPlayersEl = document.getElementById('kifuGeneralPlayers');
+
+            if (blackPlayer || whitePlayer) {
+                if (playersContainer) playersContainer.style.display = 'inline-flex';
+                if (generalPlayersEl) generalPlayersEl.style.display = 'none';
+
+                if (blackPlayerEl && blackPlayerNameEl) {
+                    if (blackPlayer) {
+                        blackPlayerNameEl.textContent = blackPlayer;
+                        blackPlayerEl.style.display = 'inline-flex';
+                    } else {
+                        blackPlayerEl.style.display = 'none';
+                    }
+                }
+
+                if (whitePlayerEl && whitePlayerNameEl) {
+                    if (whitePlayer) {
+                        whitePlayerNameEl.textContent = whitePlayer;
+                        whitePlayerEl.style.display = 'inline-flex';
+                    } else {
+                        whitePlayerEl.style.display = 'none';
+                    }
+                }
+
+                if (vsSeparatorEl) {
+                    vsSeparatorEl.style.display = (blackPlayer && whitePlayer) ? 'inline' : 'none';
+                }
+                hasAnyInfo = true;
+            } else if (generalPlayers) {
+                if (playersContainer) playersContainer.style.display = 'none';
+                if (generalPlayersEl) {
+                    generalPlayersEl.textContent = generalPlayers;
+                    generalPlayersEl.style.display = 'inline';
+                }
+                hasAnyInfo = true;
+            } else {
+                if (playersContainer) playersContainer.style.display = 'none';
+                if (generalPlayersEl) generalPlayersEl.style.display = 'none';
+            }
+
+            if (infoContainer) {
+                infoContainer.style.display = hasAnyInfo ? 'inline-flex' : 'none';
+            }
+        }
+
         // 勝率折れ線グラフおよび解析データの処理
         function initAnalysisView() {
+            const sgfElem = document.getElementById('sgfData');
+            let sgfContent = sgfElem ? (sgfElem.textContent || sgfElem.innerText || '').trim() : '';
+            if (!sgfContent && window.rawApiResponseData && window.rawApiResponseData.sgfContent) {
+                sgfContent = window.rawApiResponseData.sgfContent;
+            }
+
             let movesRawArray = [];
 
             (function() {
                 const resultElem = document.getElementById('resultJsonArea');
                 if (!resultElem) return;
 
-                const rawJson = resultElem.innerText.trim();
-                if (!rawJson) return;
+                const rawJson = (resultElem.textContent || resultElem.innerText || '').trim();
 
-                try {
-                    let parsedData = null;
+                let parsedData = null;
+                if (rawJson) {
                     try {
                         parsedData = JSON.parse(rawJson);
                     } catch (e) {
@@ -522,6 +758,30 @@
                             }
                         }
                     }
+                }
+
+                if (!sgfContent && parsedData) {
+                    if (parsedData.sgf_content) sgfContent = parsedData.sgf_content;
+                    else if (parsedData.sgf) sgfContent = parsedData.sgf;
+                    else if (Array.isArray(parsedData) && parsedData.length > 0) {
+                        for (const item of parsedData) {
+                            if (item && item.sgf_content) {
+                                sgfContent = item.sgf_content;
+                                break;
+                            } else if (item && item.sgf) {
+                                sgfContent = item.sgf;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // 碁盤上の対局情報（対局者・棋戦名・結果）を更新
+                updateKifuMatchInfo(window.rawApiResponseData, parsedData, sgfContent);
+
+                if (!rawJson) return;
+
+                try {
 
                     // 配列データの取得
                     let movesArray = [];
@@ -2170,6 +2430,7 @@
                     .then(data => {
                         if (loadingIndicator) loadingIndicator.style.display = 'none';
                         if (data && data.success) {
+                            window.rawApiResponseData = data;
                             if (resultElem) resultElem.textContent = data.resultJson || '';
                             const sgfElem = document.getElementById('sgfData');
                             if (sgfElem) sgfElem.textContent = data.sgfContent || '';

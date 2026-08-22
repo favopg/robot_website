@@ -48,7 +48,13 @@ public class AdminAnalyzeController {
         return "analyze";
     }
 
-    @GetMapping({"/admin/analyze/api", "/admin/analyze/data", "/analyze/api", "/analyze/data", "/recommended-kifu/api", "/recommended-kifu/data", "/recommend-kifu/api", "/recommend-kifu/data"})
+    @GetMapping({"/admin/analyze-easy", "/analyze-easy", "/admin/analyze/low-complexity", "/analyze/low-complexity", "/quiz-low-complexity", "/admin/quiz-low-complexity"})
+    public String analyzeEasy(Model model) {
+        model.addAttribute("title", "次の１手クイズ(難易度易)");
+        return "analyze_easy";
+    }
+
+    @GetMapping({"/admin/analyze/api", "/admin/analyze/data", "/analyze/api", "/analyze/data", "/recommended-kifu/api", "/recommended-kifu/data", "/recommend-kifu/api", "/recommend-kifu/data", "/admin/analyze-easy/api", "/admin/analyze-easy/data", "/analyze-easy/api", "/analyze-easy/data", "/quiz-low-complexity/api", "/quiz-low-complexity/data"})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> analyzeApi(@RequestParam(value = "date", required = false) String date) {
         List<String> availableDates = katagoAnalyzeService.getAvailableDates();
