@@ -102,4 +102,18 @@ public class BatchConfig {
                 .tasklet(tasklet, transactionManager)
                 .build();
     }
+
+    @Bean
+    public Job favoritePlayerExportJob(JobRepository jobRepository, Step favoritePlayerExportStep) {
+        return new JobBuilder("favoritePlayerExportJob", jobRepository)
+                .start(favoritePlayerExportStep)
+                .build();
+    }
+
+    @Bean
+    public Step favoritePlayerExportStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, FavoritePlayerExportTasklet tasklet) {
+        return new StepBuilder("favoritePlayerExportStep", jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
+    }
 }

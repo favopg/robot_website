@@ -23,8 +23,9 @@ public class BatchScheduler implements CommandLineRunner {
     private final Job normalizationJob;
     private final Job playerScrapeJob;
     private final Job kansaikiinPlayerScrapeJob;
+    private final Job favoritePlayerExportJob;
 
-    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob, Job normalizationJob, Job playerScrapeJob, Job kansaikiinPlayerScrapeJob) {
+    public BatchScheduler(JobLauncher jobLauncher, Job siteSourceCheckJob, Job nihonkiinMatchJob, Job youtubeLiveScrapeJob, Job normalizationJob, Job playerScrapeJob, Job kansaikiinPlayerScrapeJob, Job favoritePlayerExportJob) {
         this.jobLauncher = jobLauncher;
         this.siteSourceCheckJob = siteSourceCheckJob;
         this.nihonkiinMatchJob = nihonkiinMatchJob;
@@ -32,15 +33,14 @@ public class BatchScheduler implements CommandLineRunner {
         this.normalizationJob = normalizationJob;
         this.playerScrapeJob = playerScrapeJob;
         this.kansaikiinPlayerScrapeJob = kansaikiinPlayerScrapeJob;
+        this.favoritePlayerExportJob = favoritePlayerExportJob;
     }
 
     @Override
     public void run(String... args) {
         // アプリケーション起動時に実行
         runNormalizationJob();
-        runNihonkiinMatchJob();
-        runPlayerScrapeJob();
-        runKansaikiinPlayerScrapeJob();
+        runFavoritePlayerExportJob();
     }
 
     // 毎週金曜日23時59分に実行
@@ -121,6 +121,20 @@ public class BatchScheduler implements CommandLineRunner {
             jobLauncher.run(kansaikiinPlayerScrapeJob, params);
         } catch (Exception e) {
             logger.error("Error executing kansaikiinPlayerScrapeJob", e);
+        }
+    }
+
+    // 毎週金曜日22時00分に実行
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 22 * * FRI")
+    public void runFavoritePlayerExportJob() {
+        try {
+            logger.info("Starting favoritePlayerExportJob at " + new Date());
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(favoritePlayerExportJob, params);
+        } catch (Exception e) {
+            logger.error("Error executing favoritePlayerExportJob", e);
         }
     }
 }

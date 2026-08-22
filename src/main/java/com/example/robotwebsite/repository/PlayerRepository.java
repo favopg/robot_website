@@ -11,6 +11,9 @@ import java.util.Optional;
 public interface PlayerRepository extends JpaRepository<Player, Long> {
     Optional<Player> findByName(String name);
 
+    // 推し棋士フラグがtrueの棋士一覧を取得する
+    List<Player> findByIsFavoriteTrue();
+
     // いいね数が5以上かつ多い順に上位N名を取得する
     List<Player> findTop20ByLikesCountGreaterThanEqualOrderByLikesCountDesc(int minLikes);
 }
