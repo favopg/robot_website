@@ -38,6 +38,9 @@ public class Player {
     @Column(name = "likes_count", nullable = false)
     private int likesCount = 0;
 
+    @Column(name = "is_favorite", nullable = false)
+    private boolean isFavorite = false;
+
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
@@ -80,6 +83,11 @@ public class Player {
 
     public int getLikesCount() { return likesCount; }
     public void setLikesCount(int likesCount) { this.likesCount = likesCount; }
+
+    public boolean isFavorite() { return isFavorite; }
+    public boolean getIsFavorite() { return isFavorite; }
+    public void setFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
+    public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
