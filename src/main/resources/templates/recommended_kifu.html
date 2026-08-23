@@ -11,6 +11,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Driver.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         .navbar-custom {
@@ -140,6 +142,9 @@
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()" title="使い方ガイド">
+                        <i class="bi bi-question-circle"></i> 使い方
+                    </button>
                     <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
                         <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
@@ -235,35 +240,37 @@
                                             </select>
                                         </div>
 
-                                        <div class="mb-2">
-                                            <div class="fw-bold text-body small" id="gobanMoveLabel">0手目 / 全0手</div>
-                                            <div class="d-flex justify-content-center flex-wrap gap-1 mt-1">
-                                                <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
-                                                <span class="badge bg-dark border border-secondary-subtle" id="gobanCapturesText">アゲハマ: 黒 0 / 白 0</span>
+                                        <div id="gobanOperationControls">
+                                            <div class="mb-2">
+                                                <div class="fw-bold text-body small" id="gobanMoveLabel">0手目 / 全0手</div>
+                                                <div class="d-flex justify-content-center flex-wrap gap-1 mt-1">
+                                                    <span class="badge bg-secondary" id="gobanLastMoveText">着手: -</span>
+                                                    <span class="badge bg-dark border border-secondary-subtle" id="gobanCapturesText">アゲハマ: 黒 0 / 白 0</span>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <!-- 勝率バー表示エリア -->
-                                        <div id="gobanWinrateBarContainer" class="w-100 mb-2" style="display: none;">
-                                            <div class="d-flex justify-content-between small fw-bold mb-1" style="font-size: 0.75rem;">
-                                                <span id="winrateBarBlackLabel" class="text-body">黒: 50.0%</span>
-                                                <span id="winrateBarWhiteLabel" class="text-body-secondary">白: 50.0%</span>
+                                            <!-- 勝率バー表示エリア -->
+                                            <div id="gobanWinrateBarContainer" class="w-100 mb-2" style="display: none;">
+                                                <div class="d-flex justify-content-between small fw-bold mb-1" style="font-size: 0.75rem;">
+                                                    <span id="winrateBarBlackLabel" class="text-body">黒: 50.0%</span>
+                                                    <span id="winrateBarWhiteLabel" class="text-body-secondary">白: 50.0%</span>
+                                                </div>
+                                                <div class="progress" style="height: 18px; font-size: 0.7rem; font-weight: bold; background-color: var(--bs-secondary-bg, #e9ecef); border: 1px solid var(--bs-border-color, #ced4da);">
+                                                    <div id="winrateBarBlack" class="progress-bar bg-dark text-white" role="progressbar" style="width: 50%;">50%</div>
+                                                    <div id="winrateBarWhite" class="progress-bar bg-light text-body border-start" role="progressbar" style="width: 50%;">50%</div>
+                                                </div>
+                                                <div id="winrateBarLeadText" class="text-body-secondary text-center mt-1" style="font-size: 0.7rem;"></div>
                                             </div>
-                                            <div class="progress" style="height: 18px; font-size: 0.7rem; font-weight: bold; background-color: var(--bs-secondary-bg, #e9ecef); border: 1px solid var(--bs-border-color, #ced4da);">
-                                                <div id="winrateBarBlack" class="progress-bar bg-dark text-white" role="progressbar" style="width: 50%;">50%</div>
-                                                <div id="winrateBarWhite" class="progress-bar bg-light text-body border-start" role="progressbar" style="width: 50%;">50%</div>
-                                            </div>
-                                            <div id="winrateBarLeadText" class="text-body-secondary text-center mt-1" style="font-size: 0.7rem;"></div>
-                                        </div>
 
-                                        <div class="mb-2">
-                                            <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
-                                        </div>
-                                        <div class="btn-group goban-controls-btn-group w-100" role="group" aria-label="碁盤操作">
-                                            <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初へ" aria-label="最初へ"><i class="bi bi-chevron-bar-left"></i></button>
-                                            <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前へ戻る" aria-label="前へ戻る"><i class="bi bi-chevron-left"></i></button>
-                                            <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次へ進む" aria-label="次へ進む"><i class="bi bi-chevron-right"></i></button>
-                                            <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後へ" aria-label="最後へ"><i class="bi bi-chevron-bar-right"></i></button>
+                                            <div class="mb-2">
+                                                <input type="range" class="form-range" id="gobanSlider" min="0" max="0" value="0">
+                                            </div>
+                                            <div class="btn-group goban-controls-btn-group w-100" role="group" aria-label="碁盤操作">
+                                                <button type="button" class="btn btn-outline-dark" id="btnGobanFirst" title="最初へ" aria-label="最初へ"><i class="bi bi-chevron-bar-left"></i></button>
+                                                <button type="button" class="btn btn-outline-dark" id="btnGobanPrev" title="前へ戻る" aria-label="前へ戻る"><i class="bi bi-chevron-left"></i></button>
+                                                <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次へ進む" aria-label="次へ進む"><i class="bi bi-chevron-right"></i></button>
+                                                <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後へ" aria-label="最後へ"><i class="bi bi-chevron-bar-right"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -399,6 +406,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Driver.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const modalEl = document.getElementById('favoritePlayerModal');
@@ -2589,7 +2598,38 @@
             } else {
                 fetchKifuByDate();
             }
+
+            // URLパラメータにstartTutorial=trueがある場合にチュートリアルを開始
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('startTutorial') === 'true') {
+                setTimeout(startTutorial, 500);
+            }
         });
+
+        function startTutorial() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                showProgress: true,
+                nextBtnText: '次へ',
+                prevBtnText: '前へ',
+                doneBtnText: '完了',
+                steps: [
+                    { 
+                        element: '#btnGoToQuizTurn', 
+                        popover: { title: '勝率が大きく動いた局面を表示', description: '勝率が大きく変動した重要な局面へ一発でジャンプできます。押下後に最善手を表示ボタンが表示され、最善手を確認できます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#kifuDateSelect', 
+                        popover: { title: '棋譜選択', description: '日付（YYYYMMDD形式）のプルダウンから、閲覧したいおすすめ棋譜を切り替えることができます。', side: "bottom", align: 'start' } 
+                    },
+                    { 
+                        element: '#gobanOperationControls', 
+                        popover: { title: '碁盤操作ボタン', description: 'スライダーや最初へ・前へ・次へ・最後へボタンを使って、対局の手順を自由に操作できます。', side: "top", align: 'start' } 
+                    }
+                ]
+            });
+            driverObj.drive();
+        }
     </script>
 </body>
 </html>
