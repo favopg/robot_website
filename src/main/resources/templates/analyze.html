@@ -3,7 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${title} != null ? ${title} + ' - 推し囲碁棋士を見つけよう' : '次の1手クイズ - 推し囲碁棋士を見つけよう'">次の1手クイズ - 推し囲碁棋士を見つけよう</title>
+    <title th:text="${title} != null ? ${title} + ' | 推し囲碁棋士を見つけよう' : 'AI次の1手クイズ | 推し囲碁棋士を見つけよう'">AI次の1手クイズ | 推し囲碁棋士を見つけよう</title>
+    <meta name="description" content="KataGoの解析データに基づく次の1手クイズ。あなたの棋力向上をサポートします。">
+    <link rel="canonical" th:href="@{/analyze}" href="https://example.com/analyze">
+    <meta property="og:title" th:content="${title} != null ? ${title} + ' | 推し囲碁棋士を見つけよう' : 'AI次の1手クイズ | 推し囲碁棋士を見つけよう'" content="AI次の1手クイズ | 推し囲碁棋士を見つけよう">
+    <meta property="og:description" content="KataGoの解析データに基づく次の1手クイズ。あなたの棋力向上をサポートします。">
+    <meta property="og:type" content="article">
+    <meta property="og:url" th:content="@{/analyze}" content="https://example.com/analyze">
+    <meta property="og:image" th:content="@{/images/ogp-banner.png}" content="https://example.com/images/ogp-banner.png">
+    <meta property="og:site_name" content="推し囲碁棋士を見つけよう">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${title} != null ? ${title} + ' | 推し囲碁棋士を見つけよう' : 'AI次の1手クイズ | 推し囲碁棋士を見つけよう'" content="AI次の1手クイズ | 推し囲碁棋士を見つけよう">
+    <meta name="twitter:description" content="KataGoの解析データに基づく次の1手クイズ。あなたの棋力向上をサポートします。">
+    <meta name="twitter:image" th:content="@{/images/ogp-banner.png}" content="https://example.com/images/ogp-banner.png">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">

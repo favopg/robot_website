@@ -6,16 +6,32 @@
     <title>囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ</title>
     <meta name="description" content="プロ棋士の対局予定・結果速報から、AI（KataGo）を活用した次の1手クイズ、おすすめ棋譜ビューアまで。推し囲碁棋士を見つけて応援するための総合ポータルサイトです。">
     <meta name="keywords" content="囲碁, 対局予定, AI棋譜解析, 次の1手, プロ棋士, 棋聖戦, 名人戦, 囲碁クイズ">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" th:href="@{/}" href="https://example.com/">
+
     <!-- OGP Tags -->
-    <meta property="og:title" content="推し囲碁棋士を見つけよう - AI棋譜解析・対局予定ポータル">
+    <meta property="og:title" content="囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ">
     <meta property="og:description" content="プロ棋士の対局予定・結果からAI次の1手クイズまで。あなたの囲碁ライフをサポートします。">
     <meta property="og:type" content="website">
-    <!-- Structured Data -->
+    <meta property="og:url" th:content="@{/}" content="https://example.com/">
+    <meta property="og:image" th:content="@{/images/ogp-banner.png}" content="https://example.com/images/ogp-banner.png">
+    <meta property="og:site_name" content="推し囲碁棋士を見つけよう">
+    <meta property="og:locale" content="ja_JP">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ">
+    <meta name="twitter:description" content="プロ棋士の対局予定・結果からAI次の1手クイズまで。あなたの囲碁ライフをサポートします。">
+    <meta name="twitter:image" th:content="@{/images/ogp-banner.png}" content="https://example.com/images/ogp-banner.png">
+
+    <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "推し囲碁棋士を見つけよう",
+      "alternateName": ["囲碁ポータル", "囲碁対局予定・AI解析サイト"],
       "url": "https://example.com/",
       "potentialAction": {
         "@type": "SearchAction",
@@ -24,6 +40,7 @@
       }
     }
     </script>
+    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">

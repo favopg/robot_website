@@ -3,7 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${title} != null ? ${title} + ' - 推し囲碁棋士を見つけよう' : 'おすすめ棋譜 - 推し囲碁棋士を見つけよう'">おすすめ棋譜 - 推し囲碁棋士を見つけよう</title>
+    <title th:text="${title} != null ? ${title} + ' | 推し囲碁棋士を見つけよう' : 'おすすめ棋譜ビューア | 推し囲碁棋士を見つけよう'">おすすめ棋譜ビューア | 推し囲碁棋士を見つけよう</title>
+    <meta name="description" content="プロの注目局や名局の棋譜ビューア。形勢グラフや変化図でじっくり鑑賞・研究できます。">
+    <link rel="canonical" th:href="@{/recommended-kifu}" href="https://example.com/recommended-kifu">
+    <meta property="og:title" th:content="${title} != null ? ${title} + ' | 推し囲碁棋士を見つけよう' : 'おすすめ棋譜ビューア | 推し囲碁棋士を見つけよう'" content="おすすめ棋譜ビューア | 推し囲碁棋士を見つけよう">
+    <meta property="og:description" content="プロの注目局や名局の棋譜ビューア。形勢グラフや変化図でじっくり鑑賞・研究できます。">
+    <meta property="og:type" content="article">
+    <meta property="og:url" th:content="@{/recommended-kifu}" content="https://example.com/recommended-kifu">
+    <meta property="og:image" th:content="@{/images/ogp-banner.png}" content="https://example.com/images/ogp-banner.png">
+    <meta property="og:site_name" content="推し囲碁棋士を見つけよう">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${title} != null ? ${title} + ' | 推し囲碁棋士を見つけよう' : 'おすすめ棋譜ビューア | 推し囲碁棋士を見つけよう'" content="おすすめ棋譜ビューア | 推し囲碁棋士を見つけよう">
+    <meta name="twitter:description" content="プロの注目局や名局の棋譜ビューア。形勢グラフや変化図でじっくり鑑賞・研究できます。">
+    <meta name="twitter:image" th:content="@{/images/ogp-banner.png}" content="https://example.com/images/ogp-banner.png">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
