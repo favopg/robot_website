@@ -27,6 +27,12 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <script>
+        const savedTheme = localStorage.getItem('theme');
+        const theme = savedTheme
+            ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-bs-theme', theme);
+    </script>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -75,6 +81,11 @@
             padding: 0 4px;
             border-radius: 4px;
             font-weight: bold;
+        }
+
+        [data-bs-theme="dark"] .favorite-name {
+            color: #ffe69c;
+            background-color: #4d3b00;
         }
     </style>
 </head>
@@ -222,7 +233,7 @@
         </section>
 
         <!-- 使い方・ページの見方ガイド -->
-        <section class="bg-light py-5">
+        <section class="bg-body-tertiary py-5">
             <div class="container">
                 <h2 class="text-center mb-5">使い方・ページの見方ガイド</h2>
                 <div class="row g-4">
@@ -263,7 +274,7 @@
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">棋聖戦 (きせいせん)</h5>
+                            <h5 class="card-title fw-bold">棋聖戦 (きせいせん)</h5>
                             <p class="card-text small text-secondary">囲碁界最高峰の棋戦。読売新聞社主催。七大棋戦の中で最も賞金額が高く、勝者は「棋聖」の称号を得ます。</p>
                             <a href="/kisei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -272,7 +283,7 @@
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">名人戦 (めいじんせん)</h5>
+                            <h5 class="card-title fw-bold">名人戦 (めいじんせん)</h5>
                             <p class="card-text small text-secondary">長い歴史と伝統を誇る棋戦。朝日新聞社主催。序列第2位で、勝者は「名人」の称号を得ます。</p>
                             <a href="/meijin-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -281,7 +292,7 @@
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">本因坊戦 (ほんいんぼうせん)</h5>
+                            <h5 class="card-title fw-bold">本因坊戦 (ほんいんぼうせん)</h5>
                             <p class="card-text small text-secondary">最も古い歴史を持つ棋戦。毎日新聞社主催。勝者は「本因坊」の称号を名乗ることができます。</p>
                             <a href="/honinbo-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -290,7 +301,7 @@
                 <div class="col-md-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">王座戦</h5>
+                            <h5 class="card-title fw-bold">王座戦</h5>
                             <p class="card-text small text-secondary">日本経済新聞社主催。数多くの名勝負が繰り広げられてきた伝統ある棋戦です。</p>
                             <a href="/ouza-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -299,7 +310,7 @@
                 <div class="col-md-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">天元戦</h5>
+                            <h5 class="card-title fw-bold">天元戦</h5>
                             <p class="card-text small text-secondary">新聞三社連合主催。碁盤の中心である「天元」の名を冠した棋戦です。</p>
                             <a href="/tengen-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -308,7 +319,7 @@
                 <div class="col-md-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">碁聖戦</h5>
+                            <h5 class="card-title fw-bold">碁聖戦</h5>
                             <p class="card-text small text-secondary">新聞囲碁連盟主催。比較的持ち時間が短いのが特徴の一つです。</p>
                             <a href="/gosei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -317,7 +328,7 @@
                 <div class="col-md-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">十段戦</h5>
+                            <h5 class="card-title fw-bold">十段戦</h5>
                             <p class="card-text small text-secondary">産経新聞社主催。五番勝負で行われ、非常にスピーディーな展開が魅力です。</p>
                             <a href="/judan-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -326,7 +337,7 @@
                 <div class="col-md-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">NHK杯</h5>
+                            <h5 class="card-title fw-bold">NHK杯</h5>
                             <p class="card-text small text-secondary">NHK主催のトーナメント棋戦。テレビ放送される早碁戦として広く親しまれています。</p>
                             <a href="/nhk-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -342,7 +353,7 @@
                 <div class="col-md-6">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">女流本因坊戦</h5>
+                            <h5 class="card-title fw-bold">女流本因坊戦</h5>
                             <p class="card-text small text-secondary">女流棋戦の中で最も歴史があり、権威ある棋戦の一つです。共同通信社主催。</p>
                             <a href="/female-honinbo-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -351,7 +362,7 @@
                 <div class="col-md-6">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">女流名人戦</h5>
+                            <h5 class="card-title fw-bold">女流名人戦</h5>
                             <p class="card-text small text-secondary">女流二大タイトルの一つ。日本棋院主催。多くのスター選手を輩出しています。</p>
                             <a href="/female-meijin-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -360,7 +371,7 @@
                 <div class="col-md-6">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">女流棋聖戦</h5>
+                            <h5 class="card-title fw-bold">女流棋聖戦</h5>
                             <p class="card-text small text-secondary">持ち時間が極めて短い早碁棋戦。ドコモが協賛しており、スピーディーな対局が楽しめます。</p>
                             <a href="/female-kisei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -369,7 +380,7 @@
                 <div class="col-md-6">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-dark">扇興杯</h5>
+                            <h5 class="card-title fw-bold">扇興杯</h5>
                             <p class="card-text small text-secondary">女流最強を決定するトーナメント棋戦。扇興通商が主催。</p>
                             <a href="/senko-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
                         </div>
@@ -386,7 +397,7 @@
                     <div class="card shadow-sm border-0 p-4">
                         <div class="card-body">
                             <i class="bi bi-journal-bookmark-fill text-success fs-1 mb-3"></i>
-                            <h3 class="card-title fw-bold text-dark">名局・注目棋譜の紹介</h3>
+                            <h3 class="card-title fw-bold">名局・注目棋譜の紹介</h3>
                             <p class="card-text text-secondary mb-4">
                                 プロ棋士による白熱の対局やAI（KataGo）が推奨する注目の名局を分かりやすく紹介しています。形勢グラフや日付選択機能を使って、棋譜の細部までじっくり鑑賞・研究できます。
                             </p>
@@ -438,7 +449,7 @@
     <!-- 推し棋士登録モーダル -->
     <div class="modal fade" id="favoritePlayerModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog">
-            <div class="modal-content text-dark">
+            <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">推し棋士を登録しましょう！</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
@@ -552,24 +563,19 @@
         const darkModeSwitch = document.getElementById('darkModeSwitch');
         const htmlElement = document.documentElement;
 
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            htmlElement.setAttribute('data-bs-theme', savedTheme);
-            darkModeSwitch.checked = (savedTheme === 'dark');
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            htmlElement.setAttribute('data-bs-theme', 'dark');
-            darkModeSwitch.checked = true;
-        }
+        if (darkModeSwitch) {
+            darkModeSwitch.checked = (htmlElement.getAttribute('data-bs-theme') === 'dark');
 
-        darkModeSwitch.addEventListener('change', () => {
-            if (darkModeSwitch.checked) {
-                htmlElement.setAttribute('data-bs-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                htmlElement.setAttribute('data-bs-theme', 'light');
-                localStorage.setItem('theme', 'light');
-            }
-        });
+            darkModeSwitch.addEventListener('change', () => {
+                if (darkModeSwitch.checked) {
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlElement.setAttribute('data-bs-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
 
         function startTutorial() {
             const driver = window.driver.js.driver;
