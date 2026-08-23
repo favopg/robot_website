@@ -1,82 +1,82 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://example.com/</loc>
+        <loc>https://favoriteigo.site/</loc>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://example.com/match-schedule</loc>
+        <loc>https://favoriteigo.site/match-schedule</loc>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://example.com/match-results</loc>
+        <loc>https://favoriteigo.site/match-results</loc>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://example.com/ranking</loc>
+        <loc>https://favoriteigo.site/ranking</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://example.com/recommended-kifu</loc>
+        <loc>https://favoriteigo.site/recommended-kifu</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://example.com/analyze</loc>
+        <loc>https://favoriteigo.site/analyze</loc>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://example.com/kisei-info</loc>
+        <loc>https://favoriteigo.site/kisei-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/meijin-info</loc>
+        <loc>https://favoriteigo.site/meijin-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/honinbo-info</loc>
+        <loc>https://favoriteigo.site/honinbo-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/ouza-info</loc>
+        <loc>https://favoriteigo.site/ouza-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/tengen-info</loc>
+        <loc>https://favoriteigo.site/tengen-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/gosei-info</loc>
+        <loc>https://favoriteigo.site/gosei-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/judan-info</loc>
+        <loc>https://favoriteigo.site/judan-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/nhk-info</loc>
+        <loc>https://favoriteigo.site/nhk-info</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/kifu-intro</loc>
+        <loc>https://favoriteigo.site/kifu-intro</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://example.com/event-list</loc>
+        <loc>https://favoriteigo.site/event-list</loc>
         <changefreq>daily</changefreq>
         <priority>0.7</priority>
     </url>

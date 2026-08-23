@@ -33,7 +33,7 @@ public class FavoritePlayerExportTaskletTest {
         player1.setBirthPlace("宮城県仙台市");
         player1.setBirthDate(LocalDate.of(1997, 6, 10));
         player1.setAffiliation("日本棋院東京本院");
-        player1.setProfileUrl("https://example.com/ichiriki");
+        player1.setProfileUrl("https://favoriteigo.site/ichiriki");
         player1.setIconPath("/images/players/ichiriki.jpg");
         player1.setKanaName("いちりき りょう");
         player1.setLikesCount(10);
