@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">棋譜紹介 - 推し囲碁棋士を見つけよう</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #d1ecf1;
+        }
+        .card-header-custom {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">推し囲碁棋士を見つけよう</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-schedule">
+                            <i class="bi bi-clock-history"></i> 対局予定
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match-results">
+                            <i class="bi bi-trophy"></i> 対局結果
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-text"></i> 囲碁棋戦
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownTitles">
+                            <li><a class="dropdown-item" href="/kisei-info">棋聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/meijin-info">名人戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/honinbo-info">本因坊戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/ouza-info">王座戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/tengen-info">天元戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/gosei-info">碁聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/nhk-info">NHK杯の仕組み</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownFemaleTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-text"></i> 女流棋戦
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownFemaleTitles">
+                            <li><a class="dropdown-item" href="/female-honinbo-info">女流本因坊戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-meijin-info">女流名人戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/female-kisei-info">女流棋聖戦の仕組み</a></li>
+                            <li><a class="dropdown-item" href="/senko-info">扇興杯の仕組み</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ranking">
+                            <i class="bi bi-heart-fill"></i> 人気ランキング
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownKifu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-bookmark"></i> 棋譜
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownKifu">
+                            <li><a class="dropdown-item active" href="/kifu-intro">棋譜紹介</a></li>
+                            <li><a class="dropdown-item" href="/recommended-kifu">おすすめ棋譜</a></li>
+                            <li><a class="dropdown-item" href="/analyze">次の1手クイズ</a></li>
+                            <li><a class="dropdown-item" href="/analyze-easy">次の１手クイズ(難易度易)</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
+                        <i class="bi bi-star-fill"></i> 推し棋士設定
+                    </button>
+                    <div class="form-check form-switch text-light">
+                        <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                        <label class="form-check-label" for="darkModeSwitch">ダークモード</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${title}">棋譜紹介</li>
+            </ol>
+        </nav>
+
+        <h1 class="mb-4 text-center fw-bold" th:text="${title}">棋譜紹介</h1>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-primary fw-bold mb-3"><i class="bi bi-journal-bookmark-fill me-2"></i>棋譜紹介ページについて</h3>
+                        <p class="card-text text-secondary lh-lg">
+                            当サイトの棋譜紹介ページでは、プロ棋士による公式戦や、AI（KataGo）による最新解析データを基にした注目の名局を詳しく紹介しています。
+                            対局の流れや勝負の分かれ目となったポイントを視覚的に把握でき、囲碁の観戦・研究がさらに楽しくなります。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-success fw-bold mb-3"><i class="bi bi-display me-2"></i>おすすめ棋譜ビューア</h4>
+                        <p class="card-text text-secondary">
+                            日付を選択して過去の注目対局を簡単に呼び出せます。形勢グラフや手数の移動、変化図の確認など、高機能なビューアでじっくり鑑賞できます。
+                        </p>
+                        <a href="/recommended-kifu" class="btn btn-success mt-3">おすすめ棋譜を見る</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-warning fw-bold mb-3"><i class="bi bi-lightbulb me-2"></i>AI次の1手クイズ</h4>
+                        <p class="card-text text-secondary">
+                            プロの実際の棋譜からAIが導き出した「最善手」を当てるクイズに挑戦できます。難易度易も完備しており、棋力アップに最適です。
+                        </p>
+                        <a href="/analyze" class="btn btn-warning mt-3">クイズに挑戦する</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <div class="mb-2">
+                <a href="/request" class="text-white-50 text-decoration-none mx-2 small">要望を投稿する</a>
+                <span class="text-white-50">|</span>
+                <a href="/request/list" class="text-white-50 text-decoration-none mx-2 small">要望一覧</a>
+                <span class="text-white-50">|</span>
+                <a href="/inquiry" class="text-white-50 text-decoration-none mx-2 small">バグを報告する</a>
+                <span class="text-white-50">|</span>
+                <a href="/inquiry/list" class="text-white-50 text-decoration-none mx-2 small">報告一覧</a>
+            </div>
+            <p class="mb-0 text-white-50 small">&copy; 2026 推し囲碁棋士を見つけよう</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const darkModeSwitch = document.getElementById('darkModeSwitch');
+        const htmlElement = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-bs-theme', savedTheme);
+        if (darkModeSwitch) {
+            darkModeSwitch.checked = (savedTheme === 'dark');
+            darkModeSwitch.addEventListener('change', function() {
+                const theme = this.checked ? 'dark' : 'light';
+                htmlElement.setAttribute('data-bs-theme', theme);
+                localStorage.setItem('theme', theme);
+            });
+        }
+    </script>
+</body>
+</html>

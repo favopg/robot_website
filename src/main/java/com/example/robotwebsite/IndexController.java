@@ -428,4 +428,10 @@ public class IndexController {
         model.addAttribute("title", "おすすめ棋譜");
         return "recommended_kifu";
     }
+
+    @GetMapping("/kifu-intro")
+    public String kifuIntro(Model model) {
+        model.addAttribute("title", "棋譜紹介");
+        return "kifu_intro";
+    }
 }

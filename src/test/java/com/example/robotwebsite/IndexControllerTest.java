@@ -43,4 +43,20 @@ public class IndexControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("<!-- 上部ページングナビゲーション -->")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("<!-- ページングナビゲーション -->")));
     }
+
+    @Test
+    public void testKifuIntroPage() throws Exception {
+        mockMvc.perform(get("/kifu-intro"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("kifu_intro"))
+                .andExpect(model().attribute("title", "棋譜紹介"));
+    }
+
+    @Test
+    public void testIndexPageContainsKifuIntroSection() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("index"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("棋譜紹介ページ")));
+    }
 }
