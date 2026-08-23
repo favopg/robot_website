@@ -1,6 +1,16 @@
 ﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-P9QMWV6Q63"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-P9QMWV6Q63');
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ</title>
@@ -151,11 +161,6 @@
                             <li><a class="dropdown-item" href="/senko-info">扇興杯の仕組み</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item" id="step-ranking">
-                        <a class="nav-link" href="/ranking">
-                            <i class="bi bi-heart-fill"></i> 人気ランキング
-                        </a>
-                    </li>
                     <li class="nav-item dropdown" id="step-recommended-kifu">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownKifu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-journal-bookmark"></i> 棋譜
@@ -233,8 +238,8 @@
                 <div class="col-md-6 text-center">
                     <div class="p-4 shadow-sm rounded bg-body h-100">
                         <i class="bi bi-heart-fill card-icon text-danger"></i>
-                        <h4 class="h5 fw-bold">推し棋士登録 ＆ 人気ランキング</h4>
-                        <p class="small text-secondary">お気に入りの棋士を登録して対局情報でハイライト。CSVエクスポート機能や人気ランキングでトレンドもチェック。</p>
+                        <h4 class="h5 fw-bold">推し棋士登録</h4>
+                        <p class="small text-secondary">お気に入りの棋士を登録して対局情報でハイライト。CSVエクスポート機能もチェック。</p>
                         <a href="/ranking" class="btn btn-sm btn-outline-primary mt-2">ランキングを見る</a>
                     </div>
                 </div>
@@ -618,10 +623,6 @@
                   element: '#step-female-titles',
                   popover: { title: '女流棋戦', description: '女流棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
                 },
-                    {
-                        element: '#step-ranking',
-                        popover: { title: '人気ランキング', description: '棋士の人気ランキングを表示します。\n対局予定、対局結果のアイコン画像をクリックするといいねボタンが押せるので一定数以上押されたプロ棋士を対象としたランキングを確認できます。', side: "bottom", align: 'start' }
-                    },
                     {
                         element: '#step-recommended-kifu',
                         popover: { title: '棋譜', description: 'おすすめの棋譜などを確認できます。', side: "bottom", align: 'start' }
