@@ -115,12 +115,14 @@
             <div class="col-lg-12 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-header card-header-custom">
-                        1. 碁聖戦の全体像（予選から本戦トーナメント、挑戦手合まで）
+                        1. 碁聖戦の全体像（予選Cから予選A、本戦トーナメント、挑戦手合まで）
                     </div>
                     <div class="card-body">
                         <div class="mermaid text-center">
 graph TD
-    A[予選] --> B[本戦トーナメント<br/>約16名]
+    A1[予選C] --> A2[予選B]
+    A2 --> A3[予選A]
+    A3 --> B[本戦トーナメント<br/>約24名＋α]
     S[シード棋士] --> B
     B --> C{挑戦者決定}
     C --> F[挑戦手合五番勝負]
@@ -137,16 +139,28 @@ graph TD
             <div class="col-lg-12 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-header card-header-custom">
-                        2. 本戦トーナメントの仕組み
+                        2. 予選（予選C・予選B・予選A）と本戦トーナメントの仕組み
                     </div>
                     <div class="card-body">
-                        <p>碁聖戦の挑戦者は、全棋士参加の予選勝ち抜き者とシード棋士によるトーナメント戦で決定されます。</p>
+                        <p>碁聖戦の挑戦者は、全棋士参加の3段階の予選（予選C → 予選B → 予選A）を勝ち抜いた棋士と、シード棋士による本戦トーナメントで決定されます。</p>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <strong>本戦形式:</strong> 16名程度によるノックアウトトーナメント。
+                                <strong>予選C:</strong> 碁聖戦の最下位（第一歩）となる予選ステージ。多くの棋士がここから参加します。<br>
+                                <span class="text-muted small">持ち時間: 各3時間（秒読み：残り5分より）</span>
                             </li>
                             <li class="list-group-item">
-                                <strong>挑戦手合:</strong> 挑戦者と碁聖による五番勝負（1日制）。
+                                <strong>予選B:</strong> 予選Cを勝ち抜いた棋士や予選Bから参加する棋士によるトーナメント戦です。<br>
+                                <span class="text-muted small">持ち時間: 各3時間（秒読み：残り5分より）</span>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>予選A:</strong> 予選Bを勝ち抜いた棋士やシード棋士が参加する最終段階の予選ステージ。ここを勝ち上がると本戦トーナメントに進出します。<br>
+                                <span class="text-muted small">持ち時間: 各3時間（秒読み：残り5分より）</span>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>本戦トーナメント:</strong> 予選Aを勝ち抜いた棋士とシード棋士による約24名（＋α）のノックアウトトーナメント。
+                            </li>
+                            <li class="list-group-item">
+                                <strong>挑戦手合五番勝負:</strong> 本戦を勝ち抜いた挑戦者と、現役タイトルホルダー（現碁聖）による五番勝負（持ち時間 各4時間）。
                             </li>
                         </ul>
                     </div>
