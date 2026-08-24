@@ -332,10 +332,10 @@
                                              th:data-player-name="${match.player1Name}">
                                             <i class="bi bi-person text-secondary fs-2"></i>
                                         </div>
-                                        <span th:if="${match.player1Sente != null && match.player1Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark">先</span>
+                                        <span th:if="${match.player1Sente != null && match.player1Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="pointer-events: none;">先</span>
                                     </div>
                                     <div th:classappend="${match.winnerName == match.player1Name} ? 'fw-bold text-danger' : ''">
-                                        <span class="player-name" th:text="${match.player1Name}">棋士A</span>
+                                        <span class="player-name player-detail-trigger" th:text="${match.player1Name}" th:data-player-name="${match.player1Name}" style="cursor: pointer;">棋士A</span>
                                     </div>
                                     <div th:if="${match.winnerName == match.player1Name}" class="mt-1">
                                         <span class="badge rounded-pill bg-danger">勝</span>
@@ -356,10 +356,10 @@
                                              th:data-player-name="${match.player2Name}">
                                             <i class="bi bi-person text-secondary fs-2"></i>
                                         </div>
-                                        <span th:if="${match.player2Sente != null && match.player2Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark">先</span>
+                                        <span th:if="${match.player2Sente != null && match.player2Sente}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="pointer-events: none;">先</span>
                                     </div>
                                     <div th:classappend="${match.winnerName == match.player2Name} ? 'fw-bold text-danger' : ''">
-                                        <span class="player-name" th:text="${match.player2Name}">棋士B</span>
+                                        <span class="player-name player-detail-trigger" style="cursor: pointer;" th:data-player-name="${match.player2Name}" th:text="${match.player2Name}">棋士B</span>
                                     </div>
                                     <div th:if="${match.winnerName == match.player2Name}" class="mt-1">
                                         <span class="badge rounded-pill bg-danger">勝</span>
@@ -569,9 +569,12 @@
         }
 
         function filterTable() {
-            const query = hiraToKata(document.getElementById('playerSearch').value.toLowerCase());
-            const ageFilter = document.getElementById('ageFilter').value;
-            const genderFilter = document.getElementById('genderFilter').value;
+            const playerSearchEl = document.getElementById('playerSearch');
+            const query = playerSearchEl ? hiraToKata(playerSearchEl.value.toLowerCase()) : "";
+            const ageFilterEl = document.getElementById('ageFilter');
+            const ageFilter = ageFilterEl ? ageFilterEl.value : "";
+            const genderFilterEl = document.getElementById('genderFilter');
+            const genderFilter = genderFilterEl ? genderFilterEl.value : "";
             const filterCheckbox = document.getElementById('favoriteOnlyFilter');
             const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
 

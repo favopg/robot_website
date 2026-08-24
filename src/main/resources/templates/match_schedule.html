@@ -726,9 +726,12 @@
         }
 
         function filterTable() {
-            const query = hiraToKata(document.getElementById('playerSearch').value.toLowerCase());
-            const ageFilter = document.getElementById('ageFilter').value;
-            const genderFilter = document.getElementById('genderFilter') ? document.getElementById('genderFilter').value : "";
+            const playerSearchEl = document.getElementById('playerSearch');
+            const query = playerSearchEl ? hiraToKata(playerSearchEl.value.toLowerCase()) : "";
+            const ageFilterEl = document.getElementById('ageFilter');
+            const ageFilter = ageFilterEl ? ageFilterEl.value : "";
+            const genderFilterEl = document.getElementById('genderFilter');
+            const genderFilter = genderFilterEl ? genderFilterEl.value : "";
             const filterCheckbox = document.getElementById('favoriteOnlyFilter');
             const favoriteOnly = filterCheckbox ? filterCheckbox.checked : false;
             
