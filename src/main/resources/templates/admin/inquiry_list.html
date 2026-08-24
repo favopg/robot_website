@@ -25,15 +25,16 @@
         </div>
     </div>
 
-    <form id="deleteForm" th:action="@{/admin/inquiry/delete}" method="post">
-        <div class="mb-3">
-            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                <i class="bi bi-trash"></i> 選択した項目を削除
-            </button>
-        </div>
+    <form id="deleteForm" th:action="@{/admin/inquiry/delete}" method="post"></form>
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover mt-4">
+    <div class="mb-3">
+        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+            <i class="bi bi-trash"></i> 選択した項目を削除
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover mt-4">
                 <thead class="table-dark">
                 <tr>
                     <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
@@ -81,7 +82,6 @@
             </tbody>
         </table>
     </div>
-</form>
 
     <script>
         document.getElementById('selectAll').addEventListener('change', function() {
@@ -96,7 +96,16 @@
                 return;
             }
             if (confirm('選択した項目を削除してもよろしいですか？')) {
-                document.getElementById('deleteForm').submit();
+                const deleteForm = document.getElementById('deleteForm');
+                deleteForm.querySelectorAll('input[name="ids"]').forEach(el => el.remove());
+                checked.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids';
+                    input.value = cb.value;
+                    deleteForm.appendChild(input);
+                });
+                deleteForm.submit();
             }
         }
     </script>
