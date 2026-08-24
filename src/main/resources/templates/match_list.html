@@ -164,84 +164,103 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             
-            <!-- 月別リンクの追加 -->
+            <!-- 月別リンクの追加（アコーディオン化） -->
             <div class="row mb-4" th:if="${months != null}">
                 <div class="col-12">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title mb-3">月別結果</h5>
-                            <div class="d-flex overflow-auto pb-2" style="white-space: nowrap; -webkit-overflow-scrolling: touch;">
-                                <a href="/match-results?all=true" 
-                                   class="btn btn-sm me-2" 
-                                   th:classappend="${param.all != null && param.all[0] == 'true'} ? 'btn-info' : 'btn-outline-info'">全て</a>
-                                <a href="/match-results" 
-                                   class="btn btn-sm me-2" 
-                                   th:classappend="${param.all == null && param.year == null && param.month == null} ? 'btn-secondary' : 'btn-outline-secondary'">直近</a>
-                                <a th:each="m : ${months}" 
-                                   th:with="parts=${m.split('-')}"
-                                   th:href="@{/match-results(year=${parts[0]}, month=${parts[1]})}" 
-                                   class="btn btn-sm me-2"
-                                   th:classappend="${param.year != null && param.year[0] == parts[0] && param.month != null && param.month[0] == parts[1]} ? 'btn-primary' : 'btn-outline-primary'"
-                                   th:text="${parts[0] + '年' + parts[1] + '月'}">
-                                    2026年6月
-                                </a>
+                            <!-- 折り畳みトグル用ヘッダー -->
+                            <div class="d-flex justify-content-between align-items-center" 
+                                 data-bs-toggle="collapse" 
+                                 data-bs-target="#monthlyResultCollapse" 
+                                 aria-expanded="false" 
+                                 aria-controls="monthlyResultCollapse"
+                                 style="cursor: pointer;">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-calendar3 me-2"></i>月別結果・統計
+                                </h5>
+                                <button class="btn btn-sm btn-outline-secondary border-0" type="button">
+                                    <i class="bi bi-chevron-down"></i> <span>表示/非表示</span>
+                                </button>
                             </div>
-                            <!-- 最多勝利者・対局者の表示エリア -->
-                            <div id="rankingArea" class="mt-3 pt-2 border-top" style="display:none;">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <div class="fw-bold">
-                                                <i class="bi bi-trophy-fill text-warning me-2"></i>
-                                                <span id="topWinnerTitle">最多勝利者</span>
+
+                            <!-- 折り畳み対象のコンテンツエリア -->
+                            <div id="monthlyResultCollapse" class="collapse mt-3" 
+                                 th:classappend="${param.year != null || param.month != null || (param.all != null && param.all[0] == 'true')} ? 'show' : ''">
+                                
+                                <div class="d-flex overflow-auto pb-2" style="white-space: nowrap; -webkit-overflow-scrolling: touch;">
+                                    <a href="/match-results?all=true" 
+                                       class="btn btn-sm me-2" 
+                                       th:classappend="${param.all != null && param.all[0] == 'true'} ? 'btn-info' : 'btn-outline-info'">全て</a>
+                                    <a href="/match-results" 
+                                       class="btn btn-sm me-2" 
+                                       th:classappend="${param.all == null && param.year == null && param.month == null} ? 'btn-secondary' : 'btn-outline-secondary'">直近</a>
+                                    <a th:each="m : ${months}" 
+                                       th:with="parts=${m.split('-')}"
+                                       th:href="@{/match-results(year=${parts[0]}, month=${parts[1]})}" 
+                                       class="btn btn-sm me-2"
+                                       th:classappend="${param.year != null && param.year[0] == parts[0] && param.month != null && param.month[0] == parts[1]} ? 'btn-primary' : 'btn-outline-primary'"
+                                       th:text="${parts[0] + '年' + parts[1] + '月'}">
+                                        2026年6月
+                                    </a>
+                                </div>
+                                <!-- 最多勝利者・対局者の表示エリア -->
+                                <div id="rankingArea" class="mt-3 pt-2 border-top" style="display:none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div class="fw-bold">
+                                                    <i class="bi bi-trophy-fill text-warning me-2"></i>
+                                                    <span id="topWinnerTitle">最多勝利者</span>
+                                                </div>
+                                                <button id="toggleWinnersBtn" class="btn btn-sm btn-outline-primary" onclick="toggleTopWinners()" style="display:none;">
+                                                    もっと見る <i class="bi bi-chevron-down"></i>
+                                                </button>
                                             </div>
-                                            <button id="toggleWinnersBtn" class="btn btn-sm btn-outline-primary" onclick="toggleTopWinners()" style="display:none;">
-                                                もっと見る <i class="bi bi-chevron-down"></i>
-                                            </button>
-                                        </div>
-                                        <div id="topWinnersList" class="row row-cols-1 g-2 small">
-                                            <!-- JSで動的に生成 -->
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 border-start-md">
-                                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3 mt-md-0">
-                                            <div class="fw-bold">
-                                                <i class="bi bi-people-fill text-info me-2"></i>
-                                                <span id="topMatchCountTitle">最多対局者</span>
-                                            </div>
-                                            <button id="toggleMatchCountsBtn" class="btn btn-sm btn-outline-info" onclick="toggleTopMatchCounts()" style="display:none;">
-                                                もっと見る <i class="bi bi-chevron-down"></i>
-                                            </button>
-                                        </div>
-                                        <div id="topMatchCountsList" class="row row-cols-1 g-2 small">
-                                            <!-- JSで動的に生成 -->
-                                        </div>
-                                    </div>
-                                    <!-- 連勝記録ランキングの追加 -->
-                                    <div class="col-12 mt-3 pt-3 border-top">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <div class="fw-bold">
-                                                <i class="bi bi-lightning-fill text-danger me-2"></i>
-                                                <span id="topStreakTitle">連勝記録ランキング</span>
-                                            </div>
-                                            <button id="toggleStreaksBtn" class="btn btn-sm btn-outline-danger" onclick="toggleTopStreaks()" style="display:none;">
-                                                もっと見る <i class="bi bi-chevron-down"></i>
-                                            </button>
-                                        </div>
-                                        <div id="topStreaksList" class="row row-cols-1 row-cols-md-2 g-2 small">
-                                            <!-- JSで動的に生成 -->
-                                        </div>
-                                    </div>
-                                    <!-- 連勝ストップ一覧の追加 -->
-                                    <div class="col-12 mt-3 pt-3 border-top">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <div class="fw-bold">
-                                                <i class="bi bi-x-circle-fill text-secondary me-2"></i>
-                                                <span id="streakStopTitle">連勝ストップ一覧</span>
+                                            <div id="topWinnersList" class="row row-cols-1 g-2 small">
+                                                <!-- JSで動的に生成 -->
                                             </div>
                                         </div>
-                                        <div id="streakStopList" class="row row-cols-1 row-cols-md-2 g-2 small">
-                                            <!-- JSで動的に生成 -->
+                                        <div class="col-md-6 border-start-md">
+                                            <div class="d-flex justify-content-between align-items-center mb-2 mt-3 mt-md-0">
+                                                <div class="fw-bold">
+                                                    <i class="bi bi-people-fill text-info me-2"></i>
+                                                    <span id="topMatchCountTitle">最多対局者</span>
+                                                </div>
+                                                <button id="toggleMatchCountsBtn" class="btn btn-sm btn-outline-info" onclick="toggleTopMatchCounts()" style="display:none;">
+                                                    もっと見る <i class="bi bi-chevron-down"></i>
+                                                </button>
+                                            </div>
+                                            <div id="topMatchCountsList" class="row row-cols-1 g-2 small">
+                                                <!-- JSで動的に生成 -->
+                                            </div>
+                                        </div>
+                                        <!-- 連勝記録ランキングの追加 -->
+                                        <div class="col-12 mt-3 pt-3 border-top">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div class="fw-bold">
+                                                    <i class="bi bi-lightning-fill text-danger me-2"></i>
+                                                    <span id="topStreakTitle">連勝記録ランキング</span>
+                                                </div>
+                                                <button id="toggleStreaksBtn" class="btn btn-sm btn-outline-danger" onclick="toggleTopStreaks()" style="display:none;">
+                                                    もっと見る <i class="bi bi-chevron-down"></i>
+                                                </button>
+                                            </div>
+                                            <div id="topStreaksList" class="row row-cols-1 row-cols-md-2 g-2 small">
+                                                <!-- JSで動的に生成 -->
+                                            </div>
+                                        </div>
+                                        <!-- 連勝ストップ一覧の追加 -->
+                                        <div class="col-12 mt-3 pt-3 border-top">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div class="fw-bold">
+                                                    <i class="bi bi-x-circle-fill text-secondary me-2"></i>
+                                                    <span id="streakStopTitle">連勝ストップ一覧</span>
+                                                </div>
+                                            </div>
+                                            <div id="streakStopList" class="row row-cols-1 row-cols-md-2 g-2 small">
+                                                <!-- JSで動的に生成 -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
