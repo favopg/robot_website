@@ -8,10 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Service
 public class MatchService {
 
@@ -20,13 +16,6 @@ public class MatchService {
 
     public MatchService(MatchRepository matchRepository) {
         this.matchRepository = matchRepository;
-    }
-
-    public Map<String, List<Match>> getMatchResultsGroupedByTournament() {
-        List<Match> allMatches = matchRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "matchDate"));
-        return allMatches.stream()
-                .filter(m -> m.getResult() != null && !m.getResult().isEmpty())
-                .collect(Collectors.groupingBy(Match::getMatchName, Collectors.toList()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

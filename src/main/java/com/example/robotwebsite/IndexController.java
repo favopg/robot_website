@@ -11,7 +11,6 @@ import com.example.robotwebsite.repository.ReleaseInfoRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import com.example.robotwebsite.entity.Player;
 import com.example.robotwebsite.service.PlayerService;
-import com.example.robotwebsite.service.MatchService;
 import com.example.robotwebsite.service.SystemStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +51,13 @@ public class IndexController {
     private final NihonkiinPlayerScraper nihonkiinPlayerScraper;
     private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
     private final SystemStatusService systemStatusService;
-    private final MatchService matchService;
 
     public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
                            PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository,
                            ReleaseInfoRepository releaseInfoRepository,
                            NihonkiinPlayerScraper nihonkiinPlayerScraper,
                            KansaikiinPlayerScraper kansaikiinPlayerScraper,
-                           SystemStatusService systemStatusService,
-                           MatchService matchService) {
+                           SystemStatusService systemStatusService) {
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
         this.playerService = playerService;
@@ -69,7 +66,6 @@ public class IndexController {
         this.nihonkiinPlayerScraper = nihonkiinPlayerScraper;
         this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
         this.systemStatusService = systemStatusService;
-        this.matchService = matchService;
     }
 
     @GetMapping("/api/player/update-kana")
@@ -333,17 +329,6 @@ public class IndexController {
         model.addAttribute("title", titlePrefix + "プロ棋士対局結果");
         model.addAttribute("isUpdating", systemStatusService.isUpdating());
         return "match_list";
-    }
-
-    @GetMapping("/match-results/tournament")
-    public String matchResultsByTournament(Model model) {
-        java.util.Map<String, List<Match>> tournamentMatches = matchService.getMatchResultsGroupedByTournament();
-        List<Match> allMatchesFlat = tournamentMatches.values().stream().flatMap(List::stream).collect(Collectors.toList());
-        setIcons(allMatchesFlat);
-        model.addAttribute("tournamentMatches", tournamentMatches);
-        model.addAttribute("title", "直近の棋戦結果");
-        model.addAttribute("isUpdating", systemStatusService.isUpdating());
-        return "match_tournament_results";
     }
 
     @GetMapping("/match-schedule")
