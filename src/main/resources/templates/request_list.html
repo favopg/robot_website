@@ -131,10 +131,8 @@
                             <tr th:each="request : ${requests}">
                                 <td class="small" th:text="${request.createdAt != null ? #temporals.format(request.createdAt, 'yyyy/MM/dd HH:mm') : '-'}">2026/08/10 10:00</td>
                                 <td class="fw-bold" th:text="${request.subject}">機能追加</td>
-                                <td>
-                                    <div class="text-truncate" style="max-width: 400px;" th:text="${request.message}">
-                                        〇〇のような機能が欲しいです。
-                                    </div>
+                                <td th:text="${request.message}">
+                                    〇〇のような機能が欲しいです。
                                 </td>
                                 <td>
                                     <span class="badge" th:classappend="'status-badge-' + ${request.status}" th:text="${request.status}">NEW</span>
