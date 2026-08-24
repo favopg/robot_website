@@ -660,7 +660,7 @@
         function saveFavoritePlayer() {
             const input = document.getElementById('favoritePlayerInput').value.trim();
             if (input) {
-                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0).map(n => hiraToKata(n).replace(/[\s\u3000]+/g, ''));
                 const uniqueNames = [...new Set(names)];
                 
                 if (uniqueNames.length > 5) {
@@ -695,16 +695,26 @@
             const rows = document.querySelectorAll('.match-row');
             
             rows.forEach(row => {
-                const playerNamesContainer = row.querySelector('.player-names');
-                const playerNamesText = playerNamesContainer.textContent;
+                const spans = row.querySelectorAll('.player-names .player-detail-trigger');
+                const p1Name = spans.length > 0 ? (spans[0].getAttribute('data-player-name') || spans[0].textContent) : "";
+                const p2Name = spans.length > 1 ? (spans[1].getAttribute('data-player-name') || spans[1].textContent) : "";
+                const p1Kana = row.getAttribute('data-p1-kana') || "";
+                const p2Kana = row.getAttribute('data-p2-kana') || "";
                 
                 favNames.forEach(favName => {
-                    if (playerNamesText.includes(favName)) {
+                    const cleanFav = hiraToKata(favName).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p1Clean = hiraToKata(p1Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p2Clean = hiraToKata(p2Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p1KanaClean = hiraToKata(p1Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p2KanaClean = hiraToKata(p2Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+
+                    if (p1Clean.includes(cleanFav) || p2Clean.includes(cleanFav) || p1KanaClean.includes(cleanFav) || p2KanaClean.includes(cleanFav)) {
                         row.classList.add('highlight-favorite');
                         
                         const nameSpans = row.querySelectorAll('.player-names span');
                         nameSpans.forEach(span => {
-                            if (span.textContent.includes(favName)) {
+                            const spanClean = hiraToKata(span.textContent).toLowerCase().replace(/[\s\u3000]+/g, '');
+                            if (spanClean.includes(cleanFav)) {
                                 span.classList.add('favorite-name');
                             }
                         });
@@ -773,7 +783,19 @@
                 // 推し棋士フィルター判定
                 let favMatch = true;
                 if (favoriteOnly) {
-                    favMatch = favs.some(fav => text.includes(fav.toLowerCase()));
+                    favMatch = favs.some(fav => {
+                        const cleanFav = hiraToKata(fav).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const spans = row.querySelectorAll('.player-names .player-detail-trigger');
+                        const p1Name = spans.length > 0 ? (spans[0].getAttribute('data-player-name') || spans[0].textContent) : "";
+                        const p2Name = spans.length > 1 ? (spans[1].getAttribute('data-player-name') || spans[1].textContent) : "";
+                        const p1Kana = row.getAttribute('data-p1-kana') || "";
+                        const p2Kana = row.getAttribute('data-p2-kana') || "";
+                        const p1Clean = hiraToKata(p1Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p2Clean = hiraToKata(p2Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p1KanaClean = hiraToKata(p1Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p2KanaClean = hiraToKata(p2Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        return p1Clean.includes(cleanFav) || p2Clean.includes(cleanFav) || p1KanaClean.includes(cleanFav) || p2KanaClean.includes(cleanFav);
+                    });
                 }
 
                 const textMatch = text.includes(query);

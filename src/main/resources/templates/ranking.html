@@ -308,10 +308,17 @@
             modal.show();
         }
 
+        function hiraToKata(str) {
+            return str.replace(/[\u3041-\u3096]/g, function(match) {
+                var chr = match.charCodeAt(0) + 0x60;
+                return String.fromCharCode(chr);
+            });
+        }
+
         function saveFavoritePlayer() {
             const input = document.getElementById('favoritePlayerInput').value.trim();
             if (input) {
-                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0).map(n => hiraToKata(n).replace(/[\s\u3000]+/g, ''));
                 const uniqueNames = [...new Set(names)];
                 
                 if (uniqueNames.length > 5) {

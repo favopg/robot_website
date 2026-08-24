@@ -649,7 +649,14 @@
                 // 推し棋士フィルター判定
                 let favMatch = true;
                 if (favoriteOnly) {
-                    favMatch = favs.some(fav => playerNames.includes(fav.toLowerCase()));
+                    favMatch = favs.some(fav => {
+                        const cleanFav = hiraToKata(fav).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p1Clean = hiraToKata(p1Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p2Clean = hiraToKata(p2Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p1KanaClean = hiraToKata(p1Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p2KanaClean = hiraToKata(p2Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        return p1Clean.includes(cleanFav) || p2Clean.includes(cleanFav) || p1KanaClean.includes(cleanFav) || p2KanaClean.includes(cleanFav);
+                    });
                 }
 
                 const textMatch = (query === "" || text.includes(query));
@@ -1260,7 +1267,12 @@
                     const p2Name = item.getAttribute('data-p2-name');
 
                     favs.forEach(fav => {
-                        if (p1Name === fav || p2Name === fav) {
+                        const cleanFav = hiraToKata(fav).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p1Clean = hiraToKata(p1Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p2Clean = hiraToKata(p2Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p1KanaClean = hiraToKata(item.getAttribute('data-p1-kana') || "").toLowerCase().replace(/[\s\u3000]+/g, '');
+                        const p2KanaClean = hiraToKata(item.getAttribute('data-p2-kana') || "").toLowerCase().replace(/[\s\u3000]+/g, '');
+                        if (p1Clean.includes(cleanFav) || p2Clean.includes(cleanFav) || p1KanaClean.includes(cleanFav) || p2KanaClean.includes(cleanFav)) {
                             playingFavs.add(fav);
                         }
                     });
@@ -1298,7 +1310,7 @@
         function saveFavoritePlayer() {
             const input = document.getElementById('favoritePlayerInput').value.trim();
             if (input) {
-                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0);
+                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0).map(n => hiraToKata(n).replace(/[\s\u3000]+/g, ''));
                 const uniqueNames = [...new Set(names)];
                 
                 if (uniqueNames.length > 5) {
@@ -1333,11 +1345,19 @@
             const matchItems = document.querySelectorAll('.match-item');
             
             matchItems.forEach(item => {
-                const playerNamesContainer = item.querySelector('.player-names');
-                const playerNamesText = playerNamesContainer.textContent;
+                const p1Name = item.getAttribute('data-p1-name') || "";
+                const p2Name = item.getAttribute('data-p2-name') || "";
+                const p1Kana = item.getAttribute('data-p1-kana') || "";
+                const p2Kana = item.getAttribute('data-p2-kana') || "";
                 
                 favNames.forEach(favName => {
-                    if (playerNamesText.includes(favName)) {
+                    const cleanFav = hiraToKata(favName).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p1Clean = hiraToKata(p1Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p2Clean = hiraToKata(p2Name).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p1KanaClean = hiraToKata(p1Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+                    const p2KanaClean = hiraToKata(p2Kana).toLowerCase().replace(/[\s\u3000]+/g, '');
+
+                    if (p1Clean.includes(cleanFav) || p2Clean.includes(cleanFav) || p1KanaClean.includes(cleanFav) || p2KanaClean.includes(cleanFav)) {
                         // カード全体を強調
                         const cardInner = item.querySelector('.card');
                         cardInner.classList.add('highlight-favorite');
@@ -1345,7 +1365,8 @@
                         // 名前部分を特定して強調
                         const nameSpans = item.querySelectorAll('.player-names span');
                         nameSpans.forEach(span => {
-                            if (span.textContent.trim() === favName) {
+                            const spanClean = hiraToKata(span.textContent).toLowerCase().replace(/[\s\u3000]+/g, '');
+                            if (spanClean.includes(cleanFav)) {
                                 span.classList.add('favorite-name');
                             }
                         });
