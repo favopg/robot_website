@@ -28,6 +28,9 @@
             font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             font-size: 0.9rem;
         }
+        .d-flex > *, .d-inline-flex > *, .badge, #kifuMatchInfo, #kifuMatchInfo * {
+            min-width: 0;
+        }
         .goban-board-wrapper {
             background: #e4af63;
             background: linear-gradient(145deg, #e6b367 0%, #d89f50 100%);
@@ -35,14 +38,36 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), inset 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 8px;
             display: inline-block;
-            max-width: min(100%, 68vh);
+            max-width: min(100%, 520px);
             width: 100%;
         }
         .goban-board-wrapper canvas {
-            max-height: 68vh;
+            max-height: 520px;
             width: auto;
             max-width: 100%;
             aspect-ratio: 1 / 1;
+        }
+        @media (max-width: 768px) {
+            .goban-board-wrapper {
+                max-width: min(100%, 360px);
+            }
+            .goban-board-wrapper canvas {
+                max-height: 360px;
+            }
+            .chart-wrapper {
+                height: 280px !important;
+                min-height: 220px !important;
+                max-height: 320px !important;
+            }
+            .chart-parent-col {
+                min-height: auto !important;
+            }
+        }
+        .chart-wrapper {
+            height: 60vh;
+            min-height: 300px;
+            max-height: 68vh;
+            width: 100%;
         }
         .goban-controls-btn-group {
             display: flex !important;
@@ -206,9 +231,11 @@
                                     <span class="badge bg-success" id="kifuResult" style="display: none;"></span>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-light btn-sm" id="btnGoToQuizTurn">
-                                <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
-                            </button>
+                            <div class="d-flex flex-column align-items-stretch gap-1 w-100 w-md-auto">
+                                <button type="button" class="btn btn-outline-light btn-sm w-100" id="btnGoToQuizTurn">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
+                                </button>
+                            </div>
                         </div>
                         <p class="text-white mb-0 mt-1 small fw-semibold" id="quizDescription">実戦で最も勝率が落ちた手の直前の局面です。その手はどこか、碁盤上の座標をクリックして答え合わせをしてみてください</p>
                     </div>
@@ -272,7 +299,7 @@
                             </div>
 
                             <!-- 右カラム：勝率推移グラフ ＆ サマリー情報 -->
-                            <div class="col-12 col-lg-5 col-xl-5 d-flex flex-column justify-content-center" style="min-height: min(350px, 62vh); height: 100%;">
+                            <div class="col-12 col-lg-5 col-xl-5 d-flex flex-column justify-content-center chart-parent-col" style="min-height: min(350px, 62vh); height: 100%;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold fs-6 text-secondary"><i class="bi bi-graph-up me-1"></i> 勝率・評価値推移グラフ</span>
                                     <div id="chartStats" class="d-flex gap-2 align-items-center" style="display: none;">
@@ -281,7 +308,7 @@
                                 </div>
                                 
                                 <!-- グラフ描画エリア -->
-                                <div class="position-relative flex-grow-1" style="height: 60vh; min-height: 300px; max-height: 68vh; width: 100%;">
+                                <div class="position-relative flex-grow-1 chart-wrapper" style="width: 100%;">
                                     <canvas id="winrateChart"></canvas>
                                 </div>
                                 
