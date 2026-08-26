@@ -359,13 +359,13 @@
                             </div>
                             <p id="quizExplanation" class="mb-2"></p>
                             <div class="table-responsive">
-                                <table class="table table-sm table-bordered bg-white mb-0" id="quizSummaryTable">
+                                <table class="table table-sm table-bordered bg-white mb-0" id="quizSummaryTable" style="min-width: 600px;">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>種別</th>
-                                            <th>着手座標</th>
-                                            <th>勝率</th>
-                                            <th>目差リード</th>
+                                            <th class="text-nowrap">種別</th>
+                                            <th class="text-nowrap">着手座標</th>
+                                            <th class="text-nowrap">勝率</th>
+                                            <th class="text-nowrap">目差リード</th>
                                             <th>解説</th>
                                         </tr>
                                     </thead>
@@ -2428,10 +2428,10 @@
                     const trBest = document.createElement('tr');
                     trBest.className = isCorrect ? 'table-success fw-bold' : 'table-success';
                     trBest.innerHTML = `
-                        <td><span class="badge bg-success">AI最善手 (${nextPlayerName}・正解)</span></td>
-                        <td class="font-monospace fw-bold">${bestMoveCoord}</td>
-                        <td>${bWinrate !== null ? bWinrate.toFixed(1) + '%' : '最善'}</td>
-                        <td>${bScore !== null ? (bScore > 0 ? '+' : '') + bScore.toFixed(1) + '目' : '-'}</td>
+                        <td class="text-nowrap"><span class="badge bg-success">AI最善手 (${nextPlayerName}・正解)</span></td>
+                        <td class="font-monospace fw-bold text-nowrap">${bestMoveCoord}</td>
+                        <td class="text-nowrap">${bWinrate !== null ? bWinrate.toFixed(1) + '%' : '最善'}</td>
+                        <td class="text-nowrap">${bScore !== null ? (bScore > 0 ? '+' : '') + bScore.toFixed(1) + '目' : '-'}</td>
                         <td>KataGo推奨の次手番最善手</td>
                     `;
                     tbody.appendChild(trBest);
@@ -2446,10 +2446,10 @@
                     let uWinrate = rawUW !== null ? ((rawUW <= 1 && rawUW >= 0 ? rawUW * 100 : Number(rawUW)).toFixed(1) + '%') : '-';
                     let uScore = (userMatch && userMatch.scoreLead !== undefined && userMatch.scoreLead !== null) ? (Number(userMatch.scoreLead) > 0 ? '+' : '') + Number(userMatch.scoreLead).toFixed(1) + '目' : '-';
                     trUser.innerHTML = `
-                        <td><span class="badge bg-secondary">あなたの入力</span></td>
-                        <td class="font-monospace fw-bold">${inputVal}</td>
-                        <td>${uWinrate}</td>
-                        <td>${uScore}</td>
+                        <td class="text-nowrap"><span class="badge bg-secondary">あなたの入力</span></td>
+                        <td class="font-monospace fw-bold text-nowrap">${inputVal}</td>
+                        <td class="text-nowrap">${uWinrate}</td>
+                        <td class="text-nowrap">${uScore}</td>
                         <td>あなたが予想した着手座標</td>
                     `;
                     tbody.appendChild(trUser);
@@ -2459,10 +2459,10 @@
                 const trActual = document.createElement('tr');
                 trActual.className = isActualMove ? 'table-danger fw-bold' : '';
                 trActual.innerHTML = `
-                    <td><span class="badge ${isActualMove ? 'bg-danger' : 'bg-danger bg-opacity-75'}">直前の実戦手 (${playerName}・悪手)</span></td>
-                    <td class="font-monospace fw-bold">${actualMoveStr || '-'}</td>
-                    <td>${aWinrate !== null ? aWinrate.toFixed(1) + '%' : (blunderPoint ? (dropPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate).toFixed(1) + '%' : '-')}</td>
-                    <td>${aScore !== null ? (aScore > 0 ? '+' : '') + aScore.toFixed(1) + '目' : '-'}</td>
+                    <td class="text-nowrap"><span class="badge ${isActualMove ? 'bg-danger' : 'bg-danger bg-opacity-75'}">直前の実戦手 (${playerName}・悪手)</span></td>
+                    <td class="font-monospace fw-bold text-nowrap">${actualMoveStr || '-'}</td>
+                    <td class="text-nowrap">${aWinrate !== null ? aWinrate.toFixed(1) + '%' : (blunderPoint ? (dropPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate).toFixed(1) + '%' : '-')}</td>
+                    <td class="text-nowrap">${aScore !== null ? (aScore > 0 ? '+' : '') + aScore.toFixed(1) + '目' : '-'}</td>
                     <td>実戦${blunderTurn}手目で勝率が ${maxDrop.toFixed(1)}% 急落した着手</td>
                 `;
                 tbody.appendChild(trActual);
@@ -2477,10 +2477,10 @@
                         const mScore = (info.scoreLead !== undefined && info.scoreLead !== null) ? (Number(info.scoreLead) > 0 ? '+' : '') + Number(info.scoreLead).toFixed(1) + '目' : '-';
                         const trCand = document.createElement('tr');
                         trCand.innerHTML = `
-                            <td><span class="badge bg-light text-dark border">候補手 #${i+1}</span></td>
-                            <td class="font-monospace">${mCoord}</td>
-                            <td>${mWinrate}</td>
-                            <td>${mScore}</td>
+                            <td class="text-nowrap"><span class="badge bg-light text-dark border">候補手 #${i+1}</span></td>
+                            <td class="font-monospace text-nowrap">${mCoord}</td>
+                            <td class="text-nowrap">${mWinrate}</td>
+                            <td class="text-nowrap">${mScore}</td>
                             <td>AI検討候補手</td>
                         `;
                         tbody.appendChild(trCand);
