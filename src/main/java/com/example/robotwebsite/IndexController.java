@@ -92,20 +92,17 @@ public class IndexController {
         // まずファイルシステムから検索（優先）
         Set<String> localIcons = getPlayerIcons();
         
-        // カタカナ名（スペース除去）での検索を優先
+        // 漢字名での検索を最優先
+        if (localIcons.contains(normalizedName)) {
+            player.setIconPath("/images/players/" + normalizedName + ".jpg");
+            return player;
+        }
+
+        // カタカナ名（スペース除去）での検索（フォールバック）
         String kanaForFile = player.getKanaName() != null ? player.getKanaName().replaceAll("[\\s\u3000]+", "") : null;
         if (kanaForFile != null && localIcons.contains(kanaForFile)) {
             player.setIconPath("/images/players/" + kanaForFile + ".jpg");
             return player;
-        }
-
-        // 漢字名での検索（フォールバック）
-        for (String iconName : localIcons) {
-            // 正規化名でアイコンを検索
-            if (normalizedName.equals(iconName)) {
-                player.setIconPath("/images/players/" + iconName + ".jpg");
-                return player;
-            }
         }
         
         // ファイルシステムにない場合はDBの値を保持（既にplayerにセットされている）
@@ -173,21 +170,19 @@ public class IndexController {
         // まずファイルシステムから検索（優先）
         String iconPath = null;
         
-        // カタカナ名での検索を優先
-        if (playerOpt.isPresent()) {
+        // 漢字名での検索を最優先
+        if (icons.contains(name)) {
+            iconPath = "/images/players/" + name + ".jpg";
+        }
+
+        // カタカナ名での検索（フォールバック）
+        if (iconPath == null && playerOpt.isPresent()) {
             Player p = playerOpt.get();
             if (p.getKanaName() != null) {
                 String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
                 if (icons.contains(kanaForFile)) {
                     iconPath = "/images/players/" + kanaForFile + ".jpg";
                 }
-            }
-        }
-
-        // 漢字名での検索（フォールバック）
-        if (iconPath == null) {
-            if (icons.contains(name)) {
-                iconPath = "/images/players/" + name + ".jpg";
             }
         }
 
@@ -226,18 +221,16 @@ public class IndexController {
             String name = playerService.normalizeName(p.getName());
             String iconPath = null;
             
-            // カタカナ名での検索を優先
-            if (p.getKanaName() != null) {
+            // 漢字名での検索を最優先
+            if (icons.contains(name)) {
+                iconPath = "/images/players/" + name + ".jpg";
+            }
+            
+            // カタカナ名での検索（フォールバック）
+            if (iconPath == null && p.getKanaName() != null) {
                 String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
                 if (icons.contains(kanaForFile)) {
                     iconPath = "/images/players/" + kanaForFile + ".jpg";
-                }
-            }
-            
-            // 漢字名での検索（フォールバック）
-            if (iconPath == null) {
-                if (icons.contains(name)) {
-                    iconPath = "/images/players/" + name + ".jpg";
                 }
             }
             

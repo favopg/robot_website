@@ -83,18 +83,35 @@ public class PlayerNormalizationTest {
         assertTrue(pOpt.isPresent());
         Player p = pOpt.get();
         
-        String iconPath = null;
         Set<String> icons = Set.of("ナマエシー", "名前C");
         
-        // Katakana check
-        if (p.getKanaName() != null) {
+        // 1. 漢字名での検索を最優先
+        String iconPath = null;
+        if (icons.contains(normalizedName)) {
+            iconPath = "/images/players/" + normalizedName + ".jpg";
+        }
+        if (iconPath == null && p.getKanaName() != null) {
             String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
             if (icons.contains(kanaForFile)) {
                 iconPath = "/images/players/" + kanaForFile + ".jpg";
             }
         }
-        
-        assertEquals("/images/players/ナマエシー.jpg", iconPath);
+        // 漢字名とカタカナ名の両方がある場合、漢字名が優先される
+        assertEquals("/images/players/名前C.jpg", iconPath);
+
+        // 2. 漢字名がない場合はカタカナ名へフォールバック
+        Set<String> kanaOnlyIcons = Set.of("ナマエシー");
+        String fallbackIconPath = null;
+        if (kanaOnlyIcons.contains(normalizedName)) {
+            fallbackIconPath = "/images/players/" + normalizedName + ".jpg";
+        }
+        if (fallbackIconPath == null && p.getKanaName() != null) {
+            String kanaForFile = p.getKanaName().replaceAll("[\\s\u3000]+", "");
+            if (kanaOnlyIcons.contains(kanaForFile)) {
+                fallbackIconPath = "/images/players/" + kanaForFile + ".jpg";
+            }
+        }
+        assertEquals("/images/players/ナマエシー.jpg", fallbackIconPath);
     }
 
     @Test
