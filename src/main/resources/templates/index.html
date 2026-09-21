@@ -125,42 +125,6 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item" id="step-match-schedule">
-                        <a class="nav-link" href="/match-schedule">
-                            <i class="bi bi-clock-history"></i> 対局予定
-                        </a>
-                    </li>
-                    <li class="nav-item" id="step-match-results">
-                        <a class="nav-link" href="/match-results">
-                            <i class="bi bi-trophy"></i> 対局結果
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown" id="step-kisei-titles">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-journal-text"></i> 囲碁棋戦
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownTitles">
-                            <li><a class="dropdown-item" href="/kisei-info">棋聖戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/meijin-info">名人戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/honinbo-info">本因坊戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/ouza-info">王座戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/tengen-info">天元戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/gosei-info">碁聖戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/judan-info">十段戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/nhk-info">NHK杯の仕組み</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown" id="step-female-titles">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownFemaleTitles" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-journal-text"></i> 女流棋戦
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownFemaleTitles">
-                            <li><a class="dropdown-item" href="/female-honinbo-info">女流本因坊戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/female-meijin-info">女流名人戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/female-kisei-info">女流棋聖戦の仕組み</a></li>
-                            <li><a class="dropdown-item" href="/senko-info">扇興杯の仕組み</a></li>
-                        </ul>
-                    </li>
                     <li class="nav-item dropdown" id="step-recommended-kifu">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownKifu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-journal-bookmark"></i> 本日の棋譜
@@ -175,9 +139,6 @@
                 <div class="d-flex align-items-center">
                     <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()">
                         <i class="bi bi-question-circle"></i> 使い方
-                    </button>
-                    <button id="favoriteSettingBtn" class="btn btn-sm btn-outline-warning me-3" onclick="showFavoriteModal()">
-                        <i class="bi bi-star-fill"></i> 推し棋士設定
                     </button>
                     <div class="form-check form-switch text-light" id="step-dark-mode">
                         <input class="form-check-input" type="checkbox" id="darkModeSwitch">
@@ -614,28 +575,8 @@
                 doneBtnText: '完了',
                 steps: [
                     {
-                        element: '#step-match-schedule',
-                        popover: { title: '対局予定', description: '今後の対局予定をここで確認できます。', side: "bottom", align: 'start' }
-                    },
-                    {
-                        element: '#step-match-results',
-                        popover: { title: '対局結果', description: '過去の対局結果を棋士毎に確認できます', side: "bottom", align: 'start' }
-                    },
-                    {
-                        element: '#step-kisei-titles',
-                        popover: { title: '囲碁棋戦', description: '七大棋戦などの囲碁棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
-                },
-                {
-                  element: '#step-female-titles',
-                  popover: { title: '女流棋戦', description: '女流棋戦の仕組みについて詳しく知ることができます。', side: "bottom", align: 'start' }
-                },
-                    {
                         element: '#step-recommended-kifu',
                         popover: { title: '本日の棋譜', description: 'おすすめの棋譜などを確認できます。', side: "bottom", align: 'start' }
-                    },
-                    {
-                        element: '#favoriteSettingBtn',
-                        popover: { title: '推し棋士設定', description: 'お気に入りの棋士を登録して、情報を素早くチェックできます。', side: "bottom", align: 'end' }
                     },
                     {
                         element: '#step-dark-mode',
