@@ -173,14 +173,6 @@
             <div class="row g-4">
                 <div class="col-md-4 text-center">
                     <div class="p-4 shadow-sm rounded bg-body h-100">
-                        <i class="bi bi-clock-history card-icon text-primary"></i>
-                        <h4 class="h5 fw-bold">対局予定・結果速報</h4>
-                        <p class="small text-secondary">プロ棋士の公式戦スケジュールや勝敗結果を毎週更新。推し棋士の対局予定はハイライト表示で見逃し防止！</p>
-                        <a href="/match-schedule" class="btn btn-sm btn-outline-primary mt-2">対局予定を見る</a>
-                    </div>
-                </div>
-                <div class="col-md-4 text-center">
-                    <div class="p-4 shadow-sm rounded bg-body h-100">
                         <i class="bi bi-lightbulb card-icon text-warning"></i>
                         <h4 class="h5 fw-bold">AI次の1手クイズ</h4>
                         <p class="small text-secondary">KataGo解析データを元にした次の1手問題に挑戦。難易度易も完備し、初心者から高段者まで棋力向上をサポート。</p>
@@ -195,177 +187,12 @@
                         <a href="/recommended-kifu" class="btn btn-sm btn-outline-primary mt-2">棋譜を見る</a>
                     </div>
                 </div>
-                <div class="col-md-6 text-center">
-                    <div class="p-4 shadow-sm rounded bg-body h-100">
-                        <i class="bi bi-heart-fill card-icon text-danger"></i>
-                        <h4 class="h5 fw-bold">推し棋士登録</h4>
-                        <p class="small text-secondary">お気に入りの棋士を登録して対局情報でハイライト。</p>
-                        <a href="/ranking" class="btn btn-sm btn-outline-primary mt-2">ランキングを見る</a>
-                    </div>
-                </div>
-                <div class="col-md-6 text-center">
+                <div class="col-md-4 text-center">
                     <div class="p-4 shadow-sm rounded bg-body h-100">
                         <i class="bi bi-moon-stars-fill card-icon text-info"></i>
                         <h4 class="h5 fw-bold">ダークモード ＆ 使い方ガイド</h4>
                         <p class="small text-secondary">夜間や長時間の閲覧に優しいダークモード対応。チュートリアルガイドで初めての方も安心。</p>
                         <button class="btn btn-sm btn-outline-primary mt-2" onclick="startTutorial()">使い方を見る</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 使い方・ページの見方ガイド -->
-        <section class="bg-body-tertiary py-5">
-            <div class="container">
-                <h2 class="text-center mb-5">使い方・ページの見方ガイド</h2>
-                <div class="row g-4">
-                    <div class="col-lg-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary"><i class="bi bi-2-circle-fill me-2"></i>対局予定一覧の見方</h5>
-                                <ul class="list-unstyled mt-3">
-                                    <li class="mb-2"><strong>何が見れる？:</strong> これから行われる公式戦の組み合わせと日時。</li>
-                                    <li class="mb-2"><strong>注目ポイント:</strong> 「今日」の対局は枠が強調されるので、今まさに注目すべき対局がすぐに分かります。</li>
-                                    <li><strong>アイコン:</strong> 棋士の顔写真アイコンが表示されるので、誰と誰の対局か直感的に把握できます。</li>
-                                </ul>
-                                <a href="/match-schedule" class="btn btn-sm btn-outline-primary mt-auto">対局予定へ</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary"><i class="bi bi-3-circle-fill me-2"></i>対局結果の見方</h5>
-                                <ul class="list-unstyled mt-3">
-                                    <li class="mb-2"><strong>何が見れる？:</strong> 過去に行われた対局の勝敗結果。</li>
-                                    <li class="mb-2"><strong>使い方のコツ:</strong> 「月別結果」ボタンで過去の月を選択して、その時期の戦績を振り返ることができます。</li>
-                                    <li><strong>結果の見方:</strong> 「黒番 ○目勝ち」「中押し勝ち」などの詳細な結果を表示しています。</li>
-                                </ul>
-                                <a href="/match-results" class="btn btn-sm btn-outline-primary mt-auto">対局結果へ</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 囲碁棋戦の説明 -->
-        <section class="container py-5">
-            <h2 class="text-center mb-5">主要な囲碁棋戦（七大棋戦）</h2>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">棋聖戦</h5>
-                            <p class="card-text small text-secondary">囲碁界最高峰の棋戦。読売新聞社主催。七大棋戦の中で最も賞金額が高く、勝者は「棋聖」の称号を得ます。</p>
-                            <a href="/kisei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">名人戦</h5>
-                            <p class="card-text small text-secondary">長い歴史と伝統を誇る棋戦。朝日新聞社主催。序列第2位で、勝者は「名人」の称号を得ます。</p>
-                            <a href="/meijin-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">本因坊戦</h5>
-                            <p class="card-text small text-secondary">最も古い歴史を持つ棋戦。毎日新聞社主催。勝者は「本因坊」の称号を名乗ることができます。</p>
-                            <a href="/honinbo-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">王座戦</h5>
-                            <p class="card-text small text-secondary">日本経済新聞社主催。数多くの名勝負が繰り広げられてきた伝統ある棋戦です。</p>
-                            <a href="/ouza-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">天元戦</h5>
-                            <p class="card-text small text-secondary">新聞三社連合主催。碁盤の中心である「天元」の名を冠した棋戦です。</p>
-                            <a href="/tengen-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">碁聖戦</h5>
-                            <p class="card-text small text-secondary">新聞囲碁連盟主催。比較的持ち時間が短いのが特徴の一つです。</p>
-                            <a href="/gosei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">十段戦</h5>
-                            <p class="card-text small text-secondary">産経新聞社主催。五番勝負で行われ、非常にスピーディーな展開が魅力です。</p>
-                            <a href="/judan-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">NHK杯</h5>
-                            <p class="card-text small text-secondary">NHK主催のトーナメント棋戦。テレビ放送される早碁戦として広く親しまれています。</p>
-                            <a href="/nhk-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 女流棋戦の説明 -->
-        <section class="container py-5">
-            <h2 class="text-center mb-5">女流棋戦</h2>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">女流本因坊戦</h5>
-                            <p class="card-text small text-secondary">女流棋戦の中で最も歴史があり、権威ある棋戦の一つです。共同通信社主催。</p>
-                            <a href="/female-honinbo-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">女流名人戦</h5>
-                            <p class="card-text small text-secondary">女流二大タイトルの一つ。日本棋院主催。多くのスター選手を輩出しています。</p>
-                            <a href="/female-meijin-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">女流棋聖戦</h5>
-                            <p class="card-text small text-secondary">持ち時間が極めて短い早碁棋戦。ドコモが協賛しており、スピーディーな対局が楽しめます。</p>
-                            <a href="/female-kisei-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">扇興杯</h5>
-                            <p class="card-text small text-secondary">女流最強を決定するトーナメント棋戦。扇興通商が主催。</p>
-                            <a href="/senko-info" class="btn btn-sm btn-link p-0">詳細を見る</a>
-                        </div>
                     </div>
                 </div>
             </div>
