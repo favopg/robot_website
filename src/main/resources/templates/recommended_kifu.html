@@ -214,11 +214,26 @@
                         </div>
                         <div class="card-body p-2 p-md-3">
                             <div class="row g-2 g-md-3 align-items-center">
-                                <!-- 左カラム：碁盤表示 -->
-                                <div class="col-12 col-lg-5 col-xl-5 text-center d-flex justify-content-center align-items-center">
+                                <!-- 左カラム：碁盤表示 ＆ 見どころ -->
+                                <div class="col-12 col-lg-5 col-xl-5 text-center d-flex flex-column justify-content-center align-items-center">
                                     <!-- 局面（碁盤）描画領域 -->
                                     <div class="goban-board-wrapper" id="gobanWrapper">
                                         <canvas id="gobanCanvas" width="520" height="520" style="max-width: 100%; width: 100%; height: auto; display: block;"></canvas>
+                                    </div>
+
+                                    <!-- 碁盤下の見どころ表示エリア -->
+                                    <div id="kifuHighlightCard" class="card bg-body-tertiary border-0 shadow-sm mt-2 w-100 text-start" style="display: none; max-width: 520px;">
+                                        <div class="card-body p-2 p-md-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <h6 class="card-subtitle text-primary fw-bold mb-0 d-flex align-items-center">
+                                                    <i class="bi bi-stars me-1 text-warning"></i> 本局の見どころ・勝負所
+                                                </h6>
+                                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 fw-bold" id="btnGoToHighlightTurn" style="display: none; font-size: 0.75rem;">
+                                                    <i class="bi bi-play-fill"></i> 勝負所へ
+                                                </button>
+                                            </div>
+                                            <div class="card-text text-body small" id="kifuHighlightText" style="line-height: 1.6;"></div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -762,6 +777,117 @@
             if (infoContainer) {
                 infoContainer.style.display = hasAnyInfo ? 'inline-flex' : 'none';
             }
+
+            window.currentMatchInfo = {
+                matchName: matchName,
+                blackPlayer: blackPlayer,
+                whitePlayer: whitePlayer,
+                generalPlayers: generalPlayers,
+                result: result
+            };
+        }
+
+        // KataGo解析データから見どころ・勝負所を自動生成して碁盤下に表示
+        function updateKifuHighlights(chartPoints, blunderTurn, quizTurn, maxDrop, dropPlayer, matchInfo) {
+            const card = document.getElementById('kifuHighlightCard');
+            const textEl = document.getElementById('kifuHighlightText');
+            const btnJump = document.getElementById('btnGoToHighlightTurn');
+            if (!card || !textEl) return;
+
+            if (!chartPoints || chartPoints.length < 2) {
+                card.style.display = 'none';
+                return;
+            }
+
+            matchInfo = matchInfo || window.currentMatchInfo || {};
+            const blackName = matchInfo.blackPlayer || '黒';
+            const whiteName = matchInfo.whitePlayer || '白';
+
+            // 1. 最大の勝負所（山場）
+            let highlightTurn = -1;
+            let climaxHtml = '';
+            if (maxDrop > 0 && blunderTurn > 0) {
+                highlightTurn = quizTurn >= 0 ? quizTurn : blunderTurn;
+                const movingPlayerName = (dropPlayer === 'B' ? blackName : whiteName);
+                const movingPlayerStone = (dropPlayer === 'B' ? '●' : '○');
+                const dropPct = maxDrop.toFixed(1);
+
+                const prevPoint = chartPoints.find(p => p.turnNumber === quizTurn);
+                const currPoint = chartPoints.find(p => p.turnNumber === blunderTurn);
+
+                let scoreDiffText = '';
+                if (prevPoint && currPoint && prevPoint.scoreLead !== null && currPoint.scoreLead !== null && !isNaN(prevPoint.scoreLead) && !isNaN(currPoint.scoreLead)) {
+                    const leadDiff = Math.abs(currPoint.scoreLead - prevPoint.scoreLead);
+                    if (leadDiff >= 1.0) {
+                        scoreDiffText = `（目差リード約${leadDiff.toFixed(1)}目変動）`;
+                    }
+                }
+
+                climaxHtml = `<div class="mb-1"><span class="badge bg-danger me-1">勝負所</span><strong>${blunderTurn}手目 (${movingPlayerStone} ${movingPlayerName})</strong>: 勝率が約<strong>${dropPct}%</strong>急変した本局最大の勝負所です。${scoreDiffText}</div>`;
+            }
+
+            // 2. 形勢の流れ・逆転判定
+            let leadChanges = 0;
+            let lastLeader = null; // 'B' or 'W'
+            for (const pt of chartPoints) {
+                let currentLeader = null;
+                if (pt.blackWinrate >= 55) currentLeader = 'B';
+                else if (pt.whiteWinrate >= 55) currentLeader = 'W';
+
+                if (currentLeader && lastLeader && currentLeader !== lastLeader) {
+                    leadChanges++;
+                }
+                if (currentLeader) {
+                    lastLeader = currentLeader;
+                }
+            }
+
+            let flowText = '';
+            if (leadChanges >= 2) {
+                flowText = '中盤以降、形勢が二転三転する激しいシーソーゲーム・大熱戦となりました。';
+            } else if (leadChanges === 1) {
+                flowText = '中盤の攻防で形勢が逆転し、勝敗の行方が大きく動いた注目の1局です。';
+            } else {
+                const maxBlack = Math.max(...chartPoints.map(p => p.blackWinrate));
+                const maxWhite = Math.max(...chartPoints.map(p => p.whiteWinrate));
+                if (maxBlack >= 80 || maxWhite >= 80) {
+                    const dominant = maxBlack >= maxWhite ? `${blackName} (●)` : `${whiteName} (○)`;
+                    flowText = `序盤〜中盤でリードを広げた${dominant}が主導権を握り続けた展開でした。`;
+                } else {
+                    flowText = '終盤まで互角の細かな息詰まる攻防が繰り広げられた好局です。';
+                }
+            }
+            const flowHtml = `<div class="mb-1"><span class="badge bg-primary me-1">戦況</span>${flowText}</div>`;
+
+            // 3. 終局・形勢
+            let resultHtml = '';
+            if (matchInfo.result) {
+                resultHtml = `<div><span class="badge bg-success me-1">結果</span>${matchInfo.result}</div>`;
+            } else {
+                const lastPoint = chartPoints[chartPoints.length - 1];
+                if (lastPoint) {
+                    let status = '互角';
+                    if (lastPoint.blackWinrate >= 55) status = `黒優勢 (黒勝率: ${lastPoint.blackWinrate.toFixed(1)}%)`;
+                    else if (lastPoint.whiteWinrate >= 55) status = `白優勢 (白勝率: ${lastPoint.whiteWinrate.toFixed(1)}%)`;
+                    resultHtml = `<div><span class="badge bg-secondary me-1">最終形勢</span>${status}</div>`;
+                }
+            }
+
+            textEl.innerHTML = climaxHtml + flowHtml + resultHtml;
+            card.style.display = 'block';
+
+            if (btnJump) {
+                if (highlightTurn >= 0) {
+                    btnJump.style.display = 'inline-block';
+                    btnJump.onclick = () => {
+                        if (typeof window.goToGobanTurn === 'function') {
+                            window.goToGobanTurn(highlightTurn);
+                        }
+                    };
+                } else {
+                    btnJump.style.display = 'none';
+                }
+            }
         }
 
         // 勝率折れ線グラフおよび解析データの処理
@@ -928,6 +1054,8 @@
                     if (chartPoints.length === 0) {
                         const noData = document.getElementById('chartNoDataAlert');
                         if (noData) noData.style.display = 'block';
+                        const highlightCard = document.getElementById('kifuHighlightCard');
+                        if (highlightCard) highlightCard.style.display = 'none';
                         return;
                     }
 
@@ -1019,6 +1147,9 @@
 
                     window.blunderTurnGlobal = blunderTurn;
                     window.chartPointsGlobal = chartPoints;
+
+                    // 本局の見どころ・勝負所を自動生成して碁盤下に表示
+                    updateKifuHighlights(chartPoints, blunderTurn, quizTurn, maxDrop, dropPlayer, window.currentMatchInfo);
 
                     // 統計情報の更新（要素が存在する場合）
                     const lastPoint = chartPoints[chartPoints.length - 1];
@@ -2510,11 +2641,13 @@
             const resultElem = document.getElementById('resultJsonData') || document.getElementById('resultJsonArea');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const gobanCard = document.getElementById('gobanCard');
+            const highlightCard = document.getElementById('kifuHighlightCard');
             const resultJsonCard = document.getElementById('resultJsonCard');
             const dynamicErrorAlert = document.getElementById('dynamicErrorAlert');
             const dynamicErrorMessage = document.getElementById('dynamicErrorMessage');
 
             if (loadingIndicator) loadingIndicator.style.display = 'block';
+            if (highlightCard) highlightCard.style.display = 'none';
             if (dynamicErrorAlert) dynamicErrorAlert.style.display = 'none';
 
             const pathname = window.location.pathname;
