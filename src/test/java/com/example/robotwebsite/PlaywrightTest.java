@@ -28,7 +28,7 @@ class PlaywrightTest {
             BrowserContext context = browser.newContext(new Browser.NewContextOptions().setTimezoneId("Asia/Tokyo"));
             Page page = context.newPage();
             page.navigate("http://localhost:" + port);
-            assertTrue(page.title().contains("制作者が役立つ囲碁情報サイト"));
+            assertTrue(page.title().contains("盤上の一手"));
             browser.close();
         }
     }

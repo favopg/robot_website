@@ -13,7 +13,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ</title>
+    <title>盤上の一手 | 対局予定・AI棋譜解析・次の1手クイズ</title>
     <meta name="description" content="プロ棋士の対局予定・結果速報から、AI（KataGo）を活用した次の1手クイズ、おすすめ棋譜ビューアまで。推し囲碁棋士を見つけて応援するための総合ポータルサイトです。">
     <meta name="keywords" content="囲碁, 対局予定, AI棋譜解析, 次の1手, プロ棋士, 棋聖戦, 名人戦, 囲碁クイズ">
     
@@ -21,17 +21,17 @@
     <link rel="canonical" th:href="@{https://favoriteigo.site/}" href="https://favoriteigo.site/">
 
     <!-- OGP Tags -->
-    <meta property="og:title" content="囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ">
+    <meta property="og:title" content="盤上の一手 | 対局予定・AI棋譜解析・次の1手クイズ">
     <meta property="og:description" content="プロ棋士の対局予定・結果からAI次の1手クイズまで。あなたの囲碁ライフをサポートします。">
     <meta property="og:type" content="website">
     <meta property="og:url" th:content="@{https://favoriteigo.site/}" content="https://favoriteigo.site/">
     <meta property="og:image" th:content="@{https://favoriteigo.site/images/ogp-banner.png}" content="https://favoriteigo.site/images/ogp-banner.png">
-    <meta property="og:site_name" content="推し囲碁棋士を見つけよう">
+    <meta property="og:site_name" content="盤上の一手">
     <meta property="og:locale" content="ja_JP">
 
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="囲碁ポータル | 対局予定・AI棋譜解析・次の1手クイズ">
+    <meta name="twitter:title" content="盤上の一手 | 対局予定・AI棋譜解析・次の1手クイズ">
     <meta name="twitter:description" content="プロ棋士の対局予定・結果からAI次の1手クイズまで。あなたの囲碁ライフをサポートします。">
     <meta name="twitter:image" th:content="@{https://favoriteigo.site/images/ogp-banner.png}" content="https://favoriteigo.site/images/ogp-banner.png">
 
@@ -40,7 +40,7 @@
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "推し囲碁棋士を見つけよう",
+      "name": "盤上の一手",
       "alternateName": ["囲碁ポータル", "囲碁対局予定・AI解析サイト"],
       "url": "https://favoriteigo.site/",
       "potentialAction": {
@@ -119,21 +119,20 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">推し囲碁棋士を見つけよう</a>
+            <a class="navbar-brand" href="/">盤上の一手</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item dropdown" id="step-recommended-kifu">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownKifu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-journal-bookmark"></i> 本日の棋譜
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownKifu">
-                            <li><a class="dropdown-item" href="/recommended-kifu">おすすめ棋譜</a></li>
-                            <li><a class="dropdown-item" href="/analyze">次の1手クイズ</a></li>
-                            <li><a class="dropdown-item" href="/analyze-easy">次の１手クイズ(難易度易)</a></li>
-                        </ul>
+                    <li class="nav-item" id="step-recommended-kifu">
+                        <a class="nav-link" href="/recommended-kifu">本日のおすすめ棋譜</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analyze">本日の次の１手クイズ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analyze-easy">本日の次の１手クイズ(難易度易)</a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -250,7 +249,7 @@
                 <span class="text-white-50">|</span>
                 <a href="/inquiry/list" class="text-white-50 text-decoration-none mx-2 small">報告一覧</a>
             </div>
-            <p class="mb-0 text-white-50 small">&copy; 2026 推し囲碁棋士を見つけよう</p>
+            <p class="mb-0 text-white-50 small">&copy; 2026 盤上の一手</p>
         </div>
     </footer>
 

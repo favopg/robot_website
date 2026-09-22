@@ -4,7 +4,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>バグ報告 - 推し囲碁棋士を見つけよう</title>
+    <title>バグ報告 - 盤上の一手</title>
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
@@ -36,21 +36,20 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">推し囲碁棋士を見つけよう</a>
+            <a class="navbar-brand" href="/">盤上の一手</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownKifu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-journal-bookmark"></i> 本日の棋譜
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownKifu">
-                            <li><a class="dropdown-item" href="/recommended-kifu">おすすめ棋譜</a></li>
-                            <li><a class="dropdown-item" href="/analyze">次の1手クイズ</a></li>
-                            <li><a class="dropdown-item" href="/analyze-easy">次の１手クイズ(難易度易)</a></li>
-                        </ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/recommended-kifu">本日のおすすめ棋譜</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analyze">本日の次の１手クイズ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analyze-easy">本日の次の１手クイズ(難易度易)</a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -116,7 +115,7 @@
                 <span class="text-muted">|</span>
                 <a href="/inquiry/list" class="text-muted text-decoration-none mx-2 small">報告一覧</a>
             </div>
-            <p class="text-muted mb-0 small">&copy; 2026 推し囲碁棋士を見つけよう</p>
+            <p class="text-muted mb-0 small">&copy; 2026 盤上の一手</p>
         </div>
     </footer>
 
