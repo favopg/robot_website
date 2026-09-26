@@ -2,6 +2,7 @@ package com.example.robotwebsite;
 
 import com.example.robotwebsite.batch.KansaikiinPlayerScraper;
 import com.example.robotwebsite.batch.NihonkiinPlayerScraper;
+import com.example.robotwebsite.dto.KifuInfo;
 import com.example.robotwebsite.entity.Event;
 import com.example.robotwebsite.entity.Match;
 import com.example.robotwebsite.entity.YoutubeLive;
@@ -10,6 +11,7 @@ import com.example.robotwebsite.repository.MatchRepository;
 import com.example.robotwebsite.repository.ReleaseInfoRepository;
 import com.example.robotwebsite.repository.YoutubeLiveRepository;
 import com.example.robotwebsite.entity.Player;
+import com.example.robotwebsite.service.KatagoAnalyzeService;
 import com.example.robotwebsite.service.PlayerService;
 import com.example.robotwebsite.service.SystemStatusService;
 import org.slf4j.Logger;
@@ -51,13 +53,15 @@ public class IndexController {
     private final NihonkiinPlayerScraper nihonkiinPlayerScraper;
     private final KansaikiinPlayerScraper kansaikiinPlayerScraper;
     private final SystemStatusService systemStatusService;
+    private final KatagoAnalyzeService katagoAnalyzeService;
 
     public IndexController(EventRepository eventRepository, MatchRepository matchRepository,
                            PlayerService playerService, YoutubeLiveRepository youtubeLiveRepository,
                            ReleaseInfoRepository releaseInfoRepository,
                            NihonkiinPlayerScraper nihonkiinPlayerScraper,
                            KansaikiinPlayerScraper kansaikiinPlayerScraper,
-                           SystemStatusService systemStatusService) {
+                           SystemStatusService systemStatusService,
+                           KatagoAnalyzeService katagoAnalyzeService) {
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
         this.playerService = playerService;
@@ -66,6 +70,7 @@ public class IndexController {
         this.nihonkiinPlayerScraper = nihonkiinPlayerScraper;
         this.kansaikiinPlayerScraper = kansaikiinPlayerScraper;
         this.systemStatusService = systemStatusService;
+        this.katagoAnalyzeService = katagoAnalyzeService;
     }
 
     @GetMapping("/api/player/update-kana")
@@ -414,6 +419,15 @@ public class IndexController {
     public String nhkInfo(Model model) {
         model.addAttribute("title", "NHK杯 詳細情報");
         return "nhk_info";
+    }
+
+    @GetMapping({"/kifu-list", "/kifu"})
+    public String kifuList(Model model) {
+        List<KifuInfo> kifuList = katagoAnalyzeService.getAvailableKifuList();
+        model.addAttribute("kifuList", kifuList);
+        model.addAttribute("title", "棋譜一覧");
+        model.addAttribute("isUpdating", systemStatusService.isUpdating());
+        return "kifu_list";
     }
 
     @GetMapping({"/recommended-kifu", "/recommend-kifu"})

@@ -135,6 +135,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/analyze-easy">本日の次の１手クイズ(難易度易)</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/kifu-list">棋譜一覧</a>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
                     <button class="btn btn-sm btn-outline-info me-2" onclick="startTutorial()" title="使い方ガイド">
@@ -2715,17 +2718,20 @@
             const gobanCard = document.getElementById('gobanCard');
             const resultJsonCard = document.getElementById('resultJsonCard');
 
-            if (hasInitialData) {
+            // URLパラメータから日付を取得
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetDateParam = urlParams.get('date');
+
+            if (hasInitialData && !targetDateParam) {
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (gobanCard) gobanCard.style.display = 'block';
                 if (resultJsonCard) resultJsonCard.style.display = 'block';
                 initAnalysisView();
             } else {
-                fetchKifuByDate();
+                fetchKifuByDate(targetDateParam);
             }
 
             // URLパラメータにstartTutorial=trueがある場合にチュートリアルを開始
-            const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('startTutorial') === 'true') {
                 setTimeout(startTutorial, 500);
             }

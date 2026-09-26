@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title != null ? title + ' | 盤上の一手' : '棋譜一覧 | 盤上の一手'}">棋譜一覧 | 盤上の一手</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .navbar-custom {
+            background-color: #004085;
+        }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand {
+            color: white;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #d1ecf1;
+        }
+        .kifu-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .kifu-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        .player-badge-black {
+            background-color: #212529;
+            color: #ffffff;
+        }
+        .player-badge-white {
+            background-color: #f8f9fa;
+            color: #212529;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <!-- ナビゲーションバー -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">盤上の一手</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/recommended-kifu">本日のおすすめ棋譜</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analyze">本日の次の１手クイズ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analyze-easy">本日の次の１手クイズ(難易度易)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/kifu-list">棋譜一覧</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div class="form-check form-switch text-light">
+                        <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                        <label class="form-check-label" for="darkModeSwitch">ダークモード</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div th:if="${isUpdating}" class="alert alert-info alert-dismissible fade show mb-0 rounded-0 text-center" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        現在、最新の棋士情報を取得中です。最新の成績が表示されるまでお待ちください。
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="container py-4">
+        <!-- パンくずリスト -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">トップ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">棋譜一覧</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 fw-bold mb-0">
+                <i class="bi bi-collection-play me-2 text-primary"></i>棋譜一覧
+            </h1>
+            <span class="text-secondary small" th:text="'全 ' + ${kifuList.size()} + ' 件'"></span>
+        </div>
+
+        <!-- 棋譜一覧（カード表示） -->
+        <div class="row g-3">
+            <div th:each="kifu : ${kifuList}" class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 kifu-card">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-secondary" th:text="${kifu.displayDate}">2026年09月20日</span>
+                                <span th:if="${kifu.result != null && !kifu.result.isEmpty()}" class="badge bg-success-subtle text-success-emphasis border" th:text="${kifu.result}">結果</span>
+                            </div>
+                            
+                            <h5 class="card-title fw-bold text-truncate mb-3" th:text="${kifu.matchName}">棋戦名</h5>
+
+                            <!-- 対局者名表示 -->
+                            <div class="p-3 bg-body-tertiary rounded mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge player-badge-black me-2 px-2 py-1"><i class="bi bi-circle-fill me-1"></i>先番(黒)</span>
+                                    <span class="fw-bold fs-6 text-truncate" th:text="${kifu.blackPlayer}">黒番棋士名</span>
+                                </div>
+                                <div class="text-center text-muted small my-1">vs</div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge player-badge-white me-2 px-2 py-1"><i class="bi bi-circle me-1"></i>後手(白)</span>
+                                    <span class="fw-bold fs-6 text-truncate" th:text="${kifu.whitePlayer}">白番棋士名</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 棋譜を観るリンク -->
+                        <div class="mt-2 text-end">
+                            <a th:href="@{/recommended-kifu(date=${kifu.dateStr})}" class="btn btn-primary btn-sm w-100">
+                                <i class="bi bi-play-circle me-1"></i>棋譜を観る
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 棋譜が存在しない場合 -->
+            <div th:if="${#lists.isEmpty(kifuList)}" class="col-12">
+                <div class="alert alert-warning text-center py-4" role="alert">
+                    <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
+                    現在表示できる棋譜データがありません。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <div class="mb-2">
+                <a href="/request" class="text-white-50 text-decoration-none mx-2 small">要望を投稿する</a>
+                <span class="text-white-50">|</span>
+                <a href="/request/list" class="text-white-50 text-decoration-none mx-2 small">要望一覧</a>
+                <span class="text-white-50">|</span>
+                <a href="/inquiry" class="text-white-50 text-decoration-none mx-2 small">バグを報告する</a>
+                <span class="text-white-50">|</span>
+                <a href="/inquiry/list" class="text-white-50 text-decoration-none mx-2 small">報告一覧</a>
+            </div>
+            <p class="mb-0 text-white-50 small">&copy; 2026 盤上の一手</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ダークモード制御
+        const darkModeSwitch = document.getElementById('darkModeSwitch');
+        const htmlElement = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-bs-theme', savedTheme);
+        if (darkModeSwitch) {
+            darkModeSwitch.checked = (savedTheme === 'dark');
+            darkModeSwitch.addEventListener('change', function() {
+                const theme = this.checked ? 'dark' : 'light';
+                htmlElement.setAttribute('data-bs-theme', theme);
+                localStorage.setItem('theme', theme);
+            });
+        }
+    </script>
+</body>
+</html>
