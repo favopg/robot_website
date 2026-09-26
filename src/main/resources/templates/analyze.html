@@ -207,15 +207,6 @@
                                 </div>
                             </div>
                             <div class="d-flex flex-column align-items-stretch gap-1 w-100 w-md-auto">
-                                <!-- クイズ出題モード切替ボタングループ -->
-                                <div class="btn-group btn-group-sm w-100" role="group" aria-label="出題モード切替" id="quizModeButtonGroup">
-                                    <button type="button" class="btn btn-warning active fw-bold" id="btnModeNormal" title="対局全体の勝負所（最大下落局面）から出題">
-                                        <i class="bi bi-lightning-charge-fill me-1"></i> 勝負所
-                                    </button>
-                                    <button type="button" class="btn btn-outline-warning fw-bold" id="btnModeEndgame" title="総手数8割以降のヨセ・目差損失局面から出題">
-                                        <i class="bi bi-hourglass-bottom me-1"></i> 終盤ヨセ
-                                    </button>
-                                </div>
                                 <button type="button" class="btn btn-outline-light btn-sm w-100" id="btnGoToQuizTurn">
                                     <i class="bi bi-arrow-clockwise me-1"></i> 出題局面を表示
                                 </button>
@@ -1100,28 +1091,23 @@
                         }
                     };
 
-                    // クイズ出題局面の算出関数（通常勝負所モード vs 終盤ヨセモード）
-                    window.currentQuizMode = window.currentQuizMode || 'normal'; // 'normal' または 'endgame'
-
-                    function computeQuizQuestion(points, mode) {
+                    // クイズ出題局面の算出関数
+                    function computeQuizQuestion(points) {
                         if (!points || points.length < 2) {
                             return {
                                 blunderTurn: -1,
                                 quizTurn: -1,
                                 maxDrop: 0,
                                 scoreLoss: 0,
-                                dropPlayer: 'B',
-                                isFallback: false,
-                                mode: mode
+                                dropPlayer: 'B'
                             };
                         }
 
-                        // 1. 対局全体での最大下落・損失局面（通常モード用およびフォールバック用）
+                        // 対局全体での最大下落・損失局面
                         let overallMaxDrop = -1;
                         let overallMaxScoreLoss = -999;
                         let overallBlunderTurn = -1;
                         let overallDropPlayer = 'B';
-                        let overallEvalScore = -9999;
 
                         for (let i = 1; i < points.length; i++) {
                             const prev = points[i - 1];
@@ -1150,94 +1136,21 @@
                             }
                         }
 
-                        if (mode === 'normal') {
-                            return {
-                                blunderTurn: overallBlunderTurn,
-                                quizTurn: overallBlunderTurn,
-                                maxDrop: Math.max(0, overallMaxDrop),
-                                scoreLoss: overallMaxScoreLoss,
-                                dropPlayer: overallDropPlayer,
-                                isFallback: false,
-                                mode: 'normal'
-                            };
-                        }
-
-                        // 2. 終盤ヨセモード（総手数の8割進んだ以降）
-                        // 総手数 points.length の 80% (0.8) のインデックスから探索
-                        const startIdx = Math.max(1, Math.floor(points.length * 0.8));
-                        let endgameMaxEval = -9999;
-                        let endgameBlunderTurn = -1;
-                        let endgameDropPlayer = 'B';
-                        let endgameMaxDrop = 0;
-                        let endgameMaxScoreLoss = 0;
-
-                        for (let i = startIdx; i < points.length; i++) {
-                            const prev = points[i - 1];
-                            const curr = points[i];
-                            const movingPlayer = prev.player || (curr.turnNumber % 2 === 1 ? 'B' : 'W');
-                            let drop = 0;
-                            let scoreLoss = 0;
-
-                            if (movingPlayer === 'B') {
-                                drop = prev.blackWinrate - curr.blackWinrate;
-                                if (prev.scoreLead !== null && curr.scoreLead !== null && prev.scoreLead !== undefined && curr.scoreLead !== undefined) {
-                                    scoreLoss = prev.scoreLead - curr.scoreLead;
-                                }
-                            } else {
-                                drop = prev.whiteWinrate - curr.whiteWinrate;
-                                if (prev.scoreLead !== null && curr.scoreLead !== null && prev.scoreLead !== undefined && curr.scoreLead !== undefined) {
-                                    scoreLoss = curr.scoreLead - prev.scoreLead;
-                                }
-                            }
-
-                            // 終盤は勝率が張り付いている場合があるため、目差損失 (scoreLoss) を重視した総合評価
-                            // 評価スコア: 勝率下落 (drop) + 目差損失 (scoreLoss * 3.0)
-                            const evalScore = (drop > 0 ? drop : 0) + (scoreLoss > 0 ? scoreLoss * 3.0 : 0);
-
-                            if (evalScore > endgameMaxEval) {
-                                endgameMaxEval = evalScore;
-                                endgameBlunderTurn = curr.turnNumber;
-                                endgameDropPlayer = movingPlayer;
-                                endgameMaxDrop = drop;
-                                endgameMaxScoreLoss = scoreLoss;
-                            }
-                        }
-
-                        // 終盤に有意な損失（下落または目差損）がない場合のフォールバック
-                        // 目差損 0.8目以上 または 勝率下落 2.0% 以上が終盤にない場合はフォールバック
-                        const hasSignificantEndgameLoss = (endgameMaxScoreLoss >= 0.8 || endgameMaxDrop >= 2.0) && endgameBlunderTurn > 0;
-
-                        if (hasSignificantEndgameLoss) {
-                            return {
-                                blunderTurn: endgameBlunderTurn,
-                                quizTurn: endgameBlunderTurn,
-                                maxDrop: Math.max(0, endgameMaxDrop),
-                                scoreLoss: endgameMaxScoreLoss,
-                                dropPlayer: endgameDropPlayer,
-                                isFallback: false,
-                                mode: 'endgame'
-                            };
-                        } else {
-                            // フォールバック: 全体での勝負所局面を使用
-                            return {
-                                blunderTurn: overallBlunderTurn,
-                                quizTurn: overallBlunderTurn,
-                                maxDrop: Math.max(0, overallMaxDrop),
-                                scoreLoss: overallMaxScoreLoss,
-                                dropPlayer: overallDropPlayer,
-                                isFallback: true,
-                                mode: 'endgame'
-                            };
-                        }
+                        return {
+                            blunderTurn: overallBlunderTurn,
+                            quizTurn: overallBlunderTurn,
+                            maxDrop: Math.max(0, overallMaxDrop),
+                            scoreLoss: overallMaxScoreLoss,
+                            dropPlayer: overallDropPlayer
+                        };
                     }
 
-                    const quizResult = computeQuizQuestion(chartPoints, window.currentQuizMode);
+                    const quizResult = computeQuizQuestion(chartPoints);
                     let maxDrop = quizResult.maxDrop;
                     let blunderTurn = quizResult.blunderTurn;
                     let quizTurn = quizResult.quizTurn;
                     let dropPlayer = quizResult.dropPlayer;
                     let scoreLoss = quizResult.scoreLoss;
-                    let isFallback = quizResult.isFallback;
 
                     // 統計情報の更新（要素が存在する場合）
                     const lastPoint = chartPoints[chartPoints.length - 1];
@@ -1280,22 +1193,16 @@
                     window.maxDropGlobal = maxDrop;
                     window.scoreLossGlobal = scoreLoss;
                     window.dropPlayerGlobal = dropPlayer;
-                    window.isFallbackGlobal = isFallback;
-                    window.currentQuizModeGlobal = window.currentQuizMode;
 
                     const isDark = isDarkModeActive();
                     const colors = getChartThemeColors(isDark);
                     const pointColors = chartPoints.map(p => (p.turnNumber === blunderTurn ? colors.blunderPointBgColor : colors.pointBgColor));
                     const pointRadiusList = chartPoints.map(p => (p.turnNumber === blunderTurn ? 7 : (chartPoints.length > 60 ? 2 : (chartPoints.length > 30 ? 3 : 4))));
 
-                    const blunderLabelSuffix = window.currentQuizMode === 'endgame'
-                        ? (isFallback ? ' ⚠️勝負所(終盤代替)' : ' ⏳終盤ヨセ局面')
-                        : ' ⚠️最大下落';
-
                     const winrateChart = new Chart(ctx, {
                         type: 'line',
                         data: {
-                            labels: chartPoints.map(p => p.turnNumber + '手目' + (p.turnNumber === blunderTurn ? blunderLabelSuffix : '')),
+                            labels: chartPoints.map(p => p.turnNumber + '手目' + (p.turnNumber === blunderTurn ? ' ⚠️最大下落' : '')),
                             datasets: [
                                 {
                                     label: '黒 (B) 勝率',
@@ -1361,13 +1268,7 @@
                                             let title = p.turnNumber + '手目 (' + (p.player === 'B' ? '● 黒手番' : '○ 白手番') + ')';
                                             if (p.turnNumber === blunderTurn) {
                                                 const dropPlayerName = (dropPlayer === 'B' ? '黒' : '白');
-                                                if (window.currentQuizMode === 'endgame' && !isFallback) {
-                                                    title += ' ⏳ 終盤ヨセ出題手 (' + dropPlayerName + ' 目差損:' + (scoreLoss > 0 ? '-' + scoreLoss.toFixed(1) + '目' : '') + ' 勝率-' + maxDrop.toFixed(1) + '%)';
-                                                } else if (window.currentQuizMode === 'endgame' && isFallback) {
-                                                    title += ' ⚠️ 勝負所(終盤ミスなし代替出題: ' + dropPlayerName + ' -' + maxDrop.toFixed(1) + '%)';
-                                                } else {
-                                                    title += ' ⚠️ 最大勝率下落 (' + dropPlayerName + ' -' + maxDrop.toFixed(1) + '%)';
-                                                }
+                                                title += ' ⚠️ 最大勝率下落 (' + dropPlayerName + ' -' + maxDrop.toFixed(1) + '%)';
                                             }
                                             return title;
                                         },
@@ -2380,45 +2281,20 @@
             const nextPlayer = window.nextPlayerGlobal || (dropPlayer === 'B' ? 'W' : 'B');
             const playerName = dropPlayer === 'B' ? '黒' : '白';
             const nextPlayerName = nextPlayer === 'B' ? '黒' : '白';
-            const currentMode = window.currentQuizModeGlobal || 'normal';
-            const isFallback = window.isFallbackGlobal || false;
-            const scoreLoss = window.scoreLossGlobal || 0;
 
             const quizTitleElem = document.getElementById('quizTitle');
             if (quizTitleElem) {
-                let modeText = '';
-                if (currentMode === 'endgame') {
-                    modeText = isFallback ? '【終盤モード・代替勝負所】' : '【終盤ヨセ問題】';
-                }
-                quizTitleElem.innerText = modeText + '出題局面: ' + quizTurn + '手目 (' + nextPlayerName + '番)';
+                quizTitleElem.innerText = '出題局面: ' + quizTurn + '手目 (' + nextPlayerName + '番)';
             }
 
             const quizDescElem = document.getElementById('quizDescription');
             if (quizDescElem) {
-                if (currentMode === 'endgame' && !isFallback) {
-                    let lossDetail = '';
-                    if (scoreLoss > 0) lossDetail += '目差損 ' + scoreLoss.toFixed(1) + ' 目';
-                    if (maxDrop > 0) lossDetail += (lossDetail ? ' / ' : '') + '勝率急落 -' + maxDrop.toFixed(1) + '%';
-                    quizDescElem.innerText = '総手数8割以降の終盤局面です。直前の実戦で' + playerName + 'がヨセで損をした局面（' + (lossDetail || 'ミス') + '）を受け、次手番（' + nextPlayerName + '）のKataGo推奨【最善手】を当ててください。';
-                } else if (currentMode === 'endgame' && isFallback) {
-                    quizDescElem.innerText = '終盤（8割以降）に大きなミスが見られない棋譜のため、対局全体の【勝負所】を出題しています。次手番（' + nextPlayerName + '）のKataGo推奨【最善手】を当ててください。';
-                } else {
-                    quizDescElem.innerText = '実戦で' + playerName + 'が勝率を大きく落とした局面です。次手番（' + nextPlayerName + '）のKataGo推奨【最善手】を当ててください（盤面クリック）';
-                }
+                quizDescElem.innerText = '実戦で' + playerName + 'が勝率を大きく落とした局面です。次手番（' + nextPlayerName + '）のKataGo推奨【最善手】を当ててください（盤面クリック）';
             }
 
             const quizDropBadgeElem = document.getElementById('quizDropBadge');
             if (quizDropBadgeElem) {
-                if (currentMode === 'endgame' && !isFallback) {
-                    let badgeTxt = '直前の実戦' + blunderTurn + '手目ヨセ: ' + playerName;
-                    if (scoreLoss > 0) badgeTxt += ' 目差損 -' + scoreLoss.toFixed(1) + '目';
-                    if (maxDrop > 0) badgeTxt += ' 勝率 -' + maxDrop.toFixed(1) + '%';
-                    quizDropBadgeElem.innerText = badgeTxt;
-                } else if (currentMode === 'endgame' && isFallback) {
-                    quizDropBadgeElem.innerText = '終盤ミスなし・実戦' + blunderTurn + '手目勝負所: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
-                } else {
-                    quizDropBadgeElem.innerText = '直前の実戦' + blunderTurn + '手目で急落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
-                }
+                quizDropBadgeElem.innerText = '直前の実戦' + blunderTurn + '手目で急落: ' + playerName + ' -' + maxDrop.toFixed(1) + '%';
             }
 
             window.quizMarkers = []; // 初期状態では碁盤マーカーは非表示
@@ -2589,15 +2465,8 @@
                 const trActual = document.createElement('tr');
                 trActual.className = isActualMove ? 'table-danger fw-bold' : '';
                 let actualLossExplanation = `実戦${blunderTurn}手目で勝率が ${maxDrop.toFixed(1)}% 急落した着手`;
-                if (currentMode === 'endgame' && !isFallback) {
-                    if (scoreLoss > 0) {
-                        actualLossExplanation = `実戦${blunderTurn}手目で目差を ${scoreLoss.toFixed(1)}目 損したヨセ着手 (勝率-${maxDrop.toFixed(1)}%)`;
-                    }
-                } else if (currentMode === 'endgame' && isFallback) {
-                    actualLossExplanation = `実戦${blunderTurn}手目勝負所着手（終盤ノーミスのため代替出題: 勝率-${maxDrop.toFixed(1)}%）`;
-                }
                 trActual.innerHTML = `
-                    <td class="text-nowrap"><span class="badge ${isActualMove ? 'bg-danger' : 'bg-danger bg-opacity-75'}">直前の実戦手 (${playerName}・${currentMode === 'endgame' && !isFallback ? 'ヨセミス' : '悪手'})</span></td>
+                    <td class="text-nowrap"><span class="badge ${isActualMove ? 'bg-danger' : 'bg-danger bg-opacity-75'}">直前の実戦手 (${playerName}・悪手)</span></td>
                     <td class="font-monospace fw-bold text-nowrap">${actualMoveStr || '-'}</td>
                     <td class="text-nowrap">${aWinrate !== null ? aWinrate.toFixed(1) + '%' : (blunderPoint ? (dropPlayer === 'B' ? blunderPoint.blackWinrate : blunderPoint.whiteWinrate).toFixed(1) + '%' : '-')}</td>
                     <td class="text-nowrap">${aScore !== null ? (aScore > 0 ? '+' : '') + aScore.toFixed(1) + '目' : '-'}</td>
@@ -2819,44 +2688,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // クイズ出題モード切替ボタンのイベント登録
-            const btnModeNormal = document.getElementById('btnModeNormal');
-            const btnModeEndgame = document.getElementById('btnModeEndgame');
-
-            function setQuizMode(mode) {
-                if (window.currentQuizMode === mode) return;
-                window.currentQuizMode = mode;
-                if (btnModeNormal && btnModeEndgame) {
-                    if (mode === 'endgame') {
-                        btnModeEndgame.classList.add('active', 'btn-warning');
-                        btnModeEndgame.classList.remove('btn-outline-warning');
-                        btnModeNormal.classList.remove('active', 'btn-warning');
-                        btnModeNormal.classList.add('btn-outline-warning');
-                    } else {
-                        btnModeNormal.classList.add('active', 'btn-warning');
-                        btnModeNormal.classList.remove('btn-outline-warning');
-                        btnModeEndgame.classList.remove('active', 'btn-warning');
-                        btnModeEndgame.classList.add('btn-outline-warning');
-                    }
-                }
-                initAnalysisView();
-                // 出題局面に自動移動
-                if (typeof window.goToGobanTurn === 'function' && window.quizTurnGlobal !== undefined) {
-                    window.goToGobanTurn(window.quizTurnGlobal);
-                }
-            }
-
-            if (btnModeNormal) {
-                btnModeNormal.addEventListener('click', function() {
-                    setQuizMode('normal');
-                });
-            }
-            if (btnModeEndgame) {
-                btnModeEndgame.addEventListener('click', function() {
-                    setQuizMode('endgame');
-                });
-            }
-
             // プルダウン変更イベントの登録
             const kifuDateSelect = document.getElementById('kifuDateSelect');
             if (kifuDateSelect) {
