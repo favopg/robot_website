@@ -33,12 +33,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.text.Collator;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 public class IndexController {
@@ -422,9 +425,47 @@ public class IndexController {
     }
 
     @GetMapping({"/kifu-list", "/kifu"})
-    public String kifuList(Model model) {
-        List<KifuInfo> kifuList = katagoAnalyzeService.getAvailableKifuList();
+    public String kifuList(@RequestParam(value = "player", required = false) String player,
+                           @RequestParam(value = "playerName", required = false) String playerName,
+                           @RequestParam(value = "search", required = false) String search,
+                           @RequestParam(value = "q", required = false) String q,
+                           Model model) {
+        String query = player;
+        if (query == null || query.isBlank()) query = playerName;
+        if (query == null || query.isBlank()) query = search;
+        if (query == null || query.isBlank()) query = q;
+
+        List<KifuInfo> allKifuList = katagoAnalyzeService.getAvailableKifuList();
+        List<KifuInfo> kifuList = allKifuList;
+
+        Collator collator = Collator.getInstance(Locale.JAPANESE);
+        List<String> playerList = allKifuList.stream()
+                .flatMap(k -> Stream.of(k.getBlackPlayer(), k.getWhitePlayer()))
+                .filter(p -> p != null && !p.isBlank())
+                .map(String::trim)
+                .distinct()
+                .sorted(collator::compare)
+                .collect(Collectors.toList());
+
+        if (query != null && !query.isBlank()) {
+            String trimmedQuery = query.trim();
+            String cleanQuery = trimmedQuery.replaceAll("[\\s\u3000]+", "").toLowerCase();
+            kifuList = allKifuList.stream()
+                    .filter(k -> {
+                        String black = k.getBlackPlayer() != null ? k.getBlackPlayer().replaceAll("[\\s\u3000]+", "").toLowerCase() : "";
+                        String white = k.getWhitePlayer() != null ? k.getWhitePlayer().replaceAll("[\\s\u3000]+", "").toLowerCase() : "";
+                        String match = k.getMatchName() != null ? k.getMatchName().replaceAll("[\\s\u3000]+", "").toLowerCase() : "";
+                        return black.contains(cleanQuery) || white.contains(cleanQuery) || match.contains(cleanQuery);
+                    })
+                    .collect(Collectors.toList());
+            model.addAttribute("searchPlayer", trimmedQuery);
+        } else {
+            model.addAttribute("searchPlayer", "");
+        }
+
+        model.addAttribute("playerList", playerList);
         model.addAttribute("kifuList", kifuList);
+        model.addAttribute("totalCount", allKifuList.size());
         model.addAttribute("title", "棋譜一覧");
         model.addAttribute("isUpdating", systemStatusService.isUpdating());
         return "kifu_list";

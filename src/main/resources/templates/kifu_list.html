@@ -85,16 +85,45 @@
             </ol>
         </nav>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
             <h1 class="h3 fw-bold mb-0">
                 <i class="bi bi-collection-play me-2 text-primary"></i>棋譜一覧
             </h1>
-            <span class="text-secondary small" th:text="'全 ' + ${kifuList.size()} + ' 件'"></span>
+            <span id="kifuCount" class="text-secondary small" th:text="'全 ' + ${kifuList.size()} + ' 件'"></span>
+        </div>
+
+        <!-- 検索フォーム（入力可能なコンボボックス） -->
+        <div class="row mb-4">
+            <div class="col-12 col-md-6 col-lg-5">
+                <form method="get" th:action="@{/kifu-list}" id="kifuSearchForm">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-person-fill text-muted"></i>
+                        </span>
+                        <input type="text" id="playerSearch" name="player" list="playerOptions" class="form-control border-start-0 ps-0"
+                               placeholder="対局者名を入力または選択..." th:value="${searchPlayer}" autocomplete="off"
+                               aria-label="対局者名を入力または選択">
+                        <datalist id="playerOptions">
+                            <option th:each="player : ${playerList}" th:value="${player}"></option>
+                        </datalist>
+                        <button class="btn btn-outline-secondary border-start-0 bg-white" type="button" id="clearSearchBtn" title="クリア"
+                                th:style="${searchPlayer != null && !searchPlayer.isEmpty()} ? 'display: block;' : 'display: none;'">
+                            <i class="bi bi-x-lg text-muted"></i>
+                        </button>
+                        <button class="btn btn-primary px-3" type="submit">
+                            検索
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- 棋譜一覧（カード表示） -->
-        <div class="row g-3">
-            <div th:each="kifu : ${kifuList}" class="col-12 col-md-6 col-lg-4">
+        <div class="row g-3" id="kifuContainer">
+            <div th:each="kifu : ${kifuList}" class="col-12 col-md-6 col-lg-4 kifu-item"
+                 th:data-black-player="${kifu.blackPlayer}"
+                 th:data-white-player="${kifu.whitePlayer}"
+                 th:data-match-name="${kifu.matchName}">
                 <div class="card h-100 shadow-sm border-0 kifu-card">
                     <div class="card-body d-flex flex-column justify-content-between">
                         <div>
@@ -129,11 +158,30 @@
                 </div>
             </div>
 
+            <!-- 検索結果が0件の場合（JSフィルタ用） -->
+            <div id="noSearchResults" class="col-12" style="display: none;">
+                <div class="alert alert-warning text-center py-4" role="alert">
+                    <i class="bi bi-search fs-3 d-block mb-2"></i>
+                    検索条件に一致する棋譜は見つかりませんでした。
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetSearch()">検索条件をクリア</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- 棋譜が存在しない場合 -->
             <div th:if="${#lists.isEmpty(kifuList)}" class="col-12">
                 <div class="alert alert-warning text-center py-4" role="alert">
                     <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
-                    現在表示できる棋譜データがありません。
+                    <span th:if="${searchPlayer != null && !searchPlayer.isEmpty()}">
+                        「<strong th:text="${searchPlayer}"></strong>」に一致する棋譜は見つかりませんでした。
+                        <div class="mt-3">
+                            <a href="/kifu-list" class="btn btn-outline-secondary btn-sm">すべての棋譜を表示</a>
+                        </div>
+                    </span>
+                    <span th:unless="${searchPlayer != null && !searchPlayer.isEmpty()}">
+                        現在表示できる棋譜データがありません。
+                    </span>
                 </div>
             </div>
         </div>
@@ -168,6 +216,96 @@
                 htmlElement.setAttribute('data-bs-theme', theme);
                 localStorage.setItem('theme', theme);
             });
+        }
+
+        // ひらがなをカタカナに変換するユーティリティ
+        function hiraToKata(str) {
+            if (!str) return '';
+            return str.replace(/[\u3041-\u3096]/g, function(match) {
+                var chr = match.charCodeAt(0) + 0x60;
+                return String.fromCharCode(chr);
+            });
+        }
+
+        const playerSearchInput = document.getElementById('playerSearch');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const kifuItems = document.querySelectorAll('.kifu-item');
+        const noSearchResults = document.getElementById('noSearchResults');
+        const kifuCount = document.getElementById('kifuCount');
+        const totalItemsCount = kifuItems.length;
+
+        function updateClearButton() {
+            if (clearSearchBtn && playerSearchInput) {
+                clearSearchBtn.style.display = playerSearchInput.value.trim() ? 'block' : 'none';
+            }
+        }
+
+        function filterKifu() {
+            if (!playerSearchInput) return;
+            const rawQuery = playerSearchInput.value.trim();
+            updateClearButton();
+
+            if (kifuItems.length === 0) return;
+
+            const query = hiraToKata(rawQuery.toLowerCase().replace(/[\s\u3000]+/g, ''));
+            let visibleCount = 0;
+
+            kifuItems.forEach(item => {
+                const blackPlayer = item.getAttribute('data-black-player') || '';
+                const whitePlayer = item.getAttribute('data-white-player') || '';
+                const matchName = item.getAttribute('data-match-name') || '';
+
+                const normalizedBlack = hiraToKata(blackPlayer.toLowerCase().replace(/[\s\u3000]+/g, ''));
+                const normalizedWhite = hiraToKata(whitePlayer.toLowerCase().replace(/[\s\u3000]+/g, ''));
+                const normalizedMatch = hiraToKata(matchName.toLowerCase().replace(/[\s\u3000]+/g, ''));
+
+                const isMatch = (query === '') || 
+                                normalizedBlack.includes(query) || 
+                                normalizedWhite.includes(query) ||
+                                normalizedMatch.includes(query);
+
+                if (isMatch) {
+                    item.classList.remove('d-none');
+                    visibleCount++;
+                } else {
+                    item.classList.add('d-none');
+                }
+            });
+
+            if (noSearchResults) {
+                noSearchResults.style.display = (visibleCount === 0 && query !== '') ? 'block' : 'none';
+            }
+
+            if (kifuCount) {
+                if (query !== '' && visibleCount !== totalItemsCount) {
+                    kifuCount.textContent = `${visibleCount} 件 / 全 ${totalItemsCount} 件`;
+                } else {
+                    kifuCount.textContent = `全 ${totalItemsCount} 件`;
+                }
+            }
+        }
+
+        function resetSearch() {
+            if (playerSearchInput) {
+                playerSearchInput.value = '';
+            }
+            updateClearButton();
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('player') || urlParams.has('playerName') || urlParams.has('search') || urlParams.has('q')) {
+                window.location.href = '/kifu-list';
+            } else {
+                filterKifu();
+            }
+        }
+
+        if (playerSearchInput) {
+            playerSearchInput.addEventListener('input', filterKifu);
+            playerSearchInput.addEventListener('change', filterKifu);
+            updateClearButton();
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', resetSearch);
         }
     </script>
 </body>
