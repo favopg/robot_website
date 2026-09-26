@@ -829,40 +829,7 @@
                 climaxHtml = `<div class="mb-1"><span class="badge bg-danger me-1">勝負所</span><strong>${blunderTurn}手目 (${movingPlayerStone} ${movingPlayerName})</strong>: 勝率が約<strong>${dropPct}%</strong>急変した本局最大の勝負所です。${scoreDiffText}</div>`;
             }
 
-            // 2. 形勢の流れ・逆転判定
-            let leadChanges = 0;
-            let lastLeader = null; // 'B' or 'W'
-            for (const pt of chartPoints) {
-                let currentLeader = null;
-                if (pt.blackWinrate >= 55) currentLeader = 'B';
-                else if (pt.whiteWinrate >= 55) currentLeader = 'W';
-
-                if (currentLeader && lastLeader && currentLeader !== lastLeader) {
-                    leadChanges++;
-                }
-                if (currentLeader) {
-                    lastLeader = currentLeader;
-                }
-            }
-
-            let flowText = '';
-            if (leadChanges >= 2) {
-                flowText = '中盤以降、形勢が二転三転する激しいシーソーゲーム・大熱戦となりました。';
-            } else if (leadChanges === 1) {
-                flowText = '中盤の攻防で形勢が逆転し、勝敗の行方が大きく動いた注目の1局です。';
-            } else {
-                const maxBlack = Math.max(...chartPoints.map(p => p.blackWinrate));
-                const maxWhite = Math.max(...chartPoints.map(p => p.whiteWinrate));
-                if (maxBlack >= 80 || maxWhite >= 80) {
-                    const dominant = maxBlack >= maxWhite ? `${blackName} (●)` : `${whiteName} (○)`;
-                    flowText = `序盤〜中盤でリードを広げた${dominant}が主導権を握り続けた展開でした。`;
-                } else {
-                    flowText = '終盤まで互角の細かな息詰まる攻防が繰り広げられた好局です。';
-                }
-            }
-            const flowHtml = `<div class="mb-1"><span class="badge bg-primary me-1">戦況</span>${flowText}</div>`;
-
-            // 3. 終局・形勢
+            // 2. 終局・形勢
             let resultHtml = '';
             if (matchInfo.result) {
                 resultHtml = `<div><span class="badge bg-success me-1">結果</span>${matchInfo.result}</div>`;
@@ -876,7 +843,7 @@
                 }
             }
 
-            textEl.innerHTML = climaxHtml + flowHtml + resultHtml;
+            textEl.innerHTML = climaxHtml + resultHtml;
             card.style.display = 'block';
 
             if (btnJump) {
