@@ -1447,7 +1447,7 @@
                         }
 
                         // 着手ノードの抽出 (;B[..] または ;W[..])
-                        const nodeRegex = /;([BW])\[([a-zA-Z]*)\]/g;
+                        const nodeRegex = /;\s*([BW])\[([a-zA-Z]*)\]/gi;
                         let nodeMatch;
                         while ((nodeMatch = nodeRegex.exec(text)) !== null) {
                             const color = nodeMatch[1].toUpperCase() === 'B' ? 1 : 2;
