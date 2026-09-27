@@ -243,10 +243,7 @@ public class KatagoAnalyzeService {
         if (fileName != null && fileName.length() >= 8) {
             String prefix = fileName.substring(0, 8);
             if (prefix.matches("\\d{8}")) {
-                String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-                if (prefix.compareTo(todayStr) <= 0) {
-                    dateSet.add(prefix);
-                }
+                dateSet.add(prefix);
             }
         }
     }
