@@ -379,43 +379,12 @@
         </div>
     </footer>
 
-    <!-- 推し棋士登録モーダル -->
-    <div class="modal fade" id="favoritePlayerModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog">
-            <div class="modal-content text-dark">
-                <div class="modal-header">
-                    <h5 class="modal-title">推し棋士を登録しましょう！</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
-                </div>
-                <div class="modal-body">
-                    <p>推し棋士を登録すると、対局予定や結果で強調表示されます。</p>
-                    <div class="mb-3 text-start">
-                        <label for="favoritePlayerInput" class="form-label">棋士名（カンマ区切りで最大5人まで）</label>
-                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="例：一力遼, 芝野虎丸">
-                        <div class="form-text">カンマまたはスペースで区切って複数入力できます。</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">今は設定しない</button>
-                    <button type="button" class="btn btn-primary" onclick="saveFavoritePlayer()">登録する</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Driver.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const modalEl = document.getElementById('favoritePlayerModal');
-            if (modalEl) {
-                modalEl.addEventListener('hidden.bs.modal', function () {
-                    sessionStorage.setItem('favoriteModalDismissed', 'true');
-                });
-            }
-
             // ダークモード切り替え機能
             const darkModeSwitch = document.getElementById('darkModeSwitch');
             const htmlElement = document.documentElement;
@@ -445,65 +414,6 @@
             }
         });
 
-        function getFavoritePlayers() {
-            const favData = localStorage.getItem('favoritePlayers');
-            if (favData) {
-                try {
-                    return JSON.parse(favData);
-                } catch (e) {
-                    return [];
-                }
-            }
-            const oldFav = localStorage.getItem('favoritePlayer');
-            if (oldFav) {
-                return [oldFav];
-            }
-            return [];
-        }
-
-        function showFavoriteModal(isFirst = false) {
-            const modalEl = document.getElementById('favoritePlayerModal');
-            const closeBtn = document.getElementById('favoriteModalCloseBtn');
-            const input = document.getElementById('favoritePlayerInput');
-            
-            if (isFirst) {
-                closeBtn.style.display = 'none';
-            } else {
-                closeBtn.style.display = 'block';
-                const favs = getFavoritePlayers();
-                input.value = favs.join(', ');
-            }
-
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-        }
-
-        function saveFavoritePlayer() {
-            const input = document.getElementById('favoritePlayerInput');
-            const value = input.value.trim();
-            if (value) {
-                const players = value.split(/[,、\s]+/)
-                    .map(p => p.trim())
-                    .filter(p => p.length > 0)
-                    .slice(0, 5);
-                localStorage.setItem('favoritePlayers', JSON.stringify(players));
-            } else {
-                localStorage.removeItem('favoritePlayers');
-                localStorage.removeItem('favoritePlayer');
-            }
-            const modalEl = document.getElementById('favoritePlayerModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-            location.reload();
-        }
-
-        function clearFavoritePlayer() {
-            localStorage.removeItem('favoritePlayers');
-            localStorage.removeItem('favoritePlayer');
-            const modalEl = document.getElementById('favoritePlayerModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-        }
         // 局面（碁盤）のサイズ切り替え関数
         function resizeBoard(sizePx) {
             const wrapper = document.getElementById('gobanWrapper');

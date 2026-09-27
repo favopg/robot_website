@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title != null ? title + ' | 盤上の一手' : '棋譜一覧 | 盤上の一手'}">棋譜一覧 | 盤上の一手</title>
+    <meta name="description" content="注目の囲碁棋譜一覧。対局者名検索やお気に入りの対局を素早く見つけて鑑賞・検討できます。">
+    <link rel="canonical" th:href="@{https://favoriteigo.site/kifu-list}" href="https://favoriteigo.site/kifu-list">
+    <meta property="og:title" th:content="${title != null ? title + ' | 盤上の一手' : '棋譜一覧 | 盤上の一手'}" content="棋譜一覧 | 盤上の一手">
+    <meta property="og:description" content="注目の囲碁棋譜一覧。対局者名検索やお気に入りの対局を素早く見つけて鑑賞・検討できます。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" th:content="@{https://favoriteigo.site/kifu-list}" content="https://favoriteigo.site/kifu-list">
+    <meta property="og:image" th:content="@{https://favoriteigo.site/images/ogp-banner.png}" content="https://favoriteigo.site/images/ogp-banner.png">
+    <meta property="og:site_name" content="盤上の一手">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${title != null ? title + ' | 盤上の一手' : '棋譜一覧 | 盤上の一手'}" content="棋譜一覧 | 盤上の一手">
+    <meta name="twitter:description" content="注目の囲碁棋譜一覧。対局者名検索やお気に入りの対局を素早く見つけて鑑賞・検討できます。">
+    <meta name="twitter:image" th:content="@{https://favoriteigo.site/images/ogp-banner.png}" content="https://favoriteigo.site/images/ogp-banner.png">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="alternate icon" type="image/x-icon" th:href="@{/favicon.ico}">
@@ -69,12 +81,6 @@
             </div>
         </div>
     </nav>
-
-    <div th:if="${isUpdating}" class="alert alert-info alert-dismissible fade show mb-0 rounded-0 text-center" role="alert">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        現在、最新の棋士情報を取得中です。最新の成績が表示されるまでお待ちください。
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
 
     <div class="container py-4">
         <!-- パンくずリスト -->

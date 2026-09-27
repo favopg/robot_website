@@ -95,20 +95,6 @@
             font-weight: bold;
             margin: 0 auto 1rem;
         }
-
-        /* 推し棋士の強調スタイル */
-        .favorite-name {
-            color: #856404;
-            background-color: #fff3cd;
-            padding: 0 4px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        [data-bs-theme="dark"] .favorite-name {
-            color: #ffe69c;
-            background-color: #4d3b00;
-        }
     </style>
 </head>
 <body>
@@ -146,12 +132,6 @@
         </div>
     </nav>
     
-    <div th:if="${isUpdating}" class="alert alert-info alert-dismissible fade show mb-0 rounded-0 text-center" role="alert">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        現在、最新の棋士情報を取得中です。最新の成績が表示されるまでお待ちください。
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
     <header class="hero-section text-center">
         <div class="container">
             <h1 class="fs-3 fw-bold mb-2">AI棋譜解析と次の1手クイズで囲碁をもっと楽しむ！囲碁上達・観戦ポータル</h1>
