@@ -193,47 +193,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- 棋譜紹介ページのご案内 -->
-        <section class="container py-5">
-            <h2 class="text-center mb-5">棋譜紹介ページ</h2>
-            <div class="row justify-content-center">
-                <div class="col-lg-8 text-center">
-                    <div class="card shadow-sm border-0 p-4">
-                        <div class="card-body">
-                            <i class="bi bi-journal-bookmark-fill text-success fs-1 mb-3"></i>
-                            <h3 class="card-title fw-bold">名局・注目棋譜の紹介</h3>
-                            <p class="card-text text-secondary mb-4">
-                                プロ棋士による白熱の対局やAI（KataGo）が推奨する注目の名局を分かりやすく紹介しています。形勢グラフや日付選択機能を使って、棋譜の細部までじっくり鑑賞・研究できます。
-                            </p>
-                            <div class="d-flex justify-content-center gap-3">
-                                <a href="/kifu-intro" class="btn btn-primary px-4">棋譜紹介ページを見る</a>
-                                <a href="/recommended-kifu" class="btn btn-outline-success px-4">おすすめ棋譜ビューア</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- リリースノート -->
-        <section class="container py-5">
-            <h2 class="h4 border-bottom pb-2 mb-4 text-center">リリースノート</h2>
-            <div class="list-group list-group-flush mb-3">
-                <a th:each="info : ${releaseInfos}"
-                   th:href="@{/release/{id}(id=${info.id})}"
-                   class="list-group-item list-group-item-action d-flex align-items-center">
-                    <small class="text-muted me-3" th:text="${#temporals.format(info.createdAt, 'yyyy/MM/dd')}">2026/08/14</small>
-                    <span th:text="${info.subject}">リリース件名</span>
-                </a>
-                <div th:if="${#lists.isEmpty(releaseInfos)}" class="list-group-item text-muted">
-                    リリース情報はありません。
-                </div>
-            </div>
-            <div class="text-end" th:if="${totalReleaseCount > 5}">
-                <a th:href="@{/release/list}" class="btn btn-link">もっと見る <i class="bi bi-chevron-right"></i></a>
-            </div>
-        </section>
     </main>
 
     <footer class="bg-dark text-white py-4 mt-5">
@@ -251,126 +210,11 @@
         </div>
     </footer>
 
-    <!-- 推し棋士登録モーダル -->
-    <div class="modal fade" id="favoritePlayerModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">推し棋士を登録しましょう！</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="favoriteModalCloseBtn" style="display:none;"></button>
-                </div>
-                <div class="modal-body">
-                    <p>推し棋士を登録すると、対局予定や結果で強調表示されます。</p>
-                    <div class="mb-3 text-start">
-                        <label for="favoritePlayerInput" class="form-label">棋士名（カンマ区切りで最大5人まで）</label>
-                        <input type="text" id="favoritePlayerInput" class="form-control" placeholder="例：一力遼, 芝野虎丸">
-                        <div class="form-text">カンマまたはスペースで区切って複数入力できます。</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="clearFavoritePlayer()">今は設定しない</button>
-                    <button type="button" class="btn btn-primary" onclick="saveFavoritePlayer()">登録する</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Driver.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const favData = localStorage.getItem('favoritePlayers') || localStorage.getItem('favoritePlayer');
-            const modalDismissed = sessionStorage.getItem('favoriteModalDismissed');
-            if (!favData && !modalDismissed) {
-                // showFavoriteModal(true);
-            }
-
-            // モーダルが閉じられたときにフラグをセットする（再表示防止）
-            const modalEl = document.getElementById('favoritePlayerModal');
-            modalEl.addEventListener('hidden.bs.modal', function () {
-                sessionStorage.setItem('favoriteModalDismissed', 'true');
-            });
-        });
-
-        function getFavoritePlayers() {
-            const favData = localStorage.getItem('favoritePlayers');
-            if (favData) {
-                try {
-                    return JSON.parse(favData);
-                } catch (e) {
-                    return [];
-                }
-            }
-            // 移行対応
-            const oldFav = localStorage.getItem('favoritePlayer');
-            if (oldFav) {
-                return [oldFav];
-            }
-            return [];
-        }
-
-        function showFavoriteModal(isFirst = false) {
-            const modalEl = document.getElementById('favoritePlayerModal');
-            const closeBtn = document.getElementById('favoriteModalCloseBtn');
-            const input = document.getElementById('favoritePlayerInput');
-            
-            if (isFirst) {
-                closeBtn.style.display = 'none';
-            } else {
-                closeBtn.style.display = 'block';
-                const favs = getFavoritePlayers();
-                input.value = favs.join(', ');
-            }
-            
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-        }
-
-        function hiraToKata(str) {
-            return str.replace(/[\u3041-\u3096]/g, function(match) {
-                var chr = match.charCodeAt(0) + 0x60;
-                return String.fromCharCode(chr);
-            });
-        }
-
-        function saveFavoritePlayer() {
-            const input = document.getElementById('favoritePlayerInput').value.trim();
-            if (input) {
-                // カンマ、全角カンマ、スペース、全角スペースで区切る
-                const names = input.split(/[,\u3001\s\u3000]+/).filter(n => n.length > 0).map(n => hiraToKata(n).replace(/[\s\u3000]+/g, ''));
-                // 重複除去
-                const uniqueNames = [...new Set(names)];
-                
-                if (uniqueNames.length > 5) {
-                    alert('推し棋士の登録は5人までです。');
-                    return;
-                }
-                
-                localStorage.setItem('favoritePlayers', JSON.stringify(uniqueNames));
-                localStorage.setItem('favoriteOnly', 'true'); // 登録時にフィルターをONにするフラグをセット
-                localStorage.removeItem('favoritePlayer'); // 旧キー削除
-                bootstrap.Modal.getInstance(document.getElementById('favoritePlayerModal')).hide();
-                location.reload();
-            } else {
-                alert('棋士名を入力してください');
-            }
-        }
-        
-        function clearFavoritePlayer() {
-            localStorage.removeItem('favoritePlayers');
-            localStorage.removeItem('favoritePlayer');
-            localStorage.setItem('favoriteOnly', 'false'); // 解除時にフィルターをOFFにする
-            sessionStorage.setItem('favoriteModalDismissed', 'true');
-            const modalEl = document.getElementById('favoritePlayerModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
-            location.reload();
-        }
-
         // ダークモード切り替え機能
         const darkModeSwitch = document.getElementById('darkModeSwitch');
         const htmlElement = document.documentElement;

@@ -1,7 +1,5 @@
 package com.example.robotwebsite;
 
-import com.example.robotwebsite.entity.Match;
-import com.example.robotwebsite.repository.MatchRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -9,8 +7,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -24,39 +20,26 @@ public class IndexControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private MatchRepository matchRepository;
-
     @Test
-    public void testIndexPageDoesNotContainYouTubeLives() throws Exception {
+    public void testIndexPage() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("index"))
-                .andExpect(model().attributeDoesNotExist("youtubeLives"));
+                .andExpect(view().name("index"));
     }
 
     @Test
-    public void testIndexPagePagingUpperAndLower() throws Exception {
-        mockMvc.perform(get("/"))
+    public void testRecommendedKifuPage() throws Exception {
+        mockMvc.perform(get("/recommended-kifu"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("index"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("<!-- 上部ページングナビゲーション -->")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("<!-- ページングナビゲーション -->")));
+                .andExpect(view().name("recommended_kifu"))
+                .andExpect(model().attribute("title", "おすすめ棋譜"));
     }
 
     @Test
-    public void testKifuIntroPage() throws Exception {
-        mockMvc.perform(get("/kifu-intro"))
+    public void testKifuListPage() throws Exception {
+        mockMvc.perform(get("/kifu-list"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("kifu_intro"))
-                .andExpect(model().attribute("title", "棋譜紹介"));
-    }
-
-    @Test
-    public void testIndexPageContainsKifuIntroSection() throws Exception {
-        mockMvc.perform(get("/"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("index"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("棋譜紹介ページ")));
+                .andExpect(view().name("kifu_list"))
+                .andExpect(model().attribute("title", "棋譜一覧"));
     }
 }
