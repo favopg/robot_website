@@ -475,10 +475,41 @@
             const trimmed = rawResult.trim();
             if (!trimmed) return '';
 
-            // 既に日本語が含まれている場合はそのまま
-            if (/[\u3040-\u30ff\u4e00-\u9faf]/.test(trimmed)) {
+            // 既に日本語（ひらがな・カタカナ）が含まれている場合はそのまま
+            if (/[\u3040-\u309f\u30a0-\u30ff]/.test(trimmed)) {
                 return trimmed;
             }
+
+            const noSpace = trimmed.replace(/\s+/g, '');
+            if (noSpace.includes('흑불계승') || noSpace === '흑불계') return '黒中押し勝ち';
+            if (noSpace.includes('백불계승') || noSpace === '백불계') return '白中押し勝ち';
+            if (noSpace === '불계승') return '中押し勝ち';
+            if (noSpace.includes('흑시간승') || noSpace === '흑시간') return '黒時間切れ勝ち';
+            if (noSpace.includes('백시간승') || noSpace === '백시간') return '白時間切れ勝ち';
+            if (noSpace === '시간승') return '時間切れ勝ち';
+            if (noSpace.includes('흑반칙승') || noSpace === '흑반칙') return '黒反則勝ち';
+            if (noSpace.includes('백반칙승') || noSpace === '백반칙') return '白反則勝ち';
+            if (noSpace === '반칙승') return '反則勝ち';
+            if (noSpace.includes('흑기권승') || noSpace === '흑기권') return '黒棄権勝ち';
+            if (noSpace.includes('백기권승') || noSpace === '백기권') return '白棄権勝ち';
+            if (noSpace === '기권승') return '棄権勝ち';
+            if (noSpace.includes('흑반집승') || noSpace.includes('흑반집') || noSpace.includes('흑0.5집')) return '黒半目勝ち';
+            if (noSpace.includes('백반집승') || noSpace.includes('백반집') || noSpace.includes('백0.5집')) return '白半目勝ち';
+            if (noSpace === '반집승' || noSpace === '반집') return '半目勝ち';
+            if (noSpace === '무승부' || noSpace === '빅' || noSpace === '지고') return '持碁';
+
+            const bScoreHalfMatch = noSpace.match(/흑([0-9.]+)집반/);
+            if (bScoreHalfMatch) return '黒' + bScoreHalfMatch[1] + '目半勝ち';
+            const wScoreHalfMatch = noSpace.match(/백([0-9.]+)집반/);
+            if (wScoreHalfMatch) return '白' + wScoreHalfMatch[1] + '目半勝ち';
+
+            const bScoreMatchHangul = noSpace.match(/흑([0-9.]+)집/);
+            if (bScoreMatchHangul) return '黒' + bScoreMatchHangul[1] + '目勝ち';
+            const wScoreMatchHangul = noSpace.match(/백([0-9.]+)집/);
+            if (wScoreMatchHangul) return '白' + wScoreMatchHangul[1] + '目勝ち';
+
+            if (noSpace === '흑승') return '黒勝ち';
+            if (noSpace === '백승') return '白勝ち';
 
             const upper = trimmed.toUpperCase();
             if (upper === 'B+R' || upper === 'B+RESIGN' || upper === 'BLACK+R' || upper === 'BLACK+RESIGN') {
@@ -505,11 +536,13 @@
 
             const bScoreMatch = upper.match(/^B\+([0-9.]+)/);
             if (bScoreMatch) {
+                if (bScoreMatch[1] === '0.5') return '黒半目勝ち';
                 return '黒' + bScoreMatch[1] + '目勝ち';
             }
 
             const wScoreMatch = upper.match(/^W\+([0-9.]+)/);
             if (wScoreMatch) {
+                if (wScoreMatch[1] === '0.5') return '白半目勝ち';
                 return '白' + wScoreMatch[1] + '目勝ち';
             }
 

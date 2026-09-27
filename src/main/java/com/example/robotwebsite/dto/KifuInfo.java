@@ -1,5 +1,7 @@
 package com.example.robotwebsite.dto;
 
+import com.example.robotwebsite.util.KoreanTranslationUtil;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -15,10 +17,14 @@ public class KifuInfo {
 
     public KifuInfo(String dateStr, String matchName, String blackPlayer, String whitePlayer, String result) {
         this.dateStr = dateStr;
-        this.matchName = (matchName != null && !matchName.isEmpty()) ? matchName : "注目局";
-        this.blackPlayer = (blackPlayer != null && !blackPlayer.isEmpty()) ? blackPlayer : "対局者(黒)";
-        this.whitePlayer = (whitePlayer != null && !whitePlayer.isEmpty()) ? whitePlayer : "対局者(白)";
-        this.result = result;
+        String mName = (matchName != null && !matchName.isEmpty()) ? matchName : "注目局";
+        String bPlayer = (blackPlayer != null && !blackPlayer.isEmpty()) ? blackPlayer : "対局者(黒)";
+        String wPlayer = (whitePlayer != null && !whitePlayer.isEmpty()) ? whitePlayer : "対局者(白)";
+
+        this.matchName = KoreanTranslationUtil.translateMatchName(mName);
+        this.blackPlayer = KoreanTranslationUtil.translatePlayerName(bPlayer);
+        this.whitePlayer = KoreanTranslationUtil.translatePlayerName(wPlayer);
+        this.result = (result != null && !result.isEmpty()) ? KoreanTranslationUtil.translateResult(result) : result;
         
         if (dateStr != null && dateStr.length() == 8) {
             try {
@@ -39,14 +45,22 @@ public class KifuInfo {
     public void setDisplayDate(String displayDate) { this.displayDate = displayDate; }
 
     public String getMatchName() { return matchName; }
-    public void setMatchName(String matchName) { this.matchName = matchName; }
+    public void setMatchName(String matchName) {
+        this.matchName = KoreanTranslationUtil.translateMatchName(matchName);
+    }
 
     public String getBlackPlayer() { return blackPlayer; }
-    public void setBlackPlayer(String blackPlayer) { this.blackPlayer = blackPlayer; }
+    public void setBlackPlayer(String blackPlayer) {
+        this.blackPlayer = KoreanTranslationUtil.translatePlayerName(blackPlayer);
+    }
 
     public String getWhitePlayer() { return whitePlayer; }
-    public void setWhitePlayer(String whitePlayer) { this.whitePlayer = whitePlayer; }
+    public void setWhitePlayer(String whitePlayer) {
+        this.whitePlayer = KoreanTranslationUtil.translatePlayerName(whitePlayer);
+    }
 
     public String getResult() { return result; }
-    public void setResult(String result) { this.result = result; }
+    public void setResult(String result) {
+        this.result = (result != null && !result.isEmpty()) ? KoreanTranslationUtil.translateResult(result) : result;
+    }
 }
