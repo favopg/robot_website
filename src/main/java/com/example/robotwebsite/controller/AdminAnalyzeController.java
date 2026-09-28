@@ -29,6 +29,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class AdminAnalyzeController {
@@ -58,7 +59,10 @@ public class AdminAnalyzeController {
     @GetMapping({"/admin/analyze/api", "/admin/analyze/data", "/analyze/api", "/analyze/data", "/recommended-kifu/api", "/recommended-kifu/data", "/recommend-kifu/api", "/recommend-kifu/data", "/admin/analyze-easy/api", "/admin/analyze-easy/data", "/analyze-easy/api", "/analyze-easy/data", "/quiz-low-complexity/api", "/quiz-low-complexity/data"})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> analyzeApi(@RequestParam(value = "date", required = false) String date) {
-        List<String> availableDates = katagoAnalyzeService.getAvailableDates();
+        String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        List<String> availableDates = katagoAnalyzeService.getAvailableDates().stream()
+                .filter(d -> d.compareTo(todayStr) <= 0)
+                .collect(Collectors.toList());
 
         String targetDate = (date != null && !date.trim().isEmpty()) ? date.trim() : null;
         if (targetDate == null) {
@@ -66,7 +70,7 @@ public class AdminAnalyzeController {
             if (!availableDates.isEmpty()) {
                 targetDate = availableDates.get(0);
             } else {
-                targetDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                targetDate = todayStr;
             }
         }
 
