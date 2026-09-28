@@ -274,6 +274,30 @@
                                                 <button type="button" class="btn btn-outline-dark" id="btnGobanNext" title="次へ進む" aria-label="次へ進む"><i class="bi bi-chevron-right"></i></button>
                                                 <button type="button" class="btn btn-outline-dark" id="btnGobanLast" title="最後へ" aria-label="最後へ"><i class="bi bi-chevron-bar-right"></i></button>
                                             </div>
+
+                                            <!-- 各局面の変化図ボタングループ -->
+                                            <div id="variationControlsArea" class="mt-2 text-start w-100" style="display: none;">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="small fw-bold text-body" style="font-size: 0.75rem;">
+                                                        <i class="bi bi-diagram-3 me-1 text-primary"></i> 変化図 (AI候補手)
+                                                    </span>
+                                                    <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none" id="btnClearVariation" style="display: none; font-size: 0.7rem;">
+                                                        <i class="bi bi-x-circle me-1"></i>消去
+                                                    </button>
+                                                </div>
+                                                <div class="btn-group w-100 mb-1" role="group" aria-label="変化図選択">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm px-1 fw-bold" id="btnVar1" style="display: none; font-size: 0.72rem;">図1(最善)</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm px-1 fw-bold" id="btnVar2" style="display: none; font-size: 0.72rem;">図2</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm px-1 fw-bold" id="btnVar3" style="display: none; font-size: 0.72rem;">図3</button>
+                                                </div>
+                                                <!-- 選択中変化図の手順バッジ表示エリア -->
+                                                <div id="variationPvStepContainer" class="p-1 rounded bg-body-tertiary border mt-1" style="display: none; max-height: 80px; overflow-y: auto;">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="fw-bold text-primary" id="variationTitleText" style="font-size: 0.7rem;">変化図1手順</span>
+                                                    </div>
+                                                    <div id="variationPvStepList" class="d-flex flex-wrap gap-1 align-items-center" style="font-size: 0.7rem;"></div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -344,7 +368,7 @@
                                                         <th style="width: 20%;">着手座標</th>
                                                         <th style="width: 20%;">予想勝率</th>
                                                         <th style="width: 20%;">目差リード</th>
-                                                        <th>評価・特徴</th>
+                                                        <th>評価・変化図</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="bestMoveCandidatesTableBody"></tbody>
@@ -1476,7 +1500,8 @@
                             turn: 0,
                             board: currentBoard.map(r => [...r]),
                             move: null,
-                            captures: { ...captures }
+                            captures: { ...captures },
+                            nextPlayer: (parsed.moves && parsed.moves.length > 0) ? parsed.moves[0].color : 1
                         });
 
                         const getGroup = (b, sx, sy) => {
@@ -1551,11 +1576,13 @@
 
                             currentBoard = nextBoard;
                             captures = nextCaptures;
+                            const nextColor = (idx + 1 < parsed.moves.length) ? parsed.moves[idx + 1].color : (m.color === 1 ? 2 : 1);
                             states.push({
                                 turn: turnNum,
                                 board: currentBoard.map(r => [...r]),
                                 move: m,
-                                captures: { ...captures }
+                                captures: { ...captures },
+                                nextPlayer: nextColor
                             });
                         });
 
@@ -1613,6 +1640,21 @@
                     const col = colLetters[m.x] || '?';
                     const row = size - m.y;
                     return colorStr + ' ' + col + row;
+                }
+
+                // 座標ヘルパー関数（KataGo座標形式 "Q16" -> {x, y}）
+                function parseCoordToXY(coordStr) {
+                    if (!coordStr || coordStr === 'PASS' || coordStr === 'pass') return { x: -1, y: -1, pass: true };
+                    const c = coordStr.toUpperCase().trim();
+                    const colLetter = c.charAt(0);
+                    const rowNum = parseInt(c.slice(1), 10);
+                    const letters = 'ABCDEFGHJKLMNOPQRST';
+                    const x = letters.indexOf(colLetter);
+                    if (x < 0 || isNaN(rowNum) || rowNum < 1 || rowNum > 19) {
+                        return { x: -1, y: -1, pass: false };
+                    }
+                    const y = 19 - rowNum;
+                    return { x, y, pass: false };
                 }
 
                 // Canvas描画
@@ -1749,6 +1791,60 @@
                         ctx.stroke();
                     }
 
+                    // AI候補手 変化図（PV: Principal Variation）の盤面描画
+                    if (window.activeVariationMoves && window.activeVariationMoves.length > 0 && currentTurn === window.activeVariationTurn) {
+                        const pvFirstColor = window.activeVariationColor || (state.nextPlayer === 2 ? 2 : 1);
+                        window.activeVariationMoves.forEach((coord, idx) => {
+                            const xy = parseCoordToXY(coord);
+                            if (xy.x < 0 || xy.x >= size || xy.y < 0 || xy.y >= size) return;
+                            const px = pad + xy.x * cell;
+                            const py = pad + xy.y * cell;
+                            const stepColor = (idx % 2 === 0) ? pvFirstColor : (pvFirstColor === 1 ? 2 : 1);
+
+                            ctx.save();
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                            ctx.shadowBlur = 4;
+                            ctx.shadowOffsetX = 1.5;
+                            ctx.shadowOffsetY = 2;
+
+                            ctx.beginPath();
+                            ctx.arc(px, py, radius * 0.88, 0, Math.PI * 2);
+                            if (stepColor === 1) {
+                                // 黒石
+                                const stoneGrad = ctx.createRadialGradient(px - radius * 0.3, py - radius * 0.3, radius * 0.1, px, py, radius);
+                                stoneGrad.addColorStop(0, '#555555');
+                                stoneGrad.addColorStop(0.5, '#1e1e1e');
+                                stoneGrad.addColorStop(1, '#050505');
+                                ctx.fillStyle = stoneGrad;
+                                ctx.fill();
+                            } else {
+                                // 白石
+                                const stoneGrad = ctx.createRadialGradient(px - radius * 0.3, py - radius * 0.3, radius * 0.1, px, py, radius);
+                                stoneGrad.addColorStop(0, '#ffffff');
+                                stoneGrad.addColorStop(0.75, '#e8e8e8');
+                                stoneGrad.addColorStop(1, '#c8c8c8');
+                                ctx.fillStyle = stoneGrad;
+                                ctx.fill();
+                            }
+                            ctx.restore();
+
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(px, py, radius * 0.88, 0, Math.PI * 2);
+                            ctx.strokeStyle = stepColor === 1 ? '#ffffff' : '#444444';
+                            ctx.lineWidth = 1.5;
+                            ctx.stroke();
+
+                            // 手順番号（1, 2, 3...）
+                            ctx.fillStyle = stepColor === 1 ? '#ffffff' : '#111111';
+                            ctx.font = 'bold 12px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(String(idx + 1), px, py);
+                            ctx.restore();
+                        });
+                    }
+
                     // クイズマーカーの描画（出題局面（quizTurn）またはクイズ回答表示時）
                     if (window.quizMarkers && window.quizMarkers.length > 0 && currentTurn === window.quizTurnGlobal) {
                         window.quizMarkers.forEach(m => {
@@ -1833,9 +1929,158 @@
                     }
                 }
 
+                function updateVariationControls(turnIdx) {
+                    const area = document.getElementById('variationControlsArea');
+                    const btn1 = document.getElementById('btnVar1');
+                    const btn2 = document.getElementById('btnVar2');
+                    const btn3 = document.getElementById('btnVar3');
+                    const btnClear = document.getElementById('btnClearVariation');
+                    const stepContainer = document.getElementById('variationPvStepContainer');
+
+                    if (!area || !btn1 || !btn2 || !btn3) return;
+
+                    const cPoints = window.chartPointsGlobal;
+                    const point = cPoints ? cPoints.find(p => p.turnNumber === turnIdx) : null;
+                    const rawItem = point ? point.rawItem : null;
+
+                    let moveInfos = [];
+                    if (rawItem) {
+                        if (Array.isArray(rawItem.candidates)) {
+                            moveInfos = rawItem.candidates;
+                        } else if (Array.isArray(rawItem.moveInfos)) {
+                            moveInfos = rawItem.moveInfos;
+                        } else if (rawItem.rootInfo && Array.isArray(rawItem.rootInfo.moveInfos)) {
+                            moveInfos = rawItem.rootInfo.moveInfos;
+                        }
+                    }
+
+                    // 候補手が存在しない局面（データなし等）
+                    if (moveInfos.length === 0) {
+                        area.style.display = 'none';
+                        window.activeVariationMoves = null;
+                        if (stepContainer) stepContainer.style.display = 'none';
+                        if (btnClear) btnClear.style.display = 'none';
+                        return;
+                    }
+
+                    area.style.display = 'block';
+
+                    const btns = [btn1, btn2, btn3];
+                    const activeIdx = (window.activeVariationTurn === turnIdx && window.activeVariationIndex !== undefined) ? window.activeVariationIndex : null;
+
+                    btns.forEach((btn, idx) => {
+                        if (idx < moveInfos.length) {
+                            const info = moveInfos[idx];
+                            const coord = (info.move || info.point || '').toUpperCase();
+                            btn.style.display = 'inline-block';
+                            btn.innerText = (idx === 0 ? '図1(最善)' : `図${idx + 1}`) + (coord ? `:${coord}` : '');
+                            
+                            if (activeIdx === idx) {
+                                btn.className = 'btn btn-primary btn-sm px-1 fw-bold';
+                            } else {
+                                btn.className = 'btn btn-outline-secondary btn-sm px-1 fw-bold';
+                            }
+
+                            btn.onclick = function() {
+                                // 同じ変化図を再クリックした場合はトグルで閉じる
+                                if (window.activeVariationTurn === turnIdx && window.activeVariationIndex === idx && window.activeVariationMoves) {
+                                    clearVariation();
+                                    return;
+                                }
+                                applyVariation(turnIdx, idx, info, coord);
+                            };
+                        } else {
+                            btn.style.display = 'none';
+                            btn.onclick = null;
+                        }
+                    });
+
+                    if (window.activeVariationMoves && window.activeVariationTurn === turnIdx) {
+                        if (btnClear) btnClear.style.display = 'inline-block';
+                    } else {
+                        if (btnClear) btnClear.style.display = 'none';
+                        if (stepContainer) stepContainer.style.display = 'none';
+                    }
+                }
+
+                function applyVariation(turnIdx, candIdx, info, coord) {
+                    const pv = (info && Array.isArray(info.pv) && info.pv.length > 0) ? info.pv : (coord ? [coord] : []);
+                    if (!pv || pv.length === 0) return;
+
+                    const state = (turnIdx < states.length) ? states[turnIdx] : states[states.length - 1];
+                    const nextColor = (state && state.nextPlayer) ? state.nextPlayer : (state && state.move ? (state.move.color === 1 ? 2 : 1) : 1); // 1: 黒, 2: 白
+
+                    window.activeVariationTurn = turnIdx;
+                    window.activeVariationIndex = candIdx;
+                    window.activeVariationMoves = pv;
+                    window.activeVariationColor = nextColor;
+
+                    // 盤面再描画
+                    renderBoard(turnIdx);
+
+                    // 手順バッジの表示
+                    const stepContainer = document.getElementById('variationPvStepContainer');
+                    const stepList = document.getElementById('variationPvStepList');
+                    const titleText = document.getElementById('variationTitleText');
+                    const btnClear = document.getElementById('btnClearVariation');
+
+                    if (stepContainer && stepList) {
+                        stepContainer.style.display = 'block';
+                        if (titleText) {
+                            titleText.innerText = `${turnIdx}手目 変化図${candIdx + 1} (${coord || ''}) 読み筋手順`;
+                        }
+                        stepList.innerHTML = '';
+                        pv.forEach((stepCoord, sIdx) => {
+                            const stepColorNum = (sIdx % 2 === 0) ? nextColor : (nextColor === 1 ? 2 : 1);
+                            const badge = document.createElement('span');
+                            badge.className = 'badge ' + (stepColorNum === 1 ? 'bg-dark text-white' : 'bg-light text-dark border') + ' px-1 py-1';
+                            badge.innerText = `${sIdx + 1}.${stepCoord}`;
+                            stepList.appendChild(badge);
+                        });
+                    }
+                    if (btnClear) btnClear.style.display = 'inline-block';
+
+                    updateVariationControls(turnIdx);
+                }
+
+                function clearVariation() {
+                    window.activeVariationMoves = null;
+                    window.activeVariationIndex = null;
+                    window.activeVariationTurn = null;
+
+                    const stepContainer = document.getElementById('variationPvStepContainer');
+                    const btnClear = document.getElementById('btnClearVariation');
+                    if (stepContainer) stepContainer.style.display = 'none';
+                    if (btnClear) btnClear.style.display = 'none';
+
+                    renderBoard(currentTurn);
+                    updateVariationControls(currentTurn);
+                }
+
+                window.applyGobanVariation = applyVariation;
+                window.clearGobanVariation = clearVariation;
+
+                const btnClearVariationElem = document.getElementById('btnClearVariation');
+                if (btnClearVariationElem) {
+                    btnClearVariationElem.onclick = clearVariation;
+                }
+
                 function goToTurn(t) {
                     currentTurn = Math.max(0, Math.min(maxTurn, t));
+                    
+                    // 手番が変わった場合、変化図の対象手番と異なれば変化図をクリア
+                    if (window.activeVariationTurn !== currentTurn) {
+                        window.activeVariationMoves = null;
+                        window.activeVariationIndex = null;
+                        window.activeVariationTurn = null;
+                        const stepContainer = document.getElementById('variationPvStepContainer');
+                        if (stepContainer) stepContainer.style.display = 'none';
+                        const btnClear = document.getElementById('btnClearVariation');
+                        if (btnClear) btnClear.style.display = 'none';
+                    }
+
                     renderBoard(currentTurn);
+                    updateVariationControls(currentTurn);
 
                     // 勝率グラフ側も連動してハイライト
                     if (typeof window.syncChartWithTurn === 'function') {
@@ -1888,6 +2133,7 @@
 
                 // 初回描画（初期局面）
                 renderBoard(currentTurn);
+                updateVariationControls(currentTurn);
                 if (typeof window.syncChartWithTurn === 'function') {
                     window.syncChartWithTurn(currentTurn);
                 }
@@ -2136,9 +2382,21 @@
                                 <td class="font-monospace fw-bold fs-6">${bestMoveCoord}</td>
                                 <td class="text-success fw-bold">${bWinrate !== null ? bWinrate.toFixed(1) + '%' : '-'}</td>
                                 <td>${bScore !== null ? (bScore > 0 ? '+' : '') + bScore.toFixed(1) + '目' : '-'}</td>
-                                <td>KataGo推奨の最善着手</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary btn-sm py-0 px-2 fw-bold" id="btnPanelVar1">
+                                        <i class="bi bi-diagram-3 me-1"></i>変化図1を表示
+                                    </button>
+                                </td>
                             `;
                             tbody.appendChild(trBest);
+
+                            const btnPanelVar1 = trBest.querySelector('#btnPanelVar1');
+                            if (btnPanelVar1 && typeof window.applyGobanVariation === 'function') {
+                                btnPanelVar1.onclick = () => {
+                                    window.applyGobanVariation(qTurn, 0, bestMoveInfo, bestMoveCoord);
+                                    window.scrollTo({ top: document.getElementById('gobanWrapper').offsetTop - 20, behavior: 'smooth' });
+                                };
+                            }
                         }
 
                         // 2. 実戦手
@@ -2150,7 +2408,7 @@
                                 <td class="font-monospace fw-bold fs-6">${actualMoveStr}</td>
                                 <td class="text-danger">${aWinrate !== null ? aWinrate.toFixed(1) + '%' : '-'}</td>
                                 <td>${aScore !== null ? (aScore > 0 ? '+' : '') + aScore.toFixed(1) + '目' : '-'}</td>
-                                <td>実戦で選択された手 (勝率が急落)</td>
+                                <td class="text-muted small">実戦で選択された手 (勝率が急落)</td>
                             `;
                             tbody.appendChild(trAct);
                         }
@@ -2169,9 +2427,21 @@
                                     <td class="font-monospace">${mCoord}</td>
                                     <td>${mW !== null ? mW.toFixed(1) + '%' : '-'}</td>
                                     <td>${mS !== null ? (mS > 0 ? '+' : '') + mS.toFixed(1) + '目' : '-'}</td>
-                                    <td>AI検討候補手</td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 fw-bold" id="btnPanelVar${i+1}">
+                                            <i class="bi bi-diagram-3 me-1"></i>変化図${i+1}を表示
+                                        </button>
+                                    </td>
                                 `;
                                 tbody.appendChild(trCand);
+
+                                const btnPanelVarOther = trCand.querySelector(`#btnPanelVar${i+1}`);
+                                if (btnPanelVarOther && typeof window.applyGobanVariation === 'function') {
+                                    btnPanelVarOther.onclick = () => {
+                                        window.applyGobanVariation(qTurn, i, info, mCoord);
+                                        window.scrollTo({ top: document.getElementById('gobanWrapper').offsetTop - 20, behavior: 'smooth' });
+                                    };
+                                }
                             }
                         }
                     }
@@ -2436,9 +2706,24 @@
                         <td class="font-monospace fw-bold">${bestMoveCoord}</td>
                         <td>${bWinrate !== null ? bWinrate.toFixed(1) + '%' : '最善'}</td>
                         <td>${bScore !== null ? (bScore > 0 ? '+' : '') + bScore.toFixed(1) + '目' : '-'}</td>
-                        <td>KataGo推奨の最善手</td>
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span>KataGo推奨の最善手</span>
+                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 fw-bold ms-1" id="btnQuizVar1">
+                                    <i class="bi bi-diagram-3 me-1"></i>変化図1
+                                </button>
+                            </div>
+                        </td>
                     `;
                     tbody.appendChild(trBest);
+
+                    const btnQuizVar1 = trBest.querySelector('#btnQuizVar1');
+                    if (btnQuizVar1 && typeof window.applyGobanVariation === 'function') {
+                        btnQuizVar1.onclick = () => {
+                            window.applyGobanVariation(quizTurn, 0, bestMoveInfo, bestMoveCoord);
+                            window.scrollTo({ top: document.getElementById('gobanWrapper').offsetTop - 20, behavior: 'smooth' });
+                        };
+                    }
                 }
 
                 // 4. その他のAI候補手（上位2件程度）
@@ -2455,9 +2740,24 @@
                             <td class="font-monospace">${mCoord}</td>
                             <td>${mWinrate}</td>
                             <td>${mScore}</td>
-                            <td>AI検討候補手</td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span>AI検討候補手</span>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 fw-bold ms-1" id="btnQuizVar${i+1}">
+                                        <i class="bi bi-diagram-3 me-1"></i>変化図${i+1}
+                                    </button>
+                                </div>
+                            </td>
                         `;
                         tbody.appendChild(trCand);
+
+                        const btnQuizVarOther = trCand.querySelector(`#btnQuizVar${i+1}`);
+                        if (btnQuizVarOther && typeof window.applyGobanVariation === 'function') {
+                            btnQuizVarOther.onclick = () => {
+                                window.applyGobanVariation(quizTurn, i, info, mCoord);
+                                window.scrollTo({ top: document.getElementById('gobanWrapper').offsetTop - 20, behavior: 'smooth' });
+                            };
+                        }
                     }
                 }
 
