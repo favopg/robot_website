@@ -133,9 +133,8 @@
                 <div class="card h-100 shadow-sm border-0 kifu-card">
                     <div class="card-body d-flex flex-column justify-content-between">
                         <div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-secondary" th:text="${kifu.displayDate}">2026年09月20日</span>
-                                <span th:if="${kifu.result != null && !kifu.result.isEmpty()}" class="badge bg-success-subtle text-success-emphasis border" th:text="${kifu.result}">結果</span>
+                            <div class="d-flex justify-content-end align-items-center mb-2" th:if="${kifu.result != null && !kifu.result.isEmpty()}">
+                                <span class="badge bg-success-subtle text-success-emphasis border" th:text="${kifu.result}">結果</span>
                             </div>
                             
                             <h5 class="card-title fw-bold text-truncate mb-3" th:text="${kifu.matchName}">棋戦名</h5>
