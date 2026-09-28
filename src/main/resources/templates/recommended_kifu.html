@@ -243,13 +243,6 @@
                                 <!-- 中央カラム：手番ナビゲーション操作バー -->
                                 <div class="col-12 col-lg-2 col-xl-2 d-flex flex-column justify-content-center align-items-center px-1">
                                     <div id="gobanControls" class="w-100 text-center" style="max-width: 220px;">
-                                        <!-- おすすめ棋譜 日付選択プルダウン (手数の真上) -->
-                                        <div class="mb-2 w-100" id="kifuSelectContainer">
-                                            <select class="form-select form-select-sm fw-bold border-secondary shadow-sm text-center" id="kifuDateSelect" aria-label="おすすめ棋譜の日付選択">
-                                                <option value="" disabled selected>棋譜を読み込み中...</option>
-                                            </select>
-                                        </div>
-
                                         <div id="gobanOperationControls">
                                             <div class="mb-2">
                                                 <div class="fw-bold text-body small" id="gobanMoveLabel">0手目 / 全0手</div>
@@ -2522,33 +2515,6 @@
         }
     }
 
-        function updateDateSelectDropdown(availableDates, currentDate) {
-            const select = document.getElementById('kifuDateSelect');
-            if (!select || !availableDates) return;
-
-            select.innerHTML = '';
-            if (availableDates.length === 0) {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = '利用可能な棋譜がありません';
-                select.appendChild(opt);
-                select.disabled = true;
-                return;
-            }
-
-            select.disabled = false;
-            availableDates.forEach(dateStr => {
-                const option = document.createElement('option');
-                option.value = dateStr;
-                // 表示フォーマット: 「YYYYMMDD棋譜」
-                option.textContent = `${dateStr}棋譜`;
-                if (dateStr === currentDate) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            });
-        }
-
         function fetchKifuByDate(targetDate) {
             const resultElem = document.getElementById('resultJsonData') || document.getElementById('resultJsonArea');
             const loadingIndicator = document.getElementById('loadingIndicator');
@@ -2588,11 +2554,6 @@
                         if (gobanCard) gobanCard.style.display = 'block';
                         if (resultJsonCard) resultJsonCard.style.display = 'block';
 
-                        // プルダウンの選択肢一覧および現在選択日を更新
-                        if (data.availableDates) {
-                            updateDateSelectDropdown(data.availableDates, data.currentDate || targetDate);
-                        }
-
                         // 碁盤と勝率グラフを再初期化・描画
                         initAnalysisView();
                     } else {
@@ -2610,17 +2571,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // プルダウン変更イベントの登録
-            const kifuDateSelect = document.getElementById('kifuDateSelect');
-            if (kifuDateSelect) {
-                kifuDateSelect.addEventListener('change', function() {
-                    const selectedDate = this.value;
-                    if (selectedDate) {
-                        fetchKifuByDate(selectedDate);
-                    }
-                });
-            }
-
             const resultElem = document.getElementById('resultJsonData') || document.getElementById('resultJsonArea');
             const hasInitialData = resultElem && (resultElem.textContent || resultElem.innerText || '').trim().length > 0;
             const loadingIndicator = document.getElementById('loadingIndicator');
@@ -2657,10 +2607,6 @@
                     { 
                         element: '#btnGoToQuizTurn', 
                         popover: { title: '勝率が大きく動いた局面を表示', description: '勝率が大きく変動した重要な局面へ一発でジャンプできます。押下後に最善手を表示ボタンが表示され、最善手を確認できます。', side: "bottom", align: 'start' } 
-                    },
-                    { 
-                        element: '#kifuDateSelect', 
-                        popover: { title: '棋譜選択', description: '日付（YYYYMMDD形式）のプルダウンから、閲覧したいおすすめ棋譜を切り替えることができます。', side: "bottom", align: 'start' } 
                     },
                     { 
                         element: '#gobanOperationControls', 
