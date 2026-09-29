@@ -216,6 +216,41 @@ public class AdminAnalyzeController {
                         break;
                     }
                 }
+
+                // SGFからのフォールバック抽出と翻訳
+                if (sgfContent != null && !sgfContent.isEmpty()) {
+                    if (!response.containsKey("matchName")) {
+                        String ev = extractPropertyFromSgf(sgfContent, "EV");
+                        String gn = extractPropertyFromSgf(sgfContent, "GN");
+                        if (ev != null && !ev.isEmpty()) {
+                            response.put("matchName", translationService.translateMatchName(ev));
+                        } else if (gn != null && !gn.isEmpty()) {
+                            response.put("matchName", translationService.translateMatchName(gn));
+                        }
+                    }
+                    if (!response.containsKey("blackPlayer")) {
+                        String pb = extractPropertyFromSgf(sgfContent, "PB");
+                        String br = extractPropertyFromSgf(sgfContent, "BR");
+                        if (pb != null && !pb.isEmpty()) {
+                            String p = pb + (br != null && !br.isEmpty() ? (" " + br) : "");
+                            response.put("blackPlayer", translationService.translatePlayerName(p));
+                        }
+                    }
+                    if (!response.containsKey("whitePlayer")) {
+                        String pw = extractPropertyFromSgf(sgfContent, "PW");
+                        String wr = extractPropertyFromSgf(sgfContent, "WR");
+                        if (pw != null && !pw.isEmpty()) {
+                            String p = pw + (wr != null && !wr.isEmpty() ? (" " + wr) : "");
+                            response.put("whitePlayer", translationService.translatePlayerName(p));
+                        }
+                    }
+                    if (!response.containsKey("result")) {
+                        String re = extractPropertyFromSgf(sgfContent, "RE");
+                        if (re != null && !re.isEmpty()) {
+                            response.put("result", translationService.translateResult(re));
+                        }
+                    }
+                }
             } catch (Exception e) {
                 // If parsing fails, use the raw response
             }
@@ -268,6 +303,16 @@ public class AdminAnalyzeController {
         }
 
         logger.warn("SGF file not found for sgf_file_name: {}", fileName);
+        return null;
+    }
+
+    private String extractPropertyFromSgf(String sgf, String propertyName) {
+        if (sgf == null || propertyName == null) return null;
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(?:^|[^A-Z])" + java.util.regex.Pattern.quote(propertyName) + "\\[([^\\]]*(?:\\\\\\][^\\]]*)*)\\]", java.util.regex.Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher = pattern.matcher(sgf);
+        if (matcher.find() && matcher.group(1) != null) {
+            return matcher.group(1).replaceAll("\\\\([\\\\\\]])", "$1").trim();
+        }
         return null;
     }
 }

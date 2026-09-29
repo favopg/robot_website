@@ -53,13 +53,16 @@ public class KoreanTranslationUtilTest {
         assertEquals("柯潔 九段", KoreanTranslationUtil.translatePlayerName("커제 9단"));
         assertEquals("辜梓豪 九段", KoreanTranslationUtil.translatePlayerName("구쯔하오 9단"));
         assertEquals("一力遼 九段", KoreanTranslationUtil.translatePlayerName("이치리키 료 9단"));
+        assertEquals("仲邑菫 三段", KoreanTranslationUtil.translatePlayerName("나카무라 스미레 3단"));
+        assertEquals("芝野虎丸 九段", KoreanTranslationUtil.translatePlayerName("시바노 도라마루 9단"));
+        assertEquals("許皓鋐 九段", KoreanTranslationUtil.translatePlayerName("쉬하오홍 9단"));
     }
 
     @Test
     public void testTranslateMatchName() {
         assertEquals("第25回 農心辛ラーメン杯 世界囲碁最強戦 本戦 第14局",
                 KoreanTranslationUtil.translateMatchName("제25회 농심신라면배 세계바둑최강전 본선 14국"));
-        assertEquals("第28回 サムスン火災杯 ワールド囲碁マスターズ 決勝 三番勝負 第1局",
+        assertEquals("第28回 サムスン火災杯 ワールド囲碁マスターズ 決勝 3番勝負 第1局",
                 KoreanTranslationUtil.translateMatchName("제28회 삼성화재배 월드바둑마스터스 결승 3번기 1국"));
         assertEquals("第29回 LG杯 朝鮮日報棋王戦 準決勝",
                 KoreanTranslationUtil.translateMatchName("제29회 LG배 조선일보 기왕전 준결승"));
@@ -67,5 +70,13 @@ public class KoreanTranslationUtilTest {
                 KoreanTranslationUtil.translateMatchName("제1회 난양배 32강"));
         assertEquals("第1回 南洋杯 世界囲碁マスターズ 32強",
                 KoreanTranslationUtil.translateMatchName("제1회 난양배 세계바둑마스터스 32강"));
+        assertEquals("第2回 YK建機杯 プロ棋戦 本戦 第1ラウンド 第1局",
+                KoreanTranslationUtil.translateMatchName("제2회 YK건기배 프로기전 본선 1라운드 1국"));
+        assertEquals("第10回 グロービス杯 世界囲碁U-20 決勝",
+                KoreanTranslationUtil.translateMatchName("제10회 글로비스배 세계바둑U-20 결승"));
+        assertEquals("第8回 天台山杯 本戦 第1回戦",
+                KoreanTranslationUtil.translateMatchName("제8회 천태산배 본선 1회전"));
+        assertEquals("新韓銀行杯 本戦 第1局",
+                KoreanTranslationUtil.translateMatchName("신한은행배 본선 1국"));
     }
 }

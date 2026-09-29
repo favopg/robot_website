@@ -598,25 +598,7 @@
             let generalPlayers = '';
             let result = '';
 
-            // 1. SGFからの抽出
-            if (sgfText) {
-                const ev = extractPropertyFromSgf(sgfText, 'EV');
-                const gn = extractPropertyFromSgf(sgfText, 'GN');
-                const pb = extractPropertyFromSgf(sgfText, 'PB');
-                const pw = extractPropertyFromSgf(sgfText, 'PW');
-                const br = extractPropertyFromSgf(sgfText, 'BR');
-                const wr = extractPropertyFromSgf(sgfText, 'WR');
-                const re = extractPropertyFromSgf(sgfText, 'RE');
-
-                if (ev) matchName = ev;
-                else if (gn) matchName = gn;
-
-                if (pb) blackPlayer = pb + (br ? (' ' + br) : '');
-                if (pw) whitePlayer = pw + (wr ? (' ' + wr) : '');
-                if (re) result = formatResultString(re);
-            }
-
-            // 2. parsedJson / apiData からの抽出
+            // 1. apiData (サーバー側で翻訳・整形済みのメタデータ) / parsedJson からの抽出を優先
             const objectsToCheck = [];
             if (apiData && typeof apiData === 'object') objectsToCheck.push(apiData);
             if (parsedJson && typeof parsedJson === 'object') {
@@ -651,6 +633,26 @@
                     const r = obj.result || obj.gameResult || obj.game_result || obj.winnerName || obj.winner_name || obj.winner || obj.re || obj.outcome || '';
                     if (r) result = formatResultString(r);
                 }
+            }
+
+            // 2. フォールバック: SGFからの抽出
+            if (sgfText) {
+                const ev = extractPropertyFromSgf(sgfText, 'EV');
+                const gn = extractPropertyFromSgf(sgfText, 'GN');
+                const pb = extractPropertyFromSgf(sgfText, 'PB');
+                const pw = extractPropertyFromSgf(sgfText, 'PW');
+                const br = extractPropertyFromSgf(sgfText, 'BR');
+                const wr = extractPropertyFromSgf(sgfText, 'WR');
+                const re = extractPropertyFromSgf(sgfText, 'RE');
+
+                if (!matchName) {
+                    if (ev) matchName = ev;
+                    else if (gn) matchName = gn;
+                }
+
+                if (!blackPlayer && pb) blackPlayer = pb + (br ? (' ' + br) : '');
+                if (!whitePlayer && pw) whitePlayer = pw + (wr ? (' ' + wr) : '');
+                if (!result && re) result = formatResultString(re);
             }
 
             // 対局者文字列の調整
