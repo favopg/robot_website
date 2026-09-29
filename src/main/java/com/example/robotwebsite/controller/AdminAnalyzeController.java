@@ -2,6 +2,7 @@ package com.example.robotwebsite.controller;
 
 import com.example.robotwebsite.dto.KatagoAnalyzeRequest;
 import com.example.robotwebsite.service.KatagoAnalyzeService;
+import com.example.robotwebsite.service.KifuAutoTranslationService;
 import com.example.robotwebsite.util.KoreanTranslationUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,10 +38,14 @@ public class AdminAnalyzeController {
     private static final Logger logger = LoggerFactory.getLogger(AdminAnalyzeController.class);
 
     private final KatagoAnalyzeService katagoAnalyzeService;
+    private final KifuAutoTranslationService translationService;
     private final ObjectMapper objectMapper;
 
-    public AdminAnalyzeController(KatagoAnalyzeService katagoAnalyzeService, ObjectMapper objectMapper) {
+    public AdminAnalyzeController(KatagoAnalyzeService katagoAnalyzeService,
+                                  KifuAutoTranslationService translationService,
+                                  ObjectMapper objectMapper) {
         this.katagoAnalyzeService = katagoAnalyzeService;
+        this.translationService = translationService;
         this.objectMapper = objectMapper;
     }
 
@@ -186,28 +191,28 @@ public class AdminAnalyzeController {
                 String[] matchNameKeys = {"match_name", "matchName", "tournament_name", "tournamentName", "tournament", "event_name", "eventName", "event", "game_name", "gameName", "title"};
                 for (String k : matchNameKeys) {
                     if (jsonNode.hasNonNull(k)) {
-                        response.put("matchName", KoreanTranslationUtil.translateMatchName(jsonNode.get(k).asText()));
+                        response.put("matchName", translationService.translateMatchName(jsonNode.get(k).asText()));
                         break;
                     }
                 }
                 String[] blackPlayerKeys = {"black_player", "blackPlayer", "player_black", "playerBlack", "player1_name", "player1Name", "player1", "black", "pb"};
                 for (String k : blackPlayerKeys) {
                     if (jsonNode.hasNonNull(k)) {
-                        response.put("blackPlayer", KoreanTranslationUtil.translatePlayerName(jsonNode.get(k).asText()));
+                        response.put("blackPlayer", translationService.translatePlayerName(jsonNode.get(k).asText()));
                         break;
                     }
                 }
                 String[] whitePlayerKeys = {"white_player", "whitePlayer", "player_white", "playerWhite", "player2_name", "player2Name", "player2", "white", "pw"};
                 for (String k : whitePlayerKeys) {
                     if (jsonNode.hasNonNull(k)) {
-                        response.put("whitePlayer", KoreanTranslationUtil.translatePlayerName(jsonNode.get(k).asText()));
+                        response.put("whitePlayer", translationService.translatePlayerName(jsonNode.get(k).asText()));
                         break;
                     }
                 }
                 String[] resultKeys = {"result", "game_result", "gameResult", "winner_name", "winnerName", "winner", "re"};
                 for (String k : resultKeys) {
                     if (jsonNode.hasNonNull(k)) {
-                        response.put("result", KoreanTranslationUtil.translateResult(jsonNode.get(k).asText()));
+                        response.put("result", translationService.translateResult(jsonNode.get(k).asText()));
                         break;
                     }
                 }

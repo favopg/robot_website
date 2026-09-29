@@ -63,5 +63,9 @@ public class KoreanTranslationUtilTest {
                 KoreanTranslationUtil.translateMatchName("제28회 삼성화재배 월드바둑마스터스 결승 3번기 1국"));
         assertEquals("第29回 LG杯 朝鮮日報棋王戦 準決勝",
                 KoreanTranslationUtil.translateMatchName("제29회 LG배 조선일보 기왕전 준결승"));
+        assertEquals("第1回 南洋杯 32強",
+                KoreanTranslationUtil.translateMatchName("제1회 난양배 32강"));
+        assertEquals("第1回 南洋杯 世界囲碁マスターズ 32強",
+                KoreanTranslationUtil.translateMatchName("제1회 난양배 세계바둑마스터스 32강"));
     }
 }

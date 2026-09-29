@@ -374,6 +374,8 @@ public class KoreanTranslationUtil {
         addTournamentTerm("취저우 난가배", "衢州爛柯杯");
         addTournamentTerm("란커배", "爛柯杯");
         addTournamentTerm("난가배", "爛柯杯");
+        addTournamentTerm("난양배 세계바둑마스터스", "南洋杯 世界囲碁マスターズ");
+        addTournamentTerm("난양배", "南洋杯");
         addTournamentTerm("우량예배", "五糧液杯");
         addTournamentTerm("오청원배 세계여자바둑선수권", "呉清源杯 世界女子囲碁選手権");
         addTournamentTerm("오청원배", "呉清源杯");

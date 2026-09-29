@@ -34,6 +34,12 @@ public class KatagoAnalyzeService {
     @Value("${analyze.cache.dir:C:/analyze_cache}")
     private String cacheBaseDir;
 
+    private final KifuAutoTranslationService translationService;
+
+    public KatagoAnalyzeService(KifuAutoTranslationService translationService) {
+        this.translationService = translationService;
+    }
+
     /**
      * キャッシュディレクトリ内に存在する棋譜ファイルの日付一覧(YYYYMMDD)を降順で取得
      */
@@ -138,6 +144,19 @@ public class KatagoAnalyzeService {
                 if (result == null || result.isEmpty()) {
                     String rawResult = extractField(root, "result", "game_result", "winner_name", "re");
                     result = formatResultString(rawResult);
+                }
+
+                if (matchName != null) {
+                    matchName = translationService.translateMatchName(matchName);
+                }
+                if (blackPlayer != null) {
+                    blackPlayer = translationService.translatePlayerName(blackPlayer);
+                }
+                if (whitePlayer != null) {
+                    whitePlayer = translationService.translatePlayerName(whitePlayer);
+                }
+                if (result != null) {
+                    result = translationService.translateResult(result);
                 }
 
                 kifuList.add(new KifuInfo(dateStr, matchName, blackPlayer, whitePlayer, result));
