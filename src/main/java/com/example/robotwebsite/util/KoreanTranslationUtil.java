@@ -1,7 +1,5 @@
 package com.example.robotwebsite.util;
 
-import com.example.robotwebsite.dto.KifuInfo;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -690,26 +688,5 @@ public class KoreanTranslationUtil {
         result = translatePlayerName(result);
         result = translateResult(result);
         return result;
-    }
-
-    /**
-     * KifuInfo オブジェクト内の韓国語フィールドを日本語に翻訳
-     */
-    public static KifuInfo translateKifuInfo(KifuInfo kifuInfo) {
-        if (kifuInfo == null) return null;
-
-        if (kifuInfo.getMatchName() != null) {
-            kifuInfo.setMatchName(translateMatchName(kifuInfo.getMatchName()));
-        }
-        if (kifuInfo.getBlackPlayer() != null) {
-            kifuInfo.setBlackPlayer(translatePlayerName(kifuInfo.getBlackPlayer()));
-        }
-        if (kifuInfo.getWhitePlayer() != null) {
-            kifuInfo.setWhitePlayer(translatePlayerName(kifuInfo.getWhitePlayer()));
-        }
-        if (kifuInfo.getResult() != null) {
-            kifuInfo.setResult(translateResult(kifuInfo.getResult()));
-        }
-        return kifuInfo;
     }
 }

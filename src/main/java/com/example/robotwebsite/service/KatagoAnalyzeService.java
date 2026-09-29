@@ -2,7 +2,6 @@ package com.example.robotwebsite.service;
 
 import com.example.robotwebsite.dto.KatagoAnalyzeRequest;
 import com.example.robotwebsite.dto.KifuInfo;
-import com.example.robotwebsite.util.KoreanTranslationUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -177,7 +176,48 @@ public class KatagoAnalyzeService {
     }
 
     private String formatResultString(String rawResult) {
-        return KoreanTranslationUtil.translateResult(rawResult);
+        if (rawResult == null) return "";
+        String trimmed = rawResult.trim();
+        if (trimmed.isEmpty()) return "";
+
+        if (trimmed.matches(".*[\\u3040-\\u30ff\\u4e00-\\u9faf].*")) {
+            return trimmed;
+        }
+
+        String upper = trimmed.toUpperCase();
+        if ("B+R".equals(upper) || "B+RESIGN".equals(upper) || "BLACK+R".equals(upper) || "BLACK+RESIGN".equals(upper)) {
+            return "黒中押し勝ち";
+        }
+        if ("W+R".equals(upper) || "W+RESIGN".equals(upper) || "WHITE+R".equals(upper) || "WHITE+RESIGN".equals(upper)) {
+            return "白中押し勝ち";
+        }
+        if ("B+T".equals(upper) || "B+TIME".equals(upper)) {
+            return "黒時間切れ勝ち";
+        }
+        if ("W+T".equals(upper) || "W+TIME".equals(upper)) {
+            return "白時間切れ勝ち";
+        }
+        if ("B+F".equals(upper) || "B+FORFEIT".equals(upper)) {
+            return "黒反則勝ち";
+        }
+        if ("W+F".equals(upper) || "W+FORFEIT".equals(upper)) {
+            return "白反則勝ち";
+        }
+        if ("0".equals(upper) || "VOID".equals(upper) || "DRAW".equals(upper) || "JIGO".equals(upper)) {
+            return "持碁";
+        }
+
+        Matcher bScoreMatch = Pattern.compile("^B\\+([0-9.]+)").matcher(upper);
+        if (bScoreMatch.find()) {
+            return "黒" + bScoreMatch.group(1) + "目勝ち";
+        }
+
+        Matcher wScoreMatch = Pattern.compile("^W\\+([0-9.]+)").matcher(upper);
+        if (wScoreMatch.find()) {
+            return "白" + wScoreMatch.group(1) + "目勝ち";
+        }
+
+        return trimmed;
     }
 
     private String extractField(JsonNode node, String... keys) {

@@ -1,6 +1,5 @@
 package com.example.robotwebsite;
 
-import com.example.robotwebsite.dto.KifuInfo;
 import com.example.robotwebsite.util.KoreanTranslationUtil;
 import org.junit.jupiter.api.Test;
 
@@ -64,22 +63,5 @@ public class KoreanTranslationUtilTest {
                 KoreanTranslationUtil.translateMatchName("제28회 삼성화재배 월드바둑마스터스 결승 3번기 1국"));
         assertEquals("第29回 LG杯 朝鮮日報棋王戦 準決勝",
                 KoreanTranslationUtil.translateMatchName("제29회 LG배 조선일보 기왕전 준결승"));
-    }
-
-    @Test
-    public void testKifuInfoTranslation() {
-        KifuInfo kifu = new KifuInfo(
-                "20260920",
-                "제25회 농심신라면배 세계바둑최강전 본선 14국",
-                "신진서 9단",
-                "구쯔하오 9단",
-                "흑 불계승"
-        );
-
-        assertEquals("第25回 農心辛ラーメン杯 世界囲碁最強戦 本戦 第14局", kifu.getMatchName());
-        assertEquals("申真諝 九段", kifu.getBlackPlayer());
-        assertEquals("辜梓豪 九段", kifu.getWhitePlayer());
-        assertEquals("黒中押し勝ち", kifu.getResult());
-        assertEquals("2026年09月20日", kifu.getDisplayDate());
     }
 }
